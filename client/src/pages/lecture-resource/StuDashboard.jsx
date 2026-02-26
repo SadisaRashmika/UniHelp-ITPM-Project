@@ -3,7 +3,7 @@ import StuSidebar         from '../../components/lecture-resource/StuSidebar';
 import StuHome            from '../../components/lecture-resource/StuHome';
 import StuNoteUploadModal from '../../components/lecture-resource/StuNoteUploadModal';
 import StuQuizModal       from '../../components/lecture-resource/StuQuizModal';
-import StuBonusMarksModal from '../../components/lecture-resource/StuBonusMarksModal';
+import StuBonusMarksModal from '../../components/lecture-resource/StuBonusMarkModal';
 
 const StuDashboard = () => {
   const [uploadLecture, setUploadLecture] = useState(null);
