@@ -1,44 +1,49 @@
 import React, { useState } from 'react';
-import LecSidebar   from '../../components/lecture-resource/LecSidebar';
-import LecProfile   from '../../components/lecture-resource/LecProfile';
-import LecResources from '../../components/lecture-resource/LecResources';
-import LecQuiz      from '../../components/lecture-resource/LecQuiz';
-import { LECTURER, PENDING_RESOURCES } from '../../components/lecture-resource/lecData';
+import LecSidebar        from '../../components/lecture-resource/LecSidebar';
+import LecProfile        from '../../components/lecture-resource/LecProfile';
+import LecUpload         from '../../components/lecture-resource/LecUpload';
+import LecStudentUploads from '../../components/lecture-resource/LecStudentUploads';
+import LecExtraMarks     from '../../components/lecture-resource/LecExtraMarks';
+import { LECTURER_STATS, PENDING_SUBMISSIONS, BONUS_MARK_REQUESTS } from '../../components/lecture-resource/SharedData';
 
-// ── Root lecturer page ────────────────────────────────────────────────────────
-// All live state (points, pending count) lives here so sidebar stays in sync
 const LecDashboard = () => {
-  const [activeTab,    setActiveTab]    = useState('profile');
-  const [myPoints,     setMyPoints]     = useState(LECTURER.stats.myPoints);
-  const [pendingCount, setPendingCount] = useState(PENDING_RESOURCES.length);
-
-  const handlePointsEarned  = (amount) => setMyPoints(prev => prev + amount);
-  const handlePendingChange = (delta)  => setPendingCount(prev => Math.max(0, prev + delta));
+  const [activeTab,         setActiveTab]         = useState('profile');
+  const [myPoints,          setMyPoints]          = useState(LECTURER_STATS.myPoints);
+  const [pendingCount,      setPendingCount]      = useState(PENDING_SUBMISSIONS.length);
+  const [extraMarksPending, setExtraMarksPending] = useState(
+    BONUS_MARK_REQUESTS.filter(r => r.status === 'pending').length
+  );
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex">
-
-      {/* Fixed left sidebar */}
       <LecSidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        myPoints={myPoints}
         pendingCount={pendingCount}
+        extraMarksPending={extraMarksPending}
       />
 
-      {/* Scrollable main content — offset by sidebar width */}
-      <main className="flex-1 ml-64 p-10">
+      <main className="flex-1 ml-60 p-10">
         {activeTab === 'profile' && (
-          <LecProfile myPoints={myPoints} pendingCount={pendingCount} />
-        )}
-        {activeTab === 'resources' && (
-          <LecResources
-            onPointsEarned={handlePointsEarned}
-            onPendingChange={handlePendingChange}
+          <LecProfile
+            myPoints={myPoints}
+            pendingCount={pendingCount}
+            onNavigate={setActiveTab}
           />
         )}
-        {activeTab === 'quiz' && (
-          <LecQuiz />
+        {activeTab === 'upload' && (
+          <LecUpload onPublish={() => {}} />
+        )}
+        {activeTab === 'review' && (
+          <LecStudentUploads
+            onPointsEarned={(n) => setMyPoints(p => p + n)}
+            onPendingChange={(d) => setPendingCount(p => Math.max(0, p + d))}
+          />
+        )}
+        {activeTab === 'extramarks' && (
+          <LecExtraMarks
+            onPendingChange={(d) => setExtraMarksPending(p => Math.max(0, p + d))}
+          />
         )}
       </main>
     </div>
