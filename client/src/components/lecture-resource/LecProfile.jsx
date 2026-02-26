@@ -1,88 +1,135 @@
 import React from 'react';
-import { Heart, MessageSquare, Star, BarChart3 } from 'lucide-react';
+import { Download, Clock, Upload, Coins, TrendingUp, CheckCircle2, XCircle, BookOpen, Layers } from 'lucide-react';
+import { LECTURER, INITIAL_QUIZZES } from './lecData';
 
-const LecProfile = () => {
+const LecProfile = ({ myPoints, pendingCount }) => {
   return (
-    <div className="max-w-6xl mx-auto space-y-10">
+    <div className="space-y-8">
+
+      {/* Page title */}
       <header>
-        <h2 className="text-3xl font-black text-slate-900 tracking-tight">Professor Profile</h2>
-        <p className="text-slate-500 font-medium">View your teaching performance and student feedback</p>
+        <h2 className="text-3xl font-black text-slate-900">My Profile</h2>
+        <p className="text-slate-500 font-medium mt-1">Your teaching overview, stats, and reward summary</p>
       </header>
 
-      {/* Profile Header Card */}
-      <div className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm">
-        <div className="flex items-center gap-10">
-          <div className="w-28 h-28 bg-blue-600 rounded-[32px] flex items-center justify-center text-white text-4xl font-black shadow-xl shadow-blue-100">
-            DR
-          </div>
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-2xl font-black text-slate-900">Dr. Robert Smith</h3>
-              <p className="text-slate-500 font-bold">Professor of Computer Science</p>
-            </div>
-            <div className="flex gap-12 border-t border-slate-50 pt-4">
-              <ProfileMetaItem label="Department" val="Computer Science" />
-              <ProfileMetaItem label="Email" val="robert.smith@university.edu" />
-              <ProfileMetaItem label="Office" val="Room 305, CS Building" />
-            </div>
+      {/* Welcome banner — matches student side gradient style */}
+      <div className="bg-gradient-to-br from-violet-500 via-indigo-600 to-blue-600 rounded-[32px] p-8 text-white flex items-center gap-6 relative overflow-hidden">
+        {/* Decorative circle */}
+        <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/5 rounded-full" />
+        <div className="absolute -right-4 bottom-0 w-32 h-32 bg-white/5 rounded-full" />
+        <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-3xl font-black shrink-0 backdrop-blur-sm">
+          {LECTURER.initials}
+        </div>
+        <div className="relative">
+          <p className="text-xs font-black uppercase tracking-widest text-white/60 mb-1">{LECTURER.department}</p>
+          <h3 className="text-2xl font-black">{LECTURER.name}</h3>
+          <p className="text-white/70 font-semibold mt-1 text-sm">{LECTURER.title} · {LECTURER.employeeId}</p>
+          <div className="flex gap-2 mt-3 flex-wrap">
+            {LECTURER.subjects.map(s => (
+              <span key={s} className="bg-white/15 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tight backdrop-blur-sm">
+                {s}
+              </span>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Performance Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <LecStatBox icon={<Heart className="text-red-500 fill-red-50"/>} label="Total Likes" val="1234" />
-        <LecStatBox icon={<MessageSquare className="text-blue-500 fill-blue-50"/>} label="Total Comments" val="4" />
-        <LecStatBox icon={<Star className="text-amber-500 fill-amber-50"/>} label="Average Rating" val="4.8" />
+      {/* 4 stat cards — same pattern as StuSidebar StatItems but as big cards */}
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard icon={<Download size={20} className="text-blue-500"  />} label="Total Downloads"    val={LECTURER.stats.downloads}         bg="bg-blue-50"   border="border-blue-100"   />
+        <StatCard icon={<Clock    size={20} className="text-amber-500" />} label="Pending Reviews"    val={pendingCount}                     bg="bg-amber-50"  border="border-amber-100"  />
+        <StatCard icon={<Upload   size={20} className="text-green-500" />} label="Resources Uploaded" val={LECTURER.stats.uploadedResources} bg="bg-green-50"  border="border-green-100"  />
+        <StatCard icon={<Coins    size={20} className="text-violet-500"/>} label="My Points"          val={myPoints}                         bg="bg-violet-50" border="border-violet-100" />
       </div>
 
-      {/* Resource Insights */}
-      <div className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm">
-        <h4 className="font-black text-lg text-slate-900 flex items-center gap-3 mb-8">
-          <BarChart3 className="text-slate-400" size={20} /> Resource Performance
-        </h4>
-        <div className="space-y-6">
-          <PerformanceItem title="Introduction to Machine Learning" likes="456" comments="34" views="1234" />
-          <PerformanceItem title="Data Structures Notes" likes="389" comments="28" views="987" />
+      {/* Points system explanation */}
+      <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2.5 bg-violet-50 rounded-xl">
+            <Coins size={20} className="text-violet-500" />
+          </div>
+          <div>
+            <h3 className="text-lg font-black text-slate-900">How My Points Work</h3>
+            <p className="text-sm text-slate-500 font-medium">Reviewing student resources earns you points redeemable as bonus salary</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <PointCard color="bg-green-50 border-green-100"  icon="✅" action="Accept a resource" pts="+10 pts" note="Approve a student's uploaded note" />
+          <PointCard color="bg-red-50 border-red-100"      icon="❌" action="Reject a resource" pts="+5 pts"  note="Reject with optional feedback"     />
+          <PointCard color="bg-violet-50 border-violet-100" icon="💰" action="Redeem Points"    pts="Salary"  note="Convert accumulated points to bonus pay" />
+        </div>
+      </div>
+
+      {/* Two-column: activity + quizzes */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+        {/* Activity summary */}
+        <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 bg-green-50 rounded-xl">
+              <TrendingUp size={20} className="text-green-500" />
+            </div>
+            <h3 className="text-lg font-black text-slate-900">Activity Summary</h3>
+          </div>
+          <div className="space-y-3">
+            <ActivityRow label="Resources reviewed this week" val="12" />
+            <ActivityRow label="Student notes accepted"       val="9"  />
+            <ActivityRow label="Student notes rejected"       val="3"  />
+            <ActivityRow label="Points earned this month"     val="95" />
+          </div>
+        </div>
+
+        {/* Quiz overview */}
+        <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 bg-indigo-50 rounded-xl">
+              <BookOpen size={20} className="text-indigo-500" />
+            </div>
+            <h3 className="text-lg font-black text-slate-900">My Quizzes</h3>
+          </div>
+          <div className="space-y-3">
+            {INITIAL_QUIZZES.map(q => (
+              <div key={q.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-indigo-100 rounded-xl">
+                    <CheckCircle2 size={15} className="text-indigo-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-slate-900">{q.title}</p>
+                    <p className="text-xs text-slate-400 font-semibold">{q.questionCount} questions · {q.attempts} attempts</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-black bg-green-100 text-green-700 px-2.5 py-1 rounded-full uppercase">Live</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-const ProfileMetaItem = ({ label, val }) => (
-  <div>
-    <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">{label}</p>
-    <p className="text-sm font-bold text-slate-700">{val}</p>
+const StatCard = ({ icon, label, val, bg, border }) => (
+  <div className={`${bg} border ${border} rounded-[24px] p-5`}>
+    <div className="mb-3">{icon}</div>
+    <p className="text-2xl font-black text-slate-900">{val}</p>
+    <p className="text-sm font-semibold text-slate-500 mt-0.5">{label}</p>
   </div>
 );
 
-const LecStatBox = ({ icon, label, val }) => (
-  <div className="bg-white p-8 rounded-[36px] border border-slate-50 shadow-sm flex items-center justify-between group hover:shadow-md transition-all">
-    <div className="space-y-1">
-      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{label}</p>
-      <p className="text-4xl font-black text-slate-900">{val}</p>
-    </div>
-    <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center text-2xl group-hover:bg-white transition-colors">
-      {icon}
-    </div>
+const PointCard = ({ color, icon, action, pts, note }) => (
+  <div className={`${color} border rounded-2xl p-5`}>
+    <div className="text-2xl mb-3">{icon}</div>
+    <p className="font-black text-slate-900 text-sm">{action}</p>
+    <p className="text-lg font-black text-slate-700 mt-0.5">{pts}</p>
+    <p className="text-xs text-slate-500 font-medium mt-1 leading-snug">{note}</p>
   </div>
 );
 
-const PerformanceItem = ({ title, likes, comments, views }) => (
-  <div className="p-6 bg-slate-50/50 rounded-3xl border border-transparent hover:border-slate-100 hover:bg-white transition-all cursor-pointer">
-    <h5 className="font-bold text-slate-800 text-lg mb-3">{title}</h5>
-    <div className="flex gap-8">
-      <div className="flex items-center gap-2 text-xs font-bold text-red-500/70">
-        <Heart size={14} /> {likes} likes
-      </div>
-      <div className="flex items-center gap-2 text-xs font-bold text-blue-500/70">
-        <MessageSquare size={14} /> {comments} comments
-      </div>
-      <div className="text-xs font-bold text-slate-400">
-        {views} views
-      </div>
-    </div>
+const ActivityRow = ({ label, val }) => (
+  <div className="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3">
+    <span className="text-sm font-semibold text-slate-600">{label}</span>
+    <span className="font-black text-slate-900">{val}</span>
   </div>
 );
 

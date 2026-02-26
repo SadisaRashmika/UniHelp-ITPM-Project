@@ -1,238 +1,166 @@
 import React, { useState } from 'react';
 import { X, ArrowRight, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
 
+// CHANGES FROM ORIGINAL (design untouched):
+// 1. Receives `lecture` object, reads lecture.quiz for all data
+// 2. Real question/answer state — tracks selections, previous/next, shows correct answers
+// 3. Results screen shows actual score and per-question breakdown
 const StuQuizModal = ({ lecture, onClose }) => {
-  const quiz = lecture?.quiz;
-  const [current, setCurrent] = useState(0);
-  const [answers, setAnswers] = useState({});
-  const [submitted, setSubmitted] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answers, setAnswers]           = useState({}); // { questionIndex: chosenOptionIndex }
+  const [submitted, setSubmitted]       = useState(false);
 
-  if (!quiz) return null;
+  if (!lecture || !lecture.quiz) return null;
 
-  const total = quiz.questions.length;
-  const answered = Object.keys(answers).length;
-  const score = quiz.questions.filter((q, i) => answers[i] === q.answer).length;
-  const pct = Math.round((score / total) * 100);
+  const { quiz }    = lecture;
+  const questions   = quiz.questions;
+  const total       = questions.length;
+  const answered    = Object.keys(answers).length;
+  const currentQ    = questions[currentIndex];
+  const score       = questions.filter((q, i) => answers[i] === q.answer).length;
+  const percentage  = total > 0 ? Math.round((score / total) * 100) : 0;
+  const progressPct = ((currentIndex + 1) / total) * 100;
 
-  const handleSelect = (idx) => {
-    if (!submitted) setAnswers(prev => ({ ...prev, [current]: idx }));
+  const handleSelect = (optionIndex) => {
+    if (!submitted) setAnswers(prev => ({ ...prev, [currentIndex]: optionIndex }));
   };
 
-  const baseFont = { fontFamily: "'Plus Jakarta Sans', 'Segoe UI', sans-serif" };
-
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed', inset: 0, background: 'rgba(10,10,30,0.6)',
-        backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center',
-        justifyContent: 'center', zIndex: 1000, padding: '20px',
-      }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          ...baseFont,
-          background: '#fff', borderRadius: '32px',
-          width: '100%', maxWidth: '560px', maxHeight: '90vh',
-          overflowY: 'auto', position: 'relative',
-          boxShadow: '0 32px 80px rgba(0,0,0,0.25)',
-          padding: '36px',
-        }}
-      >
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-          .quiz-opt-btn {
-            display: flex; align-items: center; gap: 14px;
-            width: 100%; padding: 15px 18px;
-            border: 2px solid #f0f0f5; border-radius: 16px;
-            background: #fff; text-align: left; cursor: pointer;
-            font-size: 0.9rem; font-weight: 600; color: #2a2a4a;
-            font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
-            transition: all 0.15s;
-          }
-          .quiz-opt-btn:hover { border-color: #a5b4fc; background: #f8f7ff; }
-          .quiz-opt-btn.selected { border-color: #6366f1; background: #ede9fe; color: #4338ca; }
-          .quiz-opt-btn.correct-ans { border-color: #10b981; background: #d1fae5; color: #065f46; }
-          .quiz-opt-btn.wrong-ans { border-color: #ef4444; background: #fee2e2; color: #991b1b; }
-        `}</style>
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-[40px] w-full max-w-2xl shadow-2xl relative">
+        <div className="p-10 max-h-[90vh] overflow-y-auto">
+          <button onClick={onClose} className="absolute top-8 right-8 text-slate-400 hover:text-slate-600">
+            <X size={24} />
+          </button>
 
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute', top: '20px', right: '20px',
-            background: '#f5f5fb', border: 'none', borderRadius: '50%',
-            width: '36px', height: '36px', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7a7a9a',
-          }}
-        >
-          <X size={18} />
-        </button>
+          {!submitted ? (
+            <div className="space-y-8">
+              <header>
+                <h3 className="text-2xl font-black text-slate-900">{quiz.title}</h3>
+                <div className="flex justify-between items-center mt-4">
+                  <span className="text-sm font-bold text-slate-400">Question {currentIndex + 1} of {total}</span>
+                  <span className="text-sm font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full">{answered} / {total} answered</span>
+                </div>
+                <div className="w-full h-2 bg-slate-100 rounded-full mt-4">
+                  <div
+                    className="h-full bg-slate-900 rounded-full transition-all duration-300"
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+              </header>
 
-        {!submitted ? (
-          <>
-            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0d0d1a', margin: '0 0 20px' }}>
-              {quiz.title}
-            </h3>
+              <h4 className="text-xl font-bold text-slate-800">{currentQ.question}</h4>
 
-            {/* Progress */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', fontWeight: 700, color: '#9090aa', marginBottom: '10px' }}>
-              <span>Question {current + 1} of {total}</span>
-              <span style={{ background: '#f3f3f9', padding: '2px 10px', borderRadius: '20px' }}>{answered} / {total} answered</span>
-            </div>
-            <div style={{ height: '6px', background: '#f0f0f5', borderRadius: '20px', marginBottom: '28px' }}>
-              <div style={{
-                height: '100%', borderRadius: '20px',
-                background: 'linear-gradient(90deg, #6366f1, #a855f7)',
-                width: `${((current + 1) / total) * 100}%`,
-                transition: 'width 0.3s ease',
-              }} />
-            </div>
+              <div className="space-y-4">
+                {currentQ.options.map((opt, i) => {
+                  const isSelected = answers[currentIndex] === i;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handleSelect(i)}
+                      className={`w-full text-left p-6 border-2 rounded-[20px] font-bold flex gap-4 transition-all
+                        ${isSelected
+                          ? 'border-slate-900 bg-slate-900 text-white'
+                          : 'border-slate-100 text-slate-700 hover:border-slate-300'
+                        }`}
+                    >
+                      <span className={`font-black ${isSelected ? 'text-white/60' : 'text-slate-300'}`}>
+                        {String.fromCharCode(65 + i)}.
+                      </span>
+                      {opt}
+                    </button>
+                  );
+                })}
+              </div>
 
-            <p style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0d0d1a', marginBottom: '20px', lineHeight: 1.4 }}>
-              {quiz.questions[current].q}
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px' }}>
-              {quiz.questions[current].options.map((opt, i) => (
+              <div className="flex justify-between pt-6">
                 <button
-                  key={i}
-                  className={`quiz-opt-btn${answers[current] === i ? ' selected' : ''}`}
-                  onClick={() => handleSelect(i)}
+                  onClick={() => setCurrentIndex(i => i - 1)}
+                  disabled={currentIndex === 0}
+                  className="flex items-center gap-2 text-slate-400 font-bold px-6 py-3 disabled:opacity-30 disabled:cursor-not-allowed hover:text-slate-600 transition-colors"
                 >
-                  <span style={{
-                    minWidth: '28px', height: '28px', borderRadius: '8px',
-                    background: answers[current] === i ? '#6366f1' : '#f0f0f5',
-                    color: answers[current] === i ? '#fff' : '#9090aa',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontWeight: 800, fontSize: '0.8rem', flexShrink: 0,
-                    transition: 'all 0.15s',
-                  }}>
-                    {String.fromCharCode(65 + i)}
-                  </span>
-                  {opt}
+                  <ArrowLeft size={18} /> Previous
                 </button>
-              ))}
+
+                {currentIndex < total - 1 ? (
+                  <button
+                    onClick={() => setCurrentIndex(i => i + 1)}
+                    disabled={answers[currentIndex] === undefined}
+                    className="bg-slate-900 text-white px-10 py-3 rounded-2xl font-black flex items-center gap-2 shadow-xl shadow-slate-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-black transition-all"
+                  >
+                    Next <ArrowRight size={18} />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setSubmitted(true)}
+                    disabled={answered < total}
+                    className="bg-blue-600 text-white px-10 py-3 rounded-2xl font-black shadow-xl disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700 transition-all"
+                  >
+                    Submit Quiz
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <button
-                onClick={() => setCurrent(c => Math.max(0, c - 1))}
-                disabled={current === 0}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '10px 20px', border: 'none', borderRadius: '12px',
-                  background: '#f3f3f9', color: current === 0 ? '#c8c8d8' : '#5a5a8a',
-                  fontWeight: 700, fontSize: '0.88rem', cursor: current === 0 ? 'default' : 'pointer',
-                  fontFamily: "'Plus Jakarta Sans', 'Segoe UI', sans-serif",
-                }}
-              >
-                <ArrowLeft size={16} /> Previous
+          ) : (
+            <div className="text-center space-y-8 py-6">
+              <h3 className="text-xl font-bold text-slate-900">Quiz Results</h3>
+              <div className="space-y-1">
+                <p className="text-7xl font-black text-slate-900">{percentage}%</p>
+                <p className="text-slate-400 font-bold uppercase tracking-widest">Score: {score} / {total}</p>
+              </div>
+
+              <div className="max-h-[300px] overflow-y-auto space-y-4 p-4 text-left">
+                {questions.map((q, i) => {
+                  const isCorrect = answers[i] === q.answer;
+                  return (
+                    <ResultCard
+                      key={i}
+                      question={q.question}
+                      options={q.options}
+                      correctIndex={q.answer}
+                      chosenIndex={answers[i]}
+                      isCorrect={isCorrect}
+                    />
+                  );
+                })}
+              </div>
+
+              <button onClick={onClose} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-black hover:bg-black transition-all">
+                Close
               </button>
-
-              {current < total - 1 ? (
-                <button
-                  onClick={() => setCurrent(c => c + 1)}
-                  disabled={answers[current] === undefined}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    padding: '10px 24px', border: 'none', borderRadius: '12px',
-                    background: answers[current] !== undefined ? '#0d0d1a' : '#e8e8f0',
-                    color: answers[current] !== undefined ? '#fff' : '#a0a0b0',
-                    fontWeight: 800, fontSize: '0.88rem',
-                    cursor: answers[current] !== undefined ? 'pointer' : 'default',
-                    fontFamily: "'Plus Jakarta Sans', 'Segoe UI', sans-serif",
-                  }}
-                >
-                  Next <ArrowRight size={16} />
-                </button>
-              ) : (
-                <button
-                  onClick={() => setSubmitted(true)}
-                  disabled={answered < total}
-                  style={{
-                    padding: '10px 24px', border: 'none', borderRadius: '12px',
-                    background: answered >= total ? '#6366f1' : '#e8e8f0',
-                    color: answered >= total ? '#fff' : '#a0a0b0',
-                    fontWeight: 800, fontSize: '0.88rem',
-                    cursor: answered >= total ? 'pointer' : 'default',
-                    fontFamily: "'Plus Jakarta Sans', 'Segoe UI', sans-serif",
-                  }}
-                >
-                  Submit Quiz
-                </button>
-              )}
             </div>
-          </>
-        ) : (
-          <>
-            <h3 style={{ fontSize: '1.35rem', fontWeight: 900, color: '#0d0d1a', margin: '0 0 24px', textAlign: 'center' }}>
-              Quiz Results
-            </h3>
-
-            {/* Score Circle */}
-            <div style={{
-              width: '120px', height: '120px', borderRadius: '50%', margin: '0 auto 12px',
-              background: pct === 100 ? 'linear-gradient(135deg, #10b981, #059669)' : pct >= 60 ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #ef4444, #b91c1c)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-            }}>
-              <span style={{ fontSize: '2rem', fontWeight: 900, color: '#fff' }}>{pct}%</span>
-            </div>
-            <p style={{ textAlign: 'center', fontWeight: 700, color: '#9090aa', marginBottom: '28px', fontSize: '0.9rem' }}>
-              Score: {score} / {total}
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '320px', overflowY: 'auto' }}>
-              {quiz.questions.map((q, i) => {
-                const isCorrect = answers[i] === q.answer;
-                return (
-                  <div key={i} style={{
-                    background: '#fafafa', borderRadius: '18px', padding: '18px',
-                    border: `1.5px solid ${isCorrect ? '#bbf7d0' : '#fecaca'}`,
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '12px' }}>
-                      {isCorrect
-                        ? <CheckCircle2 size={20} color="#10b981" style={{ flexShrink: 0, marginTop: '1px' }} />
-                        : <XCircle size={20} color="#ef4444" style={{ flexShrink: 0, marginTop: '1px' }} />}
-                      <p style={{ fontWeight: 700, color: '#0d0d1a', fontSize: '0.9rem', margin: 0, lineHeight: 1.4 }}>{q.q}</p>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', paddingLeft: '30px' }}>
-                      {q.options.map((opt, j) => (
-                        <div key={j} style={{
-                          fontSize: '0.84rem', padding: '6px 12px', borderRadius: '9px',
-                          fontWeight: j === q.answer ? 700 : 500,
-                          background: j === q.answer ? '#d1fae5' : j === answers[i] && !isCorrect ? '#fee2e2' : 'transparent',
-                          color: j === q.answer ? '#065f46' : j === answers[i] && !isCorrect ? '#991b1b' : '#6a6a8a',
-                        }}>
-                          {String.fromCharCode(65 + j)}. {opt}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <button
-              onClick={onClose}
-              style={{
-                width: '100%', marginTop: '24px', padding: '14px', border: 'none',
-                borderRadius: '16px', background: '#0d0d1a', color: '#fff',
-                fontWeight: 800, fontSize: '0.95rem', cursor: 'pointer',
-                fontFamily: "'Plus Jakarta Sans', 'Segoe UI', sans-serif",
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = '#1e1e3a'}
-              onMouseLeave={e => e.currentTarget.style.background = '#0d0d1a'}
-            >
-              Close
-            </button>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
 };
+
+const ResultCard = ({ question, options, correctIndex, chosenIndex, isCorrect }) => (
+  <div className="p-6 border-2 border-slate-50 rounded-[24px] space-y-3">
+    <div className="flex items-start gap-3">
+      {isCorrect
+        ? <CheckCircle2 className="text-green-500 shrink-0 mt-0.5" size={20} />
+        : <XCircle      className="text-red-400 shrink-0 mt-0.5"   size={20} />
+      }
+      <p className="font-bold text-slate-800 leading-tight">{question}</p>
+    </div>
+    <div className="flex flex-col gap-1.5 pl-8">
+      {options.map((opt, j) => (
+        <span
+          key={j}
+          className={`text-sm px-3 py-1.5 rounded-xl font-semibold
+            ${j === correctIndex                       ? 'bg-green-50 text-green-700 font-black' : ''}
+            ${j === chosenIndex && !isCorrect          ? 'bg-red-50 text-red-500 font-black'     : ''}
+            ${j !== correctIndex && j !== chosenIndex  ? 'text-slate-400'                        : ''}
+          `}
+        >
+          {String.fromCharCode(65 + j)}. {opt}
+        </span>
+      ))}
+    </div>
+  </div>
+);
 
 export default StuQuizModal;
