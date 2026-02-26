@@ -4,7 +4,7 @@ import LecProfile        from '../../components/lecture-resource/LecProfile';
 import LecUpload         from '../../components/lecture-resource/LecUpload';
 import LecStudentUploads from '../../components/lecture-resource/LecStudentUploads';
 import LecExtraMarks     from '../../components/lecture-resource/LecExtraMarks';
-import { LECTURER_STATS, PENDING_SUBMISSIONS, BONUS_MARK_REQUESTS } from '../../components/lecture-resource/SharedData';
+import { LECTURER, LECTURER_STATS, PENDING_SUBMISSIONS, BONUS_MARK_REQUESTS } from '../../components/lecture-resource/SharedData';
 
 const LecDashboard = () => {
   const [activeTab,         setActiveTab]         = useState('profile');
@@ -15,15 +15,16 @@ const LecDashboard = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex">
+    <div className="min-h-screen bg-gray-50 flex">
       <LecSidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
         pendingCount={pendingCount}
         extraMarksPending={extraMarksPending}
+        lecturer={LECTURER}
       />
 
-      <main className="flex-1 ml-60 p-10">
+      <main className="flex-1 ml-72 p-10 min-w-0 w-full">
         {activeTab === 'profile' && (
           <LecProfile
             myPoints={myPoints}
