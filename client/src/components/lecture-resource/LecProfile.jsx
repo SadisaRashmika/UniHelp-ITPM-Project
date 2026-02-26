@@ -1,32 +1,35 @@
 import React from 'react';
-import { Download, Clock, Upload, Coins, TrendingUp, CheckCircle2, XCircle, BookOpen, Layers } from 'lucide-react';
-import { LECTURER, INITIAL_QUIZZES } from './lecData';
+import { Download, Clock, BookOpen, Coins, TrendingUp, CheckCircle2, ArrowRight } from 'lucide-react';
+import { LECTURER, LECTURER_STATS, LECTURES } from './SharedData';
 
-const LecProfile = ({ myPoints, pendingCount }) => {
+const LecProfile = ({ myPoints, pendingCount, onNavigate }) => {
+  const myLectures = LECTURES.filter(l => l.lecturer === LECTURER.name);
+
   return (
-    <div className="space-y-8">
+    <div className="max-w-5xl space-y-8">
 
-      {/* Page title */}
-      <header>
-        <h2 className="text-3xl font-black text-slate-900">My Profile</h2>
-        <p className="text-slate-500 font-medium mt-1">Your teaching overview, stats, and reward summary</p>
-      </header>
+      {/* Page header */}
+      <div>
+        <h1 className="text-2xl font-black text-slate-900">Dashboard</h1>
+        <p className="text-slate-400 text-sm mt-1 font-medium">Welcome back, {LECTURER.name.split(' ')[0]} 👋</p>
+      </div>
 
-      {/* Welcome banner — matches student side gradient style */}
-      <div className="bg-gradient-to-br from-violet-500 via-indigo-600 to-blue-600 rounded-[32px] p-8 text-white flex items-center gap-6 relative overflow-hidden">
-        {/* Decorative circle */}
-        <div className="absolute -right-10 -top-10 w-48 h-48 bg-white/5 rounded-full" />
-        <div className="absolute -right-4 bottom-0 w-32 h-32 bg-white/5 rounded-full" />
-        <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-3xl font-black shrink-0 backdrop-blur-sm">
-          {LECTURER.initials}
-        </div>
-        <div className="relative">
-          <p className="text-xs font-black uppercase tracking-widest text-white/60 mb-1">{LECTURER.department}</p>
-          <h3 className="text-2xl font-black">{LECTURER.name}</h3>
-          <p className="text-white/70 font-semibold mt-1 text-sm">{LECTURER.title} · {LECTURER.employeeId}</p>
-          <div className="flex gap-2 mt-3 flex-wrap">
+      {/* Profile banner */}
+      <div className="relative bg-slate-900 rounded-2xl p-7 overflow-hidden">
+        {/* Subtle dot grid */}
+        <div className="absolute inset-0 opacity-[0.04]" style={{backgroundImage:'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize:'24px 24px'}} />
+        <div className="relative flex items-center gap-5">
+          <div className="w-16 h-16 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center text-2xl font-black text-white shrink-0">
+            {LECTURER.initials}
+          </div>
+          <div>
+            <p className="text-white/50 text-xs font-semibold uppercase tracking-widest">{LECTURER.department}</p>
+            <h2 className="text-white text-xl font-black mt-0.5">{LECTURER.name}</h2>
+            <p className="text-white/50 text-sm font-medium mt-0.5">{LECTURER.title} · {LECTURER.employeeId}</p>
+          </div>
+          <div className="ml-auto flex gap-2 flex-wrap justify-end">
             {LECTURER.subjects.map(s => (
-              <span key={s} className="bg-white/15 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-tight backdrop-blur-sm">
+              <span key={s} className="bg-white/10 text-white/70 text-[10px] font-bold px-3 py-1 rounded-lg uppercase tracking-tight">
                 {s}
               </span>
             ))}
@@ -34,102 +37,99 @@ const LecProfile = ({ myPoints, pendingCount }) => {
         </div>
       </div>
 
-      {/* 4 stat cards — same pattern as StuSidebar StatItems but as big cards */}
+      {/* Stat cards */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-        <StatCard icon={<Download size={20} className="text-blue-500"  />} label="Total Downloads"    val={LECTURER.stats.downloads}         bg="bg-blue-50"   border="border-blue-100"   />
-        <StatCard icon={<Clock    size={20} className="text-amber-500" />} label="Pending Reviews"    val={pendingCount}                     bg="bg-amber-50"  border="border-amber-100"  />
-        <StatCard icon={<Upload   size={20} className="text-green-500" />} label="Resources Uploaded" val={LECTURER.stats.uploadedResources} bg="bg-green-50"  border="border-green-100"  />
-        <StatCard icon={<Coins    size={20} className="text-violet-500"/>} label="My Points"          val={myPoints}                         bg="bg-violet-50" border="border-violet-100" />
+        {[
+          { icon: <Download size={18} />, label: 'Downloads',      val: LECTURER_STATS.downloads,         color: 'text-blue-500',   bg: 'bg-blue-50'   },
+          { icon: <Clock    size={18} />, label: 'Pending Review', val: pendingCount,                     color: 'text-amber-500',  bg: 'bg-amber-50'  },
+          { icon: <BookOpen size={18} />, label: 'My Resources',   val: LECTURER_STATS.uploadedResources, color: 'text-emerald-500',bg: 'bg-emerald-50'},
+          { icon: <Coins    size={18} />, label: 'My Points',      val: myPoints,                         color: 'text-violet-500', bg: 'bg-violet-50' },
+        ].map(({ icon, label, val, color, bg }) => (
+          <div key={label} className="bg-white border border-slate-100 rounded-2xl p-5 hover:shadow-sm transition-shadow">
+            <div className={`${bg} ${color} w-9 h-9 rounded-xl flex items-center justify-center mb-4`}>{icon}</div>
+            <p className="text-2xl font-black text-slate-900">{val}</p>
+            <p className="text-xs font-semibold text-slate-400 mt-0.5 uppercase tracking-wide">{label}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Points system explanation */}
-      <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-8">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2.5 bg-violet-50 rounded-xl">
-            <Coins size={20} className="text-violet-500" />
-          </div>
-          <div>
-            <h3 className="text-lg font-black text-slate-900">How My Points Work</h3>
-            <p className="text-sm text-slate-500 font-medium">Reviewing student resources earns you points redeemable as bonus salary</p>
-          </div>
+      {/* Quick actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ActionCard
+          title="Upload New Resource"
+          desc="Add lecture notes, slides, and a quiz for your students"
+          cta="Go to Resources & Quiz"
+          color="bg-slate-900 text-white"
+          onClick={() => onNavigate('upload')}
+        />
+        <ActionCard
+          title="Review Student Uploads"
+          desc={`${pendingCount} submission${pendingCount !== 1 ? 's' : ''} waiting for your review`}
+          cta="Review Now"
+          color="bg-amber-50 text-slate-900 border border-amber-100"
+          onClick={() => onNavigate('review')}
+        />
+      </div>
+
+      {/* Points info */}
+      <div className="bg-white border border-slate-100 rounded-2xl p-6">
+        <div className="flex items-center gap-2 mb-5">
+          <Coins size={17} className="text-violet-500" />
+          <h3 className="font-black text-slate-900 text-sm">How Points Work</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <PointCard color="bg-green-50 border-green-100"  icon="✅" action="Accept a resource" pts="+10 pts" note="Approve a student's uploaded note" />
-          <PointCard color="bg-red-50 border-red-100"      icon="❌" action="Reject a resource" pts="+5 pts"  note="Reject with optional feedback"     />
-          <PointCard color="bg-violet-50 border-violet-100" icon="💰" action="Redeem Points"    pts="Salary"  note="Convert accumulated points to bonus pay" />
+        <div className="grid grid-cols-3 gap-3">
+          <MiniCard icon="✅" label="Accept" pts="+10 pts" sub="per approved note" />
+          <MiniCard icon="❌" label="Reject" pts="+5 pts"  sub="per rejected note" />
+          <MiniCard icon="💰" label="Redeem" pts="Salary"  sub="convert to bonus pay" />
         </div>
       </div>
 
-      {/* Two-column: activity + quizzes */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-
-        {/* Activity summary */}
-        <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2.5 bg-green-50 rounded-xl">
-              <TrendingUp size={20} className="text-green-500" />
+      {/* My published lectures */}
+      {myLectures.length > 0 && (
+        <div className="bg-white border border-slate-100 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <TrendingUp size={17} className="text-slate-400" />
+              <h3 className="font-black text-slate-900 text-sm">My Published Lectures</h3>
             </div>
-            <h3 className="text-lg font-black text-slate-900">Activity Summary</h3>
+            <span className="text-xs font-semibold text-slate-400">{myLectures.length} total</span>
           </div>
-          <div className="space-y-3">
-            <ActivityRow label="Resources reviewed this week" val="12" />
-            <ActivityRow label="Student notes accepted"       val="9"  />
-            <ActivityRow label="Student notes rejected"       val="3"  />
-            <ActivityRow label="Points earned this month"     val="95" />
-          </div>
-        </div>
-
-        {/* Quiz overview */}
-        <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2.5 bg-indigo-50 rounded-xl">
-              <BookOpen size={20} className="text-indigo-500" />
-            </div>
-            <h3 className="text-lg font-black text-slate-900">My Quizzes</h3>
-          </div>
-          <div className="space-y-3">
-            {INITIAL_QUIZZES.map(q => (
-              <div key={q.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+          <div className="space-y-2.5">
+            {myLectures.map(l => (
+              <div key={l.id} className="flex items-center justify-between py-3 border-b border-slate-50 last:border-0">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-indigo-100 rounded-xl">
-                    <CheckCircle2 size={15} className="text-indigo-500" />
-                  </div>
+                  <CheckCircle2 size={15} className="text-emerald-500 shrink-0" />
                   <div>
-                    <p className="text-sm font-black text-slate-900">{q.title}</p>
-                    <p className="text-xs text-slate-400 font-semibold">{q.questionCount} questions · {q.attempts} attempts</p>
+                    <p className="text-sm font-bold text-slate-800">{l.title}</p>
+                    <p className="text-xs text-slate-400 font-medium">{l.year} · {l.semester}</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-black bg-green-100 text-green-700 px-2.5 py-1 rounded-full uppercase">Live</span>
+                <span className="text-[10px] font-black bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full uppercase">Live</span>
               </div>
             ))}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
 
-const StatCard = ({ icon, label, val, bg, border }) => (
-  <div className={`${bg} border ${border} rounded-[24px] p-5`}>
-    <div className="mb-3">{icon}</div>
-    <p className="text-2xl font-black text-slate-900">{val}</p>
-    <p className="text-sm font-semibold text-slate-500 mt-0.5">{label}</p>
-  </div>
+const ActionCard = ({ title, desc, cta, color, onClick }) => (
+  <button onClick={onClick} className={`${color} rounded-2xl p-6 text-left hover:opacity-90 transition-opacity group`}>
+    <p className="font-black text-base">{title}</p>
+    <p className="text-sm opacity-60 font-medium mt-1 mb-4">{desc}</p>
+    <div className="flex items-center gap-1.5 text-sm font-bold opacity-80 group-hover:opacity-100 transition-opacity">
+      {cta} <ArrowRight size={14} />
+    </div>
+  </button>
 );
 
-const PointCard = ({ color, icon, action, pts, note }) => (
-  <div className={`${color} border rounded-2xl p-5`}>
-    <div className="text-2xl mb-3">{icon}</div>
-    <p className="font-black text-slate-900 text-sm">{action}</p>
-    <p className="text-lg font-black text-slate-700 mt-0.5">{pts}</p>
-    <p className="text-xs text-slate-500 font-medium mt-1 leading-snug">{note}</p>
-  </div>
-);
-
-const ActivityRow = ({ label, val }) => (
-  <div className="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3">
-    <span className="text-sm font-semibold text-slate-600">{label}</span>
-    <span className="font-black text-slate-900">{val}</span>
+const MiniCard = ({ icon, label, pts, sub }) => (
+  <div className="bg-slate-50 rounded-xl p-4">
+    <div className="text-xl mb-2">{icon}</div>
+    <p className="font-black text-slate-900 text-sm">{label}</p>
+    <p className="font-black text-slate-700 text-base">{pts}</p>
+    <p className="text-[10px] text-slate-400 font-medium mt-0.5">{sub}</p>
   </div>
 );
 
