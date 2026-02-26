@@ -1,79 +1,84 @@
 import React, { useState } from 'react';
-import { FileText, Video, Upload, ChevronDown, ChevronUp, PenTool } from 'lucide-react';
+import { FileText, Video, Upload, ChevronDown, ChevronUp, PenTool, Heart } from 'lucide-react';
 
-// CHANGES FROM ORIGINAL (design untouched):
-// 1. Props changed: receives `lecture` object instead of loose title/lecturer/files
-// 2. Tags rendered from lecture.tags array (were hardcoded)
-// 3. Student notes rendered from lecture.studentNotes (were hardcoded to Sarah & Tom)
-// 4. onUpload(lecture) — passes lecture up so modal shows correct title
-// 5. onQuiz(lecture)  — passes lecture up so modal runs the correct quiz
-const StuResourceCard = ({ lecture, onUpload, onQuiz }) => {
+const StuResourceCard = ({ lecture, onUpload, onQuiz, noteLikes, likedSet, onLike }) => {
   const [showStudents, setShowStudents] = useState(false);
-
   const studentCount = lecture.studentNotes.length;
 
   return (
-    <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-all">
-      <div className="h-48 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white/20">
-        <Video size={64} />
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-sm transition-all">
+      {/* Header image area */}
+      <div className="h-36 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+        <Video size={48} className="text-white/20" />
       </div>
 
-      <div className="p-8 space-y-6">
+      <div className="p-5 space-y-4">
+        {/* Title + tags */}
         <div>
-          <h3 className="text-xl font-black text-slate-900">{lecture.title}</h3>
-          <div className="flex flex-wrap gap-2 mt-3">
+          <h3 className="font-semibold text-gray-900">{lecture.title}</h3>
+          <div className="flex flex-wrap gap-1.5 mt-2">
             {lecture.tags.map(tag => (
-              <Badge key={tag} label={tag} />
+              <span key={tag} className="bg-gray-100 text-gray-500 px-2.5 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-wide">
+                {tag}
+              </span>
             ))}
           </div>
-          <p className="text-sm font-bold text-slate-400 mt-4 flex items-center gap-2">
-            <span className="text-lg">🎓</span> {lecture.lecturer}
-          </p>
+          <p className="text-sm text-gray-400 font-medium mt-2.5">🎓 {lecture.lecturer}</p>
         </div>
 
-        <div className="space-y-3">
-          <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Lecture Files:</p>
-          {lecture.files.map((file, idx) => (
-            <div key={idx} className="flex items-center gap-2 text-blue-600 font-bold text-sm hover:underline cursor-pointer">
-              <FileText size={16} />
-              {file}
-            </div>
-          ))}
+        {/* Files */}
+        <div>
+          <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Lecture Files:</p>
+          <div className="space-y-1">
+            {lecture.files.map((file, idx) => (
+              <div key={idx} className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline cursor-pointer">
+                <FileText size={14} className="shrink-0" /> {file}
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="space-y-3 pt-2">
+        {/* Action buttons */}
+        <div className="space-y-2 pt-1">
           <button
             onClick={() => onUpload(lecture)}
-            className="w-full py-3.5 border-2 border-slate-100 rounded-2xl font-black text-slate-700 text-sm flex items-center justify-center gap-2 hover:bg-slate-50 transition-all"
+            className="w-full py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 transition-all"
           >
-            <Upload size={18} /> Upload Note for this Lecture
+            <Upload size={15} /> Upload Note for this Lecture
           </button>
 
           <button
             onClick={() => setShowStudents(!showStudents)}
-            className="w-full py-3.5 border-2 border-slate-100 rounded-2xl font-black text-slate-700 text-sm flex items-center justify-center gap-2 hover:bg-slate-50 transition-all"
+            className="w-full py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 transition-all"
           >
-            {showStudents ? <ChevronUp size={18}/> : <ChevronDown size={18}/>}
-            {showStudents ? `Hide Student Files (${studentCount})` : `Show Student Files (${studentCount})`}
+            {showStudents ? <ChevronUp size={15}/> : <ChevronDown size={15}/>}
+            {showStudents ? `Hide Student Notes (${studentCount})` : `Show Student Notes (${studentCount})`}
           </button>
 
           <button
             onClick={() => onQuiz(lecture)}
-            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg shadow-slate-200"
+            className="w-full py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-black transition-all"
           >
-            <PenTool size={18} /> Take Quiz — {lecture.quizTitle}
+            <PenTool size={15} /> Take Quiz — {lecture.quizTitle}
           </button>
         </div>
 
+        {/* Expanded student notes with like buttons */}
         {showStudents && (
-          <div className="mt-4 pt-6 border-t border-slate-50 space-y-4 animate-in slide-in-from-top-2 duration-300">
+          <div className="pt-3 border-t border-gray-100 space-y-2">
             {studentCount === 0 ? (
-              <p className="text-sm text-center text-slate-400 font-bold py-2">
+              <p className="text-sm text-center text-gray-400 font-medium py-2">
                 No student notes yet — be the first to upload!
               </p>
             ) : (
               lecture.studentNotes.map(note => (
-                <MiniStudentNote key={note.id} name={note.author} title={note.title} likes={note.likes} />
+                <MiniStudentNote
+                  key={note.id}
+                  note={note}
+                  likes={noteLikes?.[note.id] ?? note.likes}
+                  liked={likedSet?.has(note.id) ?? false}
+                  onLike={() => onLike?.(note.id, note.isMyUpload)}
+                />
               ))
             )}
           </div>
@@ -83,25 +88,41 @@ const StuResourceCard = ({ lecture, onUpload, onQuiz }) => {
   );
 };
 
-const Badge = ({ label }) => (
-  <span className="bg-slate-100 text-slate-500 px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-tight">
-    {label}
-  </span>
-);
-
-const MiniStudentNote = ({ name, title, likes }) => (
-  <div className="flex items-center justify-between group cursor-pointer">
-    <div className="flex items-center gap-3">
-      <div className="p-2 bg-green-50 text-green-600 rounded-lg group-hover:bg-green-100 transition-colors">
-        <FileText size={18} />
+const MiniStudentNote = ({ note, likes, liked, onLike }) => (
+  <div className="flex items-center justify-between bg-gray-50 rounded-xl px-3 py-2.5 gap-3">
+    {/* Left: icon + info */}
+    <div className="flex items-center gap-2.5 min-w-0">
+      <div className="p-1.5 bg-green-50 rounded-lg shrink-0">
+        <FileText size={13} className="text-green-600" />
       </div>
-      <div>
-        <p className="text-sm font-bold text-slate-800">{title}</p>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">by {name}</p>
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-gray-800 truncate">{note.title}</p>
+        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">by {note.author}</p>
       </div>
     </div>
-    <div className="flex items-center gap-1.5 text-red-500 font-black text-xs">
-      ❤️ {likes}
+
+    {/* Right: like count + button */}
+    <div className="flex items-center gap-2 shrink-0">
+      <span className="text-xs font-semibold text-gray-500 flex items-center gap-1">
+        <Heart size={11} className="text-red-400 fill-red-400" /> {likes}
+      </span>
+
+      {note.isMyUpload ? (
+        <span className="text-[10px] font-medium text-gray-300 bg-white border border-gray-100 px-2 py-1 rounded-lg">
+          Yours
+        </span>
+      ) : liked ? (
+        <span className="text-[10px] font-semibold text-red-500 bg-red-50 border border-red-100 px-2 py-1 rounded-lg flex items-center gap-1">
+          <Heart size={10} className="fill-red-500" /> Liked
+        </span>
+      ) : (
+        <button
+          onClick={onLike}
+          className="text-[10px] font-semibold text-gray-500 border border-gray-200 bg-white px-2 py-1 rounded-lg hover:border-red-200 hover:text-red-500 hover:bg-red-50 transition-all flex items-center gap-1"
+        >
+          <Heart size={10} /> Like
+        </button>
+      )}
     </div>
   </div>
 );

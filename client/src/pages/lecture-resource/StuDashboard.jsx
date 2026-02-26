@@ -1,24 +1,24 @@
 import React, { useState } from 'react';
-import StuSidebar from '../../components/lecture-resource/StuSidebar';
-import StuHome from '../../components/lecture-resource/StuHome';
+import StuSidebar         from '../../components/lecture-resource/StuSidebar';
+import StuHome            from '../../components/lecture-resource/StuHome';
 import StuNoteUploadModal from '../../components/lecture-resource/StuNoteUploadModal';
-import StuQuizModal from '../../components/lecture-resource/StuQuizModal';
+import StuQuizModal       from '../../components/lecture-resource/StuQuizModal';
 import StuBonusMarksModal from '../../components/lecture-resource/StuBonusMarksModal';
 
 const StuDashboard = () => {
-  const [uploadLecture,   setUploadLecture]   = useState(null);
-  const [quizLecture,     setQuizLecture]     = useState(null);
-  const [bonusOpen,       setBonusOpen]       = useState(false);
+  const [uploadLecture, setUploadLecture] = useState(null);
+  const [quizLecture,   setQuizLecture]   = useState(null);
+  const [bonusOpen,     setBonusOpen]     = useState(false);
 
-  // Likes live here so sidebar updates when 100 are spent on bonus marks
   const [likes,     setLikes]     = useState(45);
   const [bonusUsed, setBonusUsed] = useState(false);
 
-  const handleSpendLikes = () => setLikes(prev => prev - 100);
+  const handleSpendLikes  = () => setLikes(prev => prev - 100);
+  // Each time the student likes someone else's note, their own likes counter goes up
+  const handleLikeEarned  = () => setLikes(prev => prev + 1);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex">
-      {/* Sidebar — receives live likes count so it updates after bonus spend */}
+    <div className="min-h-screen bg-gray-50 flex">
       <StuSidebar
         points={likes}
         quizzes={12}
@@ -26,22 +26,21 @@ const StuDashboard = () => {
         level="Bronze"
       />
 
-      <main className="flex-1 ml-80 p-10">
+      <main className="flex-1 ml-72 p-10 min-w-0 w-full">
         <StuHome
           onUploadClick={(lecture) => setUploadLecture(lecture)}
           onTakeQuiz={(lecture)    => setQuizLecture(lecture)}
           onBonusMarks={()         => setBonusOpen(true)}
+          onLikeEarned={handleLikeEarned}
         />
       </main>
 
-      {/* Upload note modal */}
       <StuNoteUploadModal
         isOpen={!!uploadLecture}
         onClose={() => setUploadLecture(null)}
         lecture={uploadLecture}
       />
 
-      {/* Quiz modal */}
       {quizLecture && (
         <StuQuizModal
           lecture={quizLecture}
@@ -49,7 +48,6 @@ const StuDashboard = () => {
         />
       )}
 
-      {/* Bonus marks modal */}
       <StuBonusMarksModal
         isOpen={bonusOpen}
         onClose={() => setBonusOpen(false)}

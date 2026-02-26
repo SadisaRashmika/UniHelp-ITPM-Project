@@ -1,42 +1,54 @@
 import React, { useState } from 'react';
-import { FileText, Eye, CheckCircle, XCircle, Clock, Medal, SlidersHorizontal, X } from 'lucide-react';
+import { Search, ChevronDown, CheckCircle, XCircle, Eye, FileText, Medal } from 'lucide-react';
 import { PENDING_SUBMISSIONS } from './SharedData';
 
 const SORT_OPTIONS = [
-  { value: 'fifo', label: 'First Uploaded First'   },
-  { value: 'rank', label: 'Highest Rank First'     },
+  { value: 'recent', label: 'Recent First'        },
+  { value: 'fifo',   label: 'First Uploaded First' },
+  { value: 'rank',   label: 'Highest Rank First'  },
 ];
 
-const formatDate = (iso) => {
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
-    ' · ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-};
+const rankLabel = (r) =>
+  r === 1 ? { text: 'Gold',   cls: 'bg-yellow-100 text-yellow-700' } :
+  r === 2 ? { text: 'Silver', cls: 'bg-gray-200 text-gray-600' } :
+  r === 3 ? { text: 'Bronze', cls: 'bg-orange-100 text-orange-600' } :
+            { text: `#${r}`,  cls: 'bg-gray-100 text-gray-400' };
 
-const rankStyle = (r) =>
-  r === 1 ? 'bg-amber-100 text-amber-700' :
-  r === 2 ? 'bg-slate-200 text-slate-600' :
-  r === 3 ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-400';
+const formatDate = (iso) => iso?.split('T')[0] ?? '';
 
 const LecStudentUploads = ({ onPointsEarned, onPendingChange }) => {
-  const [items,       setItems]      = useState(PENDING_SUBMISSIONS);
-  const [sort,        setSort]       = useState('fifo');
-  const [viewItem,    setViewItem]   = useState(null);
-  const [rejectItem,  setRejectItem] = useState(null);
-  const [rejectNote,  setRejectNote] = useState('');
-  const [toast,       setToast]      = useState(null);
+  const [items,      setItems]     = useState(PENDING_SUBMISSIONS);
+  const [sort,       setSort]      = useState('recent');
+  const [search,     setSearch]    = useState('');
+  const [viewItem,   setViewItem]  = useState(null);
+  const [rejectItem, setRejectItem]= useState(null);
+  const [rejectNote, setRejectNote]= useState('');
+  const [toast,      setToast]     = useState(null);
 
-  const showToast = (msg, type = 'ok') => {
-    setToast({ msg, type });
-    setTimeout(() => setToast(null), 3200);
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
   };
 
   const pending  = items.filter(r => r.status === 'pending');
   const reviewed = items.filter(r => r.status !== 'pending');
+  const pendingCount = pending.length;
 
-  const sorted = (list) => [...list].sort((a, b) =>
-    sort === 'rank' ? a.studentRank - b.studentRank : new Date(a.uploadedAt) - new Date(b.uploadedAt)
-  );
+  const filtered = (list) => {
+    let out = [...list];
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      out = out.filter(r =>
+        r.title?.toLowerCase().includes(q) ||
+        r.studentName?.toLowerCase().includes(q) ||
+        r.subject?.toLowerCase().includes(q)
+      );
+    }
+    if (sort === 'rank')   out.sort((a, b) => a.studentRank - b.studentRank);
+    if (sort === 'fifo')   out.sort((a, b) => new Date(a.uploadedAt) - new Date(b.uploadedAt));
+    if (sort === 'recent') out.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+    return out;
+  };
 
   const doAccept = (id) => {
     setItems(prev => prev.map(r => r.id === id ? { ...r, status: 'accepted' } : r));
@@ -53,264 +65,214 @@ const LecStudentUploads = ({ onPointsEarned, onPendingChange }) => {
     setRejectNote('');
     onPointsEarned(5);
     onPendingChange(-1);
-    showToast('❌ Rejected — +5 points earned!');
+    showToast('Rejected — +5 points earned.');
   };
 
   return (
-    <div className="max-w-5xl space-y-8">
-
+    <div className="space-y-6 w-full">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">Student Uploads</h1>
-          <p className="text-slate-400 text-sm mt-1 font-medium">
-            Review submissions · <span className="text-emerald-600 font-bold">+10 pts</span> accept · <span className="text-red-500 font-bold">+5 pts</span> reject
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">Check Student Uploads</h1>
+          <p className="text-gray-400 text-sm mt-1">Review and approve student-submitted resources</p>
         </div>
-
-        {/* Sort */}
-        <div className="shrink-0 flex items-center gap-2 mt-1">
-          <SlidersHorizontal size={15} className="text-slate-400" />
-          <div className="relative">
-            <select
-              value={sort}
-              onChange={e => setSort(e.target.value)}
-              className="appearance-none bg-white border-2 border-slate-200 hover:border-slate-300 focus:border-slate-400 text-slate-700 font-bold text-sm px-4 py-2 pr-8 rounded-xl cursor-pointer focus:outline-none transition-all"
-            >
-              {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        {pendingCount > 0 && (
+          <div className="bg-gray-100 rounded-xl px-4 py-2 text-sm font-semibold text-gray-600 whitespace-nowrap">
+            {pendingCount} Pending
           </div>
+        )}
+      </div>
+
+      {/* Search + sort bar */}
+      <div className="flex gap-3">
+        <div className="relative flex-1">
+          <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by title, student, or subject..."
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all placeholder:text-gray-400"
+          />
+        </div>
+        <div className="relative">
+          <select
+            value={sort}
+            onChange={e => setSort(e.target.value)}
+            className="appearance-none bg-white border border-gray-200 text-sm text-gray-700 font-medium pl-4 pr-9 py-2.5 rounded-xl cursor-pointer outline-none focus:ring-2 focus:ring-blue-100 hover:border-gray-300 transition-all"
+          >
+            {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
         </div>
       </div>
 
-      {/* Summary strip */}
-      <div className="grid grid-cols-3 gap-3">
-        <SummaryCard label="Pending"  val={pending.length}  color="bg-amber-50  text-amber-600"  dot="bg-amber-400"  />
-        <SummaryCard label="Accepted" val={reviewed.filter(r => r.status === 'accepted').length} color="bg-emerald-50 text-emerald-600" dot="bg-emerald-400" />
-        <SummaryCard label="Rejected" val={reviewed.filter(r => r.status === 'rejected').length} color="bg-red-50 text-red-500" dot="bg-red-400" />
+      {/* All items */}
+      <div className="space-y-4">
+        {filtered([...pending, ...reviewed]).map(r => (
+          <SubmissionCard
+            key={r.id}
+            resource={r}
+            onView={() => setViewItem(r)}
+            onAccept={() => doAccept(r.id)}
+            onReject={() => { setRejectItem(r); setRejectNote(''); }}
+          />
+        ))}
+        {filtered([...pending, ...reviewed]).length === 0 && (
+          <div className="py-20 text-center text-gray-400 text-sm">No submissions found.</div>
+        )}
       </div>
 
-      {/* ── Pending section ── */}
-      {sorted(pending).length > 0 && (
-        <Section label={`Pending Review (${pending.length})`} dotColor="bg-amber-400" labelColor="text-amber-600">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            {sorted(pending).map(r => (
-              <SubmissionCard
-                key={r.id} resource={r}
-                onView={() => setViewItem(r)}
-                onAccept={() => doAccept(r.id)}
-                onReject={() => { setRejectItem(r); setRejectNote(''); }}
-              />
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {/* ── Reviewed section ── */}
-      {reviewed.length > 0 && (
-        <Section label={`Reviewed (${reviewed.length})`} dotColor="bg-slate-300" labelColor="text-slate-400">
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            {sorted(reviewed).map(r => (
-              <SubmissionCard key={r.id} resource={r} reviewed />
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {pending.length === 0 && reviewed.length === 0 && (
-        <div className="p-16 text-center border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-sm">
-          No student submissions yet.
-        </div>
-      )}
-
-      {/* ── View modal ── */}
+      {/* View modal */}
       {viewItem && (
-        <Overlay onClose={() => setViewItem(null)}>
-          <ModalBar label="Submission Preview" onClose={() => setViewItem(null)} />
-          <div className="mt-5 space-y-5">
-            <div>
-              <h3 className="text-xl font-black text-slate-900">{viewItem.title}</h3>
-              <p className="text-slate-400 text-sm font-medium mt-0.5">{viewItem.subject}</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <InfoCell label="Student"  val={viewItem.studentName} />
-              <InfoCell label="Rank"     val={`#${viewItem.studentRank}`} />
-              <InfoCell label="Likes"    val={`❤️ ${viewItem.studentLikes}`} />
-              <InfoCell label="File"     val={`${viewItem.file} · ${viewItem.fileSize}`} />
-              <InfoCell label="Uploaded" val={formatDate(viewItem.uploadedAt)} />
-              <InfoCell label="Status"   val="Pending Review" />
-            </div>
-
-            {/* File preview zone */}
-            <div className="h-40 bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-2">
-              <FileText size={28} className="text-slate-300" />
-              <p className="text-sm font-bold text-slate-400">{viewItem.file}</p>
-              <button className="text-xs font-black text-blue-500 hover:underline">Open full preview ↗</button>
-            </div>
-
-            <div className="flex gap-3 pt-1">
-              <button onClick={() => { setViewItem(null); setRejectItem(viewItem); setRejectNote(''); }}
-                className="flex-1 py-3 border-2 border-red-100 text-red-500 font-black rounded-xl hover:bg-red-50 transition-all flex items-center justify-center gap-2 text-sm">
-                <XCircle size={16} /> Reject
-              </button>
-              <button onClick={() => doAccept(viewItem.id)}
-                className="flex-1 py-3 bg-emerald-500 text-white font-black rounded-xl hover:bg-emerald-600 transition-all flex items-center justify-center gap-2 text-sm">
-                <CheckCircle size={16} /> Accept
-              </button>
-            </div>
+        <Modal onClose={() => setViewItem(null)}>
+          <h3 className="text-lg font-bold text-gray-900 mb-1">{viewItem.title}</h3>
+          <p className="text-sm text-gray-400 mb-4">{viewItem.subject}</p>
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            <InfoCell label="Student"  val={viewItem.studentName} />
+            <InfoCell label="Rank"     val={`#${viewItem.studentRank}`} />
+            <InfoCell label="Likes"    val={`❤️ ${viewItem.studentLikes}`} />
+            <InfoCell label="Uploaded" val={formatDate(viewItem.uploadedAt)} />
           </div>
-        </Overlay>
+          <div className="h-32 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2 mb-5">
+            <FileText size={24} className="text-gray-300" />
+            <p className="text-sm text-gray-400">{viewItem.file}</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setViewItem(null); setRejectItem(viewItem); setRejectNote(''); }}
+              className="flex-1 py-2.5 border border-red-200 text-red-500 rounded-xl font-semibold text-sm hover:bg-red-50 flex items-center justify-center gap-2"
+            >
+              <XCircle size={15} /> Reject (+5pts)
+            </button>
+            <button
+              onClick={() => doAccept(viewItem.id)}
+              className="flex-1 py-2.5 bg-green-500 text-white rounded-xl font-semibold text-sm hover:bg-green-600 flex items-center justify-center gap-2"
+            >
+              <CheckCircle size={15} /> Accept (+10pts)
+            </button>
+          </div>
+        </Modal>
       )}
 
-      {/* ── Reject note modal ── */}
+      {/* Reject note modal */}
       {rejectItem && (
-        <Overlay onClose={() => setRejectItem(null)}>
-          <ModalBar label="Reject Submission" onClose={() => setRejectItem(null)} />
-          <div className="mt-5 space-y-5">
-            <div>
-              <h3 className="text-xl font-black text-slate-900">{rejectItem.title}</h3>
-              <p className="text-slate-400 text-sm font-medium">by {rejectItem.studentName}</p>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-bold text-slate-700">Reason <span className="text-slate-400 font-normal">(optional)</span></label>
-              <textarea
-                value={rejectNote}
-                onChange={e => setRejectNote(e.target.value)}
-                placeholder="e.g., Content is incomplete or inaccurate..."
-                className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-red-200 focus:border-red-300 transition-all h-24 placeholder:text-slate-300 font-medium text-sm resize-none"
-              />
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setRejectItem(null)}
-                className="flex-1 py-3 border border-slate-200 rounded-xl font-bold text-sm text-slate-500 hover:bg-slate-50 transition-all">
-                Cancel
-              </button>
-              <button onClick={() => doReject(rejectItem.id)}
-                className="flex-1 py-3 bg-red-500 text-white rounded-xl font-black text-sm hover:bg-red-600 transition-all flex items-center justify-center gap-2">
-                <XCircle size={16} /> Confirm Reject
-              </button>
-            </div>
+        <Modal onClose={() => setRejectItem(null)}>
+          <h3 className="text-lg font-bold text-gray-900 mb-1">Reject Submission</h3>
+          <p className="text-sm text-gray-400 mb-4">by {rejectItem.studentName}</p>
+          <label className="text-sm font-medium text-gray-700 block mb-1.5">
+            Reason <span className="text-gray-400 font-normal">(optional)</span>
+          </label>
+          <textarea
+            value={rejectNote}
+            onChange={e => setRejectNote(e.target.value)}
+            placeholder="e.g., Content is incomplete or inaccurate..."
+            className="w-full p-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-red-100 h-24 resize-none placeholder:text-gray-300"
+          />
+          <div className="flex gap-3 mt-4">
+            <button onClick={() => setRejectItem(null)}
+              className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50">
+              Cancel
+            </button>
+            <button onClick={() => doReject(rejectItem.id)}
+              className="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 flex items-center justify-center gap-2">
+              <XCircle size={15} /> Confirm Reject
+            </button>
           </div>
-        </Overlay>
+        </Modal>
       )}
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-8 right-8 z-50 bg-slate-900 text-white px-5 py-3.5 rounded-xl font-black text-sm shadow-xl">
-          {toast.msg}
+        <div className="fixed bottom-8 right-8 z-50 bg-gray-900 text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-xl">
+          {toast}
         </div>
       )}
     </div>
   );
 };
 
-// ── Submission card ───────────────────────────────────────────────────────────
-const SubmissionCard = ({ resource: r, onView, onAccept, onReject, reviewed }) => (
-  <div className={`bg-white rounded-2xl border p-5 space-y-4 hover:shadow-sm transition-all
-    ${r.status === 'accepted' ? 'border-emerald-100' : r.status === 'rejected' ? 'border-red-100' : 'border-slate-100'}`}>
+const SubmissionCard = ({ resource: r, onView, onAccept, onReject }) => {
+  const rank = rankLabel(r.studentRank);
+  const reviewed = r.status !== 'pending';
 
-    <div className="flex items-start justify-between gap-3">
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="p-2.5 bg-slate-100 rounded-xl shrink-0">
-          <FileText size={16} className="text-slate-500" />
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-sm transition-all">
+      <div className="flex items-start justify-between gap-4">
+        {/* Left: avatar + info */}
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">
+            {r.studentInitials}
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-semibold text-gray-900">{r.title}</p>
+              <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">{r.subject}</span>
+            </div>
+            <p className="text-sm text-gray-400 mt-0.5">{r.description || `Notes by ${r.studentName}`}</p>
+            <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+              <span>By {r.studentName}</span>
+              <span className={`font-semibold px-2 py-0.5 rounded-full ${rank.cls}`}>{rank.text}</span>
+              <span>❤️ {r.studentLikes} likes</span>
+              <span>{formatDate(r.uploadedAt)}</span>
+            </div>
+            {/* File tags */}
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {(r.files || [r.file]).filter(Boolean).map((f, i) => (
+                <span key={i} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg font-medium">
+                  {f}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
-        <div className="min-w-0">
-          <p className="font-black text-slate-900 text-sm truncate">{r.title}</p>
-          <p className="text-xs text-slate-400 font-medium truncate mt-0.5">{r.subject}</p>
+
+        {/* Right: actions */}
+        <div className="flex flex-col gap-2 shrink-0">
+          {!reviewed ? (
+            <>
+              <button onClick={onView}
+                className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all">
+                Preview
+              </button>
+              <button onClick={onAccept}
+                className="px-4 py-2 bg-green-500 text-white rounded-xl text-sm font-semibold hover:bg-green-600 transition-all flex items-center gap-1.5">
+                <CheckCircle size={14} /> Accept (+10pts)
+              </button>
+              <button onClick={onReject}
+                className="px-4 py-2 border border-red-200 text-red-500 rounded-xl text-sm font-semibold hover:bg-red-50 transition-all flex items-center gap-1.5">
+                <XCircle size={14} /> Reject (+5pts)
+              </button>
+            </>
+          ) : (
+            <StatusBadge status={r.status} />
+          )}
         </div>
       </div>
-      <StatusPill status={r.status} />
     </div>
-
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-[10px] font-black">
-          {r.studentInitials}
-        </div>
-        <span className="text-sm font-bold text-slate-700">{r.studentName}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <span className={`flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-lg ${rankStyle(r.studentRank)}`}>
-          <Medal size={9} /> #{r.studentRank}
-        </span>
-        <span className="text-xs text-slate-400 font-semibold">❤️ {r.studentLikes}</span>
-      </div>
-    </div>
-
-    <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-      <span>{r.file} · {r.fileSize}</span>
-      <span className="flex items-center gap-1"><Clock size={10} /> {formatDate(r.uploadedAt).split('·')[0].trim()}</span>
-    </div>
-
-    {r.status === 'rejected' && r.rejectionNote && (
-      <div className="bg-red-50 rounded-lg px-3 py-2">
-        <p className="text-xs text-red-600 font-semibold">Note: {r.rejectionNote}</p>
-      </div>
-    )}
-
-    {!reviewed && (
-      <div className="flex gap-2 pt-1">
-        <button onClick={onView}   className="flex-1 py-2.5 border-2 border-slate-100 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-50 flex items-center justify-center gap-1.5 transition-all">
-          <Eye size={13} /> View
-        </button>
-        <button onClick={onReject} className="flex-1 py-2.5 border-2 border-red-100 rounded-xl text-xs font-black text-red-500 hover:bg-red-50 flex items-center justify-center gap-1.5 transition-all">
-          <XCircle size={13} /> Reject
-        </button>
-        <button onClick={onAccept} className="flex-1 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black hover:bg-black flex items-center justify-center gap-1.5 transition-all">
-          <CheckCircle size={13} /> Accept
-        </button>
-      </div>
-    )}
-  </div>
-);
-
-// ── Small reusables ───────────────────────────────────────────────────────────
-const SummaryCard = ({ label, val, color, dot }) => (
-  <div className={`${color} rounded-xl px-5 py-4 flex items-center gap-3`}>
-    <span className={`w-2 h-2 rounded-full ${dot} shrink-0`} />
-    <div>
-      <p className="text-2xl font-black">{val}</p>
-      <p className="text-xs font-bold uppercase tracking-wide opacity-70">{label}</p>
-    </div>
-  </div>
-);
-
-const Section = ({ label, dotColor, labelColor, children }) => (
-  <div>
-    <div className="flex items-center gap-2 mb-4">
-      <span className={`w-2 h-2 rounded-full ${dotColor}`} />
-      <p className={`text-xs font-black uppercase tracking-widest ${labelColor}`}>{label}</p>
-    </div>
-    {children}
-  </div>
-);
-
-const StatusPill = ({ status }) => {
-  const map = { accepted: 'bg-emerald-100 text-emerald-700', rejected: 'bg-red-100 text-red-600', pending: 'bg-amber-100 text-amber-700' };
-  return <span className={`shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full uppercase ${map[status]}`}>{status}</span>;
+  );
 };
 
-const Overlay = ({ children, onClose }) => (
-  <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
-    <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl p-7" onClick={e => e.stopPropagation()}>
+const StatusBadge = ({ status }) => {
+  const map = {
+    accepted: 'bg-green-100 text-green-700',
+    rejected: 'bg-red-100 text-red-600',
+    pending:  'bg-yellow-100 text-yellow-700',
+  };
+  return <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${map[status]}`}>{status}</span>;
+};
+
+const Modal = ({ children, onClose }) => (
+  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+    <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
       {children}
     </div>
   </div>
 );
 
-const ModalBar = ({ label, onClose }) => (
-  <div className="flex items-center justify-between">
-    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
-    <button onClick={onClose} className="text-slate-300 hover:text-slate-600 transition-colors"><X size={18} /></button>
-  </div>
-);
-
 const InfoCell = ({ label, val }) => (
-  <div className="bg-slate-50 rounded-xl px-4 py-3">
-    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</p>
-    <p className="text-sm font-bold text-slate-800 mt-0.5">{val}</p>
+  <div className="bg-gray-50 rounded-xl px-3 py-2.5">
+    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
+    <p className="text-sm font-semibold text-gray-800 mt-0.5">{val}</p>
   </div>
 );
 
