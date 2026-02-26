@@ -1,45 +1,49 @@
 import React from 'react';
-import { LayoutDashboard, BookCopy, FileQuestion, UserCircle2 } from 'lucide-react';
+import { User, FolderOpen, ClipboardList } from 'lucide-react';
 
-const LecSidebar = ({ activeTab, setActiveTab }) => {
-  const navItems = [
-    { id: 'home', label: 'Home', icon: <LayoutDashboard size={22} /> },
-    { id: 'resources', label: 'Resources', icon: <BookCopy size={22} /> },
-    { id: 'quiz', label: 'Quiz', icon: <FileQuestion size={22} /> },
-    { id: 'profile', label: 'Profile', icon: <UserCircle2 size={22} /> },
-  ];
+const NAV_ITEMS = [
+  { key: 'profile',   label: 'Profile',   icon: User          },
+  { key: 'resources', label: 'Resources', icon: FolderOpen    },
+  { key: 'quiz',      label: 'Quiz',      icon: ClipboardList },
+];
 
+const LecSidebar = ({ activeTab, onTabChange, pendingCount }) => {
   return (
-    <aside className="w-64 h-screen bg-white border-r border-slate-200 fixed left-0 top-0 flex flex-col">
-      <div className="p-8">
-        <h1 className="text-xl font-black text-slate-900 leading-tight">University of<br/>Excellence</h1>
+    <aside className="w-64 h-screen bg-white border-r border-slate-100 fixed left-0 top-0 flex flex-col">
+
+      {/* App name */}
+      <div className="px-7 py-7 border-b border-slate-100">
+        <h1 className="text-lg font-black text-slate-900 tracking-tight">Uni-Help System</h1>
       </div>
 
-      <nav className="flex-1 px-4 space-y-2">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setActiveTab(item.id)}
-            className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl font-bold transition-all ${
-              activeTab === item.id 
-                ? 'bg-blue-50 text-blue-600 shadow-sm' 
-                : 'text-slate-500 hover:bg-slate-50'
-            }`}
-          >
-            {item.icon}
-            <span>{item.label}</span>
-          </button>
-        ))}
+      {/* Nav */}
+      <nav className="flex-1 px-4 py-6 space-y-1">
+        {NAV_ITEMS.map(({ key, label, icon: Icon }) => {
+          const isActive = activeTab === key;
+          return (
+            <button
+              key={key}
+              onClick={() => onTabChange(key)}
+              className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-black transition-all
+                ${isActive
+                  ? 'bg-slate-900 text-white shadow-md'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                }`}
+            >
+              <div className="flex items-center gap-3">
+                <Icon size={18} />
+                {label}
+              </div>
+              {key === 'resources' && pendingCount > 0 && (
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full
+                  ${isActive ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'}`}>
+                  {pendingCount}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </nav>
-
-      {/* Professor Identity at the Bottom */}
-      <div className="p-6 border-t border-slate-100 flex items-center gap-3">
-        <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold">DR</div>
-        <div className="overflow-hidden">
-          <p className="text-sm font-bold text-slate-900 truncate">Dr. Robert Smith</p>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Professor</p>
-        </div>
-      </div>
     </aside>
   );
 };
