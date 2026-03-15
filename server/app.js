@@ -1,19 +1,30 @@
 const express = require("express");
-const pool = require("./config/db"); // ✅ import correctly
+const cors = require("cors");
+require("dotenv").config();
+
 const app = express();
 
-
+// Middleware
+app.use(cors());
 app.use(express.json());
 
+// Routes
+const authRoutes = require("./routes/auth");
+app.use("/api/auth", authRoutes);
+
+// Test route
 app.get("/test", async (req, res) => {
   try {
-    const result = await pool.query("SELECT NOW()"); // simple query
-    res.json(result.rows);
+    res.json({ message: "Server is running!" });
   } catch (err) {
-    console.error("Database query error:", err.message); // log exact error
-    res.status(500).json({ error: "Database connection failed" });
+    console.error("Error:", err.message);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
+// Root route
+app.get("/", (req, res) => {
+  res.send("UniHelp Backend Running 🚀");
+});
 
 module.exports = app;
