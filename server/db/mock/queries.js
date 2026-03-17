@@ -5,35 +5,36 @@ const { data, idCounters, insertUser, insertSubject, insertLocation, insertTimes
 
 // Simple SQL parser
 function parseQuery(sql) {
-    // Normalize SQL - convert to uppercase for keywords but preserve original case for identifiers
     const normalizedSql = sql.trim();
-    
-    // Detect query type
     const queryType = normalizedSql.split(/\s+/)[0].toUpperCase();
-    
     return {
         type: queryType,
         sql: normalizedSql
     };
 }
 
-// Execute SELECT query
+// Execute SELECT query with JOIN support
 function executeSelect(sql, params) {
     const parsed = parseQuery(sql);
     
-    // Extract table name from FROM clause
+    // Check for JOIN
+    const hasJoin = /JOIN/i.test(sql);
+    
+    if (hasJoin) {
+        return executeSelectWithJoin(sql, params);
+    }
+    
+    // Simple SELECT without JOIN
     const fromMatch = sql.match(/FROM\s+(\w+)/i);
     if (!fromMatch) {
         throw new Error('Invalid SELECT: no table specified');
     }
     const tableName = fromMatch[1].toLowerCase();
     
-    // Check if table exists
     if (!data[tableName]) {
         throw new Error(`Table "${tableName}" does not exist`);
     }
     
-    // Get all rows from table
     let rows = [...data[tableName]];
     
     // Handle WHERE clause
@@ -63,30 +64,140 @@ function executeSelect(sql, params) {
     // Handle SELECT * vs specific columns
     const selectMatch = sql.match(/SELECT\s+(.+?)\s+FROM/i);
     if (selectMatch && selectMatch[1].trim() !== '*') {
-        const columns = selectMatch[1].split(',').map(c => c.trim());
-        rows = rows.map(row => {
-            const newRow = {};
-            columns.forEach(col => {
-                // Handle column aliases (e.g., "id AS user_id")
-                const aliasMatch = col.match(/(\w+)(?:\s+AS\s+(\w+))?/i);
-                if (aliasMatch) {
-                    const sourceCol = aliasMatch[1];
-                    const targetCol = aliasMatch[2] || sourceCol;
-                    newRow[targetCol] = row[sourceCol];
-                }
-            });
-            return newRow;
-        });
+        rows = selectColumns(rows, selectMatch[1]);
     }
     
     return { rows, rowCount: rows.length };
 }
 
+// Execute SELECT with JOIN
+function executeSelectWithJoin(sql, params) {
+    // Parse the main table
+    const fromMatch = sql.match(/FROM\s+(\w+)/i);
+    if (!fromMatch) {
+        throw new Error('Invalid SELECT: no table specified');
+    }
+    const mainTable = fromMatch[1].toLowerCase();
+    
+    if (!data[mainTable]) {
+        throw new Error(`Table "${mainTable}" does not exist`);
+    }
+    
+    // Start with main table rows
+    let rows = data[mainTable].map(row => ({ ...row }));
+    
+    // Parse JOIN clauses
+    const joinRegex = /JOIN\s+(\w+)\s+(\w+)\s+ON\s+(\w+)\.(\w+)\s*=\s*(\w+)\.(\w+)/gi;
+    let joinMatch;
+    
+    while ((joinMatch = joinRegex.exec(sql)) !== null) {
+        const joinTable = joinMatch[1].toLowerCase();
+        const joinAlias = joinMatch[2].toLowerCase();
+        const leftTable = joinMatch[3].toLowerCase();
+        const leftCol = joinMatch[4];
+        const rightTable = joinMatch[5].toLowerCase();
+        const rightCol = joinMatch[6];
+        
+        if (!data[joinTable]) {
+            throw new Error(`Table "${joinTable}" does not exist`);
+        }
+        
+        // Perform the join
+        rows = rows.map(row => {
+            // Determine which column to match
+            const leftValue = leftTable === mainTable || leftTable === mainTable[0] ? row[leftCol] : row[`${leftTable}_${leftCol}`];
+            
+            // Find matching row in join table
+            const matchingRow = data[joinTable].find(jRow => {
+                const rightValue = jRow[rightCol];
+                return leftValue === rightValue;
+            });
+            
+            if (matchingRow) {
+                // Add joined columns with prefix
+                Object.keys(matchingRow).forEach(key => {
+                    if (key !== rightCol) { // Skip the join key
+                        row[`${joinAlias}_${key}`] = matchingRow[key];
+                    }
+                });
+            }
+            
+            return row;
+        });
+    }
+    
+    // Handle WHERE clause
+    const whereMatch = sql.match(/WHERE\s+(.+?)(?:\s+ORDER|\s+LIMIT|\s*$)/i);
+    if (whereMatch) {
+        rows = applyWhereClause(rows, whereMatch[1], params, mainTable);
+    }
+    
+    // Handle ORDER BY
+    const orderMatch = sql.match(/ORDER\s+BY\s+(\w+)(?:\s+(ASC|DESC))?/i);
+    if (orderMatch) {
+        const field = orderMatch[1];
+        const direction = (orderMatch[2] || 'ASC').toUpperCase();
+        rows.sort((a, b) => {
+            if (a[field] < b[field]) return direction === 'ASC' ? -1 : 1;
+            if (a[field] > b[field]) return direction === 'ASC' ? 1 : -1;
+            return 0;
+        });
+    }
+    
+    // Handle column selection
+    const selectMatch = sql.match(/SELECT\s+(.+?)\s+FROM/i);
+    if (selectMatch && selectMatch[1].trim() !== '*') {
+        rows = selectColumns(rows, selectMatch[1]);
+    }
+    
+    return { rows, rowCount: rows.length };
+}
+
+// Select specific columns
+function selectColumns(rows, columnsStr) {
+    const columns = columnsStr.split(',').map(c => c.trim());
+    
+    return rows.map(row => {
+        const newRow = {};
+        columns.forEach(col => {
+            // Handle table.column format
+            const parts = col.split('.');
+            let sourceCol, targetCol;
+            
+            if (parts.length === 2) {
+                // t.column_name format
+                const tablePrefix = parts[0];
+                const colName = parts[1];
+                sourceCol = `${tablePrefix}_${colName}`;
+                
+                // Handle alias (e.g., "t.column AS alias")
+                const aliasMatch = colName.match(/(\w+)(?:\s+AS\s+(\w+))?/i);
+                if (aliasMatch) {
+                    sourceCol = `${tablePrefix}_${aliasMatch[1]}`;
+                    targetCol = aliasMatch[2] || aliasMatch[1];
+                } else {
+                    targetCol = colName;
+                }
+            } else {
+                // Simple column format
+                const aliasMatch = col.match(/(\w+)(?:\s+AS\s+(\w+))?/i);
+                if (aliasMatch) {
+                    sourceCol = aliasMatch[1];
+                    targetCol = aliasMatch[2] || sourceCol;
+                } else {
+                    sourceCol = col;
+                    targetCol = col;
+                }
+            }
+            
+            newRow[targetCol] = row[sourceCol];
+        });
+        return newRow;
+    });
+}
+
 // Apply WHERE clause conditions
 function applyWhereClause(rows, whereClause, params, tableName) {
-    // Simple parameterized WHERE clause parser
-    // Supports: column = $1, column IN ($1, $2), etc.
-    
     let filteredRows = rows;
     
     // Handle AND conditions
@@ -140,7 +251,6 @@ function applyWhereClause(rows, whereClause, params, tableName) {
             const column = likeMatch[1];
             const paramIndex = parseInt(likeMatch[2]) - 1;
             const pattern = params[paramIndex];
-            // Convert SQL LIKE pattern to regex
             const regex = new RegExp('^' + pattern.replace(/%/g, '.*').replace(/_/g, '.') + '$', 'i');
             filteredRows = filteredRows.filter(row => regex.test(row[column]));
         }
@@ -151,24 +261,20 @@ function applyWhereClause(rows, whereClause, params, tableName) {
 
 // Execute INSERT query
 function executeInsert(sql, params) {
-    // Extract table name
     const intoMatch = sql.match(/INSERT\s+INTO\s+(\w+)/i);
     if (!intoMatch) {
         throw new Error('Invalid INSERT: no table specified');
     }
     const tableName = intoMatch[1].toLowerCase();
     
-    // Extract columns
     const columnsMatch = sql.match(/\(([^)]+)\)\s*VALUES/i);
     if (!columnsMatch) {
         throw new Error('Invalid INSERT: no columns specified');
     }
     const columns = columnsMatch[1].split(',').map(c => c.trim());
     
-    // Check for RETURNING clause
     const returningMatch = sql.match(/RETURNING\s+(.+)/i);
     
-    // Insert based on table
     let newId;
     switch (tableName) {
         case 'users':
@@ -193,7 +299,6 @@ function executeInsert(sql, params) {
             throw new Error(`Unknown table: ${tableName}`);
     }
     
-    // Get the newly inserted row
     const newRow = data[tableName].find(row => row.id === newId);
     
     if (returningMatch) {
@@ -205,7 +310,6 @@ function executeInsert(sql, params) {
 
 // Execute UPDATE query
 function executeUpdate(sql, params) {
-    // Extract table name
     const tableMatch = sql.match(/UPDATE\s+(\w+)/i);
     if (!tableMatch) {
         throw new Error('Invalid UPDATE: no table specified');
@@ -216,13 +320,11 @@ function executeUpdate(sql, params) {
         throw new Error(`Table "${tableName}" does not exist`);
     }
     
-    // Extract SET clause
     const setMatch = sql.match(/SET\s+(.+?)\s+WHERE/i);
     if (!setMatch) {
         throw new Error('Invalid UPDATE: no SET clause');
     }
     
-    // Parse SET column = value pairs
     const setClause = setMatch[1];
     const setPairs = [];
     const setRegex = /(\w+)\s*=\s*\$(\d+)/g;
@@ -234,19 +336,15 @@ function executeUpdate(sql, params) {
         });
     }
     
-    // Extract WHERE clause
     const whereMatch = sql.match(/WHERE\s+(.+?)(?:\s+RETURNING|\s*$)/i);
     if (!whereMatch) {
         throw new Error('Invalid UPDATE: no WHERE clause');
     }
     
-    // Find rows to update
     let rowsToUpdate = applyWhereClause([...data[tableName]], whereMatch[1], params, tableName);
     
-    // Check for RETURNING clause
     const returningMatch = sql.match(/RETURNING\s+(.+)/i);
     
-    // Update rows
     rowsToUpdate.forEach(row => {
         setPairs.forEach(pair => {
             row[pair.column] = params[pair.paramIndex];
@@ -262,7 +360,6 @@ function executeUpdate(sql, params) {
 
 // Execute DELETE query
 function executeDelete(sql, params) {
-    // Extract table name
     const fromMatch = sql.match(/DELETE\s+FROM\s+(\w+)/i);
     if (!fromMatch) {
         throw new Error('Invalid DELETE: no table specified');
@@ -273,17 +370,14 @@ function executeDelete(sql, params) {
         throw new Error(`Table "${tableName}" does not exist`);
     }
     
-    // Extract WHERE clause
     const whereMatch = sql.match(/WHERE\s+(.+)/i);
     if (!whereMatch) {
         throw new Error('DELETE without WHERE is not allowed');
     }
     
-    // Find rows to delete
     const rowsToDelete = applyWhereClause([...data[tableName]], whereMatch[1], params, tableName);
     const idsToDelete = rowsToDelete.map(row => row.id);
     
-    // Remove rows
     data[tableName] = data[tableName].filter(row => !idsToDelete.includes(row.id));
     
     return { rows: [], rowCount: rowsToDelete.length };
