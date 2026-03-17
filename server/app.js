@@ -10,7 +10,9 @@ app.use(express.json());
 
 // Routes
 const authRoutes = require("./routes/auth");
+const timetableRoutes = require("./routes/timetable");
 app.use("/api/auth", authRoutes);
+app.use("/api/timetable", timetableRoutes);
 
 // Test route
 app.get("/test", async (req, res) => {
