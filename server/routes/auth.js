@@ -3,7 +3,7 @@
 
 const express = require('express');
 const router = express.Router();
-const pool = require('../db/index');
+const db = require('../db/index');
 const { comparePassword } = require('../utils/password');
 const { createToken } = require('../utils/jwt');
 const authMiddleware = require('../middleware/auth');
@@ -24,7 +24,7 @@ router.post('/login', async (req, res) => {
         }
         
         // Find the user in the database
-        const result = await pool.query(
+        const result = await db.query(
             'SELECT * FROM users WHERE email = $1',
             [email]
         );
@@ -84,7 +84,7 @@ router.get('/me', authMiddleware, async (req, res) => {
         const userId = req.user.userId;
         
         // Find the user in the database
-        const result = await pool.query(
+        const result = await db.query(
             'SELECT id, full_name, email, role, created_at FROM users WHERE id = $1',
             [userId]
         );
