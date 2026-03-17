@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, FileCheck, BookOpen, Award } from 'lucide-react';
+import { User, FileCheck, BookOpen, Award, LogOut } from 'lucide-react';
 
 const NAV = [
   { key: 'profile',    label: 'Profile',                icon: User      },
@@ -8,7 +8,7 @@ const NAV = [
   { key: 'extramarks', label: 'Extra Marks Approve',    icon: Award     },
 ];
 
-const LecSidebar = ({ activeTab, onTabChange, pendingCount, extraMarksPending, lecturer }) => (
+const LecSidebar = ({ activeTab, onTabChange, pendingCount, extraMarksPending, lecturer, onLogout }) => (
   <aside className="w-72 h-screen bg-white border-r border-gray-200 fixed left-0 top-0 flex flex-col shadow-sm">
 
     {/* App branding */}
@@ -47,17 +47,26 @@ const LecSidebar = ({ activeTab, onTabChange, pendingCount, extraMarksPending, l
       })}
     </nav>
 
-    {/* User footer */}
+    {/* User footer with logout */}
     {lecturer && (
       <div className="px-4 py-4 border-t border-gray-100">
         <div className="flex items-center gap-3 px-2">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
             {lecturer.initials}
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-gray-800 truncate">{lecturer.name}</p>
             <p className="text-xs text-gray-400 truncate">{lecturer.employeeId}</p>
           </div>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              title="Logout"
+            >
+              <LogOut size={18} />
+            </button>
+          )}
         </div>
       </div>
     )}

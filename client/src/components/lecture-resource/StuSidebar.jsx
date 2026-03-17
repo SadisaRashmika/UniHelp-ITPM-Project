@@ -1,12 +1,17 @@
 import React from 'react';
-import { Heart, Trophy, FileText, GraduationCap, Calendar } from 'lucide-react';
+import { Heart, Trophy, FileText, GraduationCap, Calendar, LogOut } from 'lucide-react';
 
-const StuSidebar = ({ points, quizzes, notes, level }) => {
+const StuSidebar = ({ points, quizzes, notes, level, user, onLogout }) => {
   const levelColor =
     level === 'Gold'     ? 'bg-yellow-100 text-yellow-700 border border-yellow-300' :
     level === 'Silver'   ? 'bg-gray-100 text-gray-700 border border-gray-300' :
     level === 'Platinum' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
                            'bg-orange-100 text-orange-700 border border-orange-200';
+
+  // Get student initials from user name
+  const initials = user?.name?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'ST';
+  const studentName = user?.name || 'Student';
+  const studentId = user?.student_id || user?.id || 'N/A';
 
   return (
     <aside className="w-72 h-screen bg-white border-r border-gray-200 fixed left-0 top-0 flex flex-col shadow-sm">
@@ -21,12 +26,21 @@ const StuSidebar = ({ points, quizzes, notes, level }) => {
       <div className="px-6 py-6 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-base font-bold shrink-0">
-            AJ
+            {initials}
           </div>
-          <div>
-            <p className="text-sm font-semibold text-gray-900">Alex Johnson</p>
-            <p className="text-xs text-gray-400">2024001</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-gray-900 truncate">{studentName}</p>
+            <p className="text-xs text-gray-400">{studentId}</p>
           </div>
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+              title="Logout"
+            >
+              <LogOut size={18} />
+            </button>
+          )}
         </div>
         <div className="mt-4 space-y-2">
           <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">

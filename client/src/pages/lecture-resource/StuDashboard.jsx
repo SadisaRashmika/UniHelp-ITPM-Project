@@ -5,7 +5,7 @@ import StuNoteUploadModal from '../../components/lecture-resource/StuNoteUploadM
 import StuQuizModal       from '../../components/lecture-resource/StuQuizModal';
 import StuBonusMarksModal from '../../components/lecture-resource/StuBonusMarkModal';
 
-const StuDashboard = () => {
+const StuDashboard = ({ user, onLogout }) => {
   const [uploadLecture, setUploadLecture] = useState(null);
   const [quizLecture,   setQuizLecture]   = useState(null);
   const [bonusOpen,     setBonusOpen]     = useState(false);
@@ -24,6 +24,8 @@ const StuDashboard = () => {
         quizzes={12}
         notes={8}
         level="Bronze"
+        user={user}
+        onLogout={onLogout}
       />
 
       <main className="flex-1 ml-72 p-10 min-w-0 w-full">

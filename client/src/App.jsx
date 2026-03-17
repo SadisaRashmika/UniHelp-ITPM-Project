@@ -6,22 +6,21 @@ import StuDashboard from './pages/lecture-resource/StuDashboard'
 
 // Main app content - shows login or dashboard based on auth state
 function AppContent() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user, logout } = useAuth()
 
   // If not logged in, show login page
   if (!isAuthenticated) {
     return <Login />
   }
 
-  // If logged in, show the appropriate dashboard based on role
-  // For now, we show the lecturer dashboard
-  // TODO: Add role-based routing
-  return (
-    <div>
-      <LecDashboard />
-      {/* <StuDashboard /> */}
-    </div>
-  )
+  // Role-based routing - show appropriate dashboard based on user role
+  // Admin also sees lecturer dashboard for now
+  if (user?.role === 'student') {
+    return <StuDashboard user={user} onLogout={logout} />
+  } else {
+    // Lecturer and Admin see lecturer dashboard
+    return <LecDashboard user={user} onLogout={logout} />
+  }
 }
 
 // Root App component with AuthProvider

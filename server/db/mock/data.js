@@ -50,26 +50,29 @@ async function initializeData() {
     idCounters.notifications = 0;
 
     // Insert admin user
-    insertUser('Admin User', 'admin@unihelp.com', passwordHashes.admin, 'admin');
+    insertUser('Bandula Jayawardena', 'admin@unihelp.com', passwordHashes.admin, 'admin');
 
     // Insert lecturers
-    insertUser('Dr. John Smith', 'john.smith@unihelp.com', passwordHashes.lecturer, 'lecturer');
-    insertUser('Dr. Sarah Johnson', 'sarah.johnson@unihelp.com', passwordHashes.lecturer, 'lecturer');
-    insertUser('Prof. Michael Brown', 'michael.brown@unihelp.com', passwordHashes.lecturer, 'lecturer');
+    insertUser('Dr. Sarath Gunasekara', 'sarath.gunasekara@unihelp.com', passwordHashes.lecturer, 'lecturer');
+    insertUser('Prof. Chaminda Wijesinghe', 'chaminda.wijesinghe@unihelp.com', passwordHashes.lecturer, 'lecturer');
+    insertUser('Lakmi Siriwardena', 'lakmi.siriwardena@unihelp.com', passwordHashes.lecturer, 'lecturer');
 
     // Insert students
-    insertUser('Alice Williams', 'alice.williams@student.unihelp.com', passwordHashes.student, 'student');
-    insertUser('Bob Taylor', 'bob.taylor@student.unihelp.com', passwordHashes.student, 'student');
-    insertUser('Charlie Davis', 'charlie.davis@student.unihelp.com', passwordHashes.student, 'student');
-    insertUser('Diana Miller', 'diana.miller@student.unihelp.com', passwordHashes.student, 'student');
-    insertUser('Eva Wilson', 'eva.wilson@student.unihelp.com', passwordHashes.student, 'student');
+    insertUser('Kavindu Perera', 'kavindu.perera@student.unihelp.com', passwordHashes.student, 'student');
+    insertUser('Dilini Senanayake', 'dilini.senanayake@student.unihelp.com', passwordHashes.student, 'student');
+    insertUser('Pathum Dhananjaya', 'pathum.dhananjaya@student.unihelp.com', passwordHashes.student, 'student');
+    insertUser('Tharushi Fernando', 'tharushi.fernando@student.unihelp.com', passwordHashes.student, 'student');
+    insertUser('Isuru Herath', 'isuru.herath@student.unihelp.com', passwordHashes.student, 'student');
 
-    // Insert subjects
-    insertSubject('Introduction to Programming', 'CS101');
-    insertSubject('Data Structures and Algorithms', 'CS201');
-    insertSubject('Database Systems', 'CS301');
-    insertSubject('Web Development', 'CS401');
-    insertSubject('Software Engineering', 'CS402');
+    // Insert subjects with real module codes
+    insertSubject('Probability and Statistics', 'IT2120');
+    insertSubject('Object Oriented Programming', 'SE2010');
+    insertSubject('Operating Systems & System Administration', 'IT2130');
+    insertSubject('Database Design and Development', 'IT2140');
+    insertSubject('Artificial Intelligence & Machine Learning', 'IT2011');
+    insertSubject('IT Project', 'IT2150');
+    insertSubject('Web and Mobile Technologies', 'SE2020');
+    insertSubject('Professional Skills', 'IT2160');
 
     // Insert locations
     insertLocation('Lecture Hall A', 100);
