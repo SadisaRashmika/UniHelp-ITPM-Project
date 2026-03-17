@@ -3,17 +3,11 @@
 
 const bcrypt = require('bcrypt');
 
-// Password hashes will be generated synchronously
-// Using pre-generated hashes for common passwords
-const ADMIN_PASSWORD_HASH = '$2b$10$rQZ5Q8X1Y2Z3W4V5U6T7SeK8L9M0N1O2P3Q4R5S6T7U8V9W0X1Y2Z3';
-const LECTURER_PASSWORD_HASH = '$2b$10$rQZ5Q8X1Y2Z3W4V5U6T7SeK8L9M0N1O2P3Q4R5S6T7U8V9W0X1Y2Z3';
-const STUDENT_PASSWORD_HASH = '$2b$10$rQZ5Q8X1Y2Z3W4V5U6T7SeK8L9M0N1O2P3Q4R5S6T7U8V9W0X1Y2Z3';
-
 // We'll generate real hashes at runtime
 let passwordHashes = {};
 
-// Initialize data store
-let data = {
+// Initialize data store - use a single object that gets mutated
+const data = {
     users: [],
     subjects: [],
     locations: [],
@@ -23,7 +17,7 @@ let data = {
 };
 
 // ID counters for auto-increment
-let idCounters = {
+const idCounters = {
     users: 0,
     subjects: 0,
     locations: 0,
@@ -39,24 +33,21 @@ async function initializeData() {
     passwordHashes.lecturer = await bcrypt.hash('lecturer123', 10);
     passwordHashes.student = await bcrypt.hash('student123', 10);
 
-    // Reset data
-    data = {
-        users: [],
-        subjects: [],
-        locations: [],
-        timeslots: [],
-        bookings: [],
-        notifications: []
-    };
+    // Clear existing data (mutate instead of replacing)
+    data.users.length = 0;
+    data.subjects.length = 0;
+    data.locations.length = 0;
+    data.timeslots.length = 0;
+    data.bookings.length = 0;
+    data.notifications.length = 0;
 
-    idCounters = {
-        users: 0,
-        subjects: 0,
-        locations: 0,
-        timeslots: 0,
-        bookings: 0,
-        notifications: 0
-    };
+    // Reset counters
+    idCounters.users = 0;
+    idCounters.subjects = 0;
+    idCounters.locations = 0;
+    idCounters.timeslots = 0;
+    idCounters.bookings = 0;
+    idCounters.notifications = 0;
 
     // Insert admin user
     insertUser('Admin User', 'admin@unihelp.com', passwordHashes.admin, 'admin');
@@ -130,40 +121,43 @@ async function initializeData() {
 // Helper functions for inserting data
 function insertUser(full_name, email, password_hash, role) {
     idCounters.users++;
-    data.users.push({
+    const user = {
         id: idCounters.users,
         full_name,
         email,
         password_hash,
         role,
         created_at: new Date()
-    });
+    };
+    data.users.push(user);
     return idCounters.users;
 }
 
 function insertSubject(subject_name, subject_code) {
     idCounters.subjects++;
-    data.subjects.push({
+    const subject = {
         id: idCounters.subjects,
         subject_name,
         subject_code
-    });
+    };
+    data.subjects.push(subject);
     return idCounters.subjects;
 }
 
 function insertLocation(room_name, seat_count) {
     idCounters.locations++;
-    data.locations.push({
+    const location = {
         id: idCounters.locations,
         room_name,
         seat_count
-    });
+    };
+    data.locations.push(location);
     return idCounters.locations;
 }
 
 function insertTimeslot(subject_id, lecturer_id, location_id, day_of_week, start_time, end_time, lecture_topic = null, notice = null) {
     idCounters.timeslots++;
-    data.timeslots.push({
+    const timeslot = {
         id: idCounters.timeslots,
         subject_id,
         lecturer_id,
@@ -173,33 +167,36 @@ function insertTimeslot(subject_id, lecturer_id, location_id, day_of_week, start
         end_time,
         lecture_topic,
         notice
-    });
+    };
+    data.timeslots.push(timeslot);
     return idCounters.timeslots;
 }
 
 function insertBooking(student_id, timeslot_id, seat_number, attendance_status = 'booked') {
     idCounters.bookings++;
-    data.bookings.push({
+    const booking = {
         id: idCounters.bookings,
         student_id,
         timeslot_id,
         seat_number,
         attendance_status,
         created_at: new Date()
-    });
+    };
+    data.bookings.push(booking);
     return idCounters.bookings;
 }
 
 function insertNotification(user_id, timeslot_id, message, is_read = false) {
     idCounters.notifications++;
-    data.notifications.push({
+    const notification = {
         id: idCounters.notifications,
         user_id,
         timeslot_id,
         message,
         is_read,
         created_at: new Date()
-    });
+    };
+    data.notifications.push(notification);
     return idCounters.notifications;
 }
 
