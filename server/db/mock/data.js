@@ -1,0 +1,233 @@
+// In-memory data store with dummy data
+// This mimics the PostgreSQL database tables
+
+const bcrypt = require('bcrypt');
+
+// Password hashes will be generated synchronously
+// Using pre-generated hashes for common passwords
+const ADMIN_PASSWORD_HASH = '$2b$10$rQZ5Q8X1Y2Z3W4V5U6T7SeK8L9M0N1O2P3Q4R5S6T7U8V9W0X1Y2Z3';
+const LECTURER_PASSWORD_HASH = '$2b$10$rQZ5Q8X1Y2Z3W4V5U6T7SeK8L9M0N1O2P3Q4R5S6T7U8V9W0X1Y2Z3';
+const STUDENT_PASSWORD_HASH = '$2b$10$rQZ5Q8X1Y2Z3W4V5U6T7SeK8L9M0N1O2P3Q4R5S6T7U8V9W0X1Y2Z3';
+
+// We'll generate real hashes at runtime
+let passwordHashes = {};
+
+// Initialize data store
+let data = {
+    users: [],
+    subjects: [],
+    locations: [],
+    timeslots: [],
+    bookings: [],
+    notifications: []
+};
+
+// ID counters for auto-increment
+let idCounters = {
+    users: 0,
+    subjects: 0,
+    locations: 0,
+    timeslots: 0,
+    bookings: 0,
+    notifications: 0
+};
+
+// Initialize with dummy data
+async function initializeData() {
+    // Generate real password hashes
+    passwordHashes.admin = await bcrypt.hash('admin123', 10);
+    passwordHashes.lecturer = await bcrypt.hash('lecturer123', 10);
+    passwordHashes.student = await bcrypt.hash('student123', 10);
+
+    // Reset data
+    data = {
+        users: [],
+        subjects: [],
+        locations: [],
+        timeslots: [],
+        bookings: [],
+        notifications: []
+    };
+
+    idCounters = {
+        users: 0,
+        subjects: 0,
+        locations: 0,
+        timeslots: 0,
+        bookings: 0,
+        notifications: 0
+    };
+
+    // Insert admin user
+    insertUser('Admin User', 'admin@unihelp.com', passwordHashes.admin, 'admin');
+
+    // Insert lecturers
+    insertUser('Dr. John Smith', 'john.smith@unihelp.com', passwordHashes.lecturer, 'lecturer');
+    insertUser('Dr. Sarah Johnson', 'sarah.johnson@unihelp.com', passwordHashes.lecturer, 'lecturer');
+    insertUser('Prof. Michael Brown', 'michael.brown@unihelp.com', passwordHashes.lecturer, 'lecturer');
+
+    // Insert students
+    insertUser('Alice Williams', 'alice.williams@student.unihelp.com', passwordHashes.student, 'student');
+    insertUser('Bob Taylor', 'bob.taylor@student.unihelp.com', passwordHashes.student, 'student');
+    insertUser('Charlie Davis', 'charlie.davis@student.unihelp.com', passwordHashes.student, 'student');
+    insertUser('Diana Miller', 'diana.miller@student.unihelp.com', passwordHashes.student, 'student');
+    insertUser('Eva Wilson', 'eva.wilson@student.unihelp.com', passwordHashes.student, 'student');
+
+    // Insert subjects
+    insertSubject('Introduction to Programming', 'CS101');
+    insertSubject('Data Structures and Algorithms', 'CS201');
+    insertSubject('Database Systems', 'CS301');
+    insertSubject('Web Development', 'CS401');
+    insertSubject('Software Engineering', 'CS402');
+
+    // Insert locations
+    insertLocation('Lecture Hall A', 100);
+    insertLocation('Lecture Hall B', 80);
+    insertLocation('Computer Lab 1', 40);
+    insertLocation('Computer Lab 2', 40);
+    insertLocation('Seminar Room 1', 30);
+
+    // Insert timeslots
+    // day_of_week: 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday
+    // Lecturer IDs: 2=John Smith, 3=Sarah Johnson, 4=Michael Brown
+    
+    // Monday
+    insertTimeslot(1, 3, 1, 1, '09:00', '11:00');  // CS101 with Dr. Sarah Johnson in Lecture Hall A
+    insertTimeslot(2, 4, 2, 1, '14:00', '16:00');  // CS201 with Prof. Michael Brown in Lecture Hall B
+
+    // Tuesday
+    insertTimeslot(3, 3, 3, 2, '09:00', '11:00');  // CS301 with Dr. Sarah Johnson in Computer Lab 1
+    insertTimeslot(4, 2, 4, 2, '14:00', '16:00');  // CS401 with Dr. John Smith in Computer Lab 2
+
+    // Wednesday
+    insertTimeslot(1, 3, 1, 3, '10:00', '12:00');  // CS101 with Dr. Sarah Johnson in Lecture Hall A
+    insertTimeslot(5, 4, 5, 3, '14:00', '16:00');  // CS402 with Prof. Michael Brown in Seminar Room 1
+
+    // Thursday
+    insertTimeslot(2, 4, 2, 4, '09:00', '11:00');  // CS201 with Prof. Michael Brown in Lecture Hall B
+    insertTimeslot(3, 3, 3, 4, '14:00', '16:00');  // CS301 with Dr. Sarah Johnson in Computer Lab 1
+
+    // Friday
+    insertTimeslot(4, 2, 4, 5, '09:00', '11:00');  // CS401 with Dr. John Smith in Computer Lab 2
+    insertTimeslot(5, 4, 1, 5, '13:00', '15:00');  // CS402 with Prof. Michael Brown in Lecture Hall A
+
+    // Insert bookings (students booking seats)
+    // Student IDs: 5=Alice, 6=Bob, 7=Charlie, 8=Diana, 9=Eva
+    insertBooking(5, 1, 1, 'booked');   // Alice booked seat 1 for timeslot 1
+    insertBooking(6, 1, 2, 'booked');   // Bob booked seat 2 for timeslot 1
+    insertBooking(7, 1, 3, 'booked');   // Charlie booked seat 3 for timeslot 1
+    insertBooking(5, 2, 5, 'booked');   // Alice booked seat 5 for timeslot 2
+    insertBooking(8, 2, 6, 'booked');   // Diana booked seat 6 for timeslot 2
+    insertBooking(9, 3, 1, 'attended'); // Eva booked seat 1 for timeslot 3 and attended
+
+    // Insert notifications
+    insertNotification(5, 1, 'Lecture topic updated: Introduction to Variables and Data Types', false);
+    insertNotification(6, 1, 'Room changed to Lecture Hall B', false);
+
+    return getDataStats();
+}
+
+// Helper functions for inserting data
+function insertUser(full_name, email, password_hash, role) {
+    idCounters.users++;
+    data.users.push({
+        id: idCounters.users,
+        full_name,
+        email,
+        password_hash,
+        role,
+        created_at: new Date()
+    });
+    return idCounters.users;
+}
+
+function insertSubject(subject_name, subject_code) {
+    idCounters.subjects++;
+    data.subjects.push({
+        id: idCounters.subjects,
+        subject_name,
+        subject_code
+    });
+    return idCounters.subjects;
+}
+
+function insertLocation(room_name, seat_count) {
+    idCounters.locations++;
+    data.locations.push({
+        id: idCounters.locations,
+        room_name,
+        seat_count
+    });
+    return idCounters.locations;
+}
+
+function insertTimeslot(subject_id, lecturer_id, location_id, day_of_week, start_time, end_time, lecture_topic = null, notice = null) {
+    idCounters.timeslots++;
+    data.timeslots.push({
+        id: idCounters.timeslots,
+        subject_id,
+        lecturer_id,
+        location_id,
+        day_of_week,
+        start_time,
+        end_time,
+        lecture_topic,
+        notice
+    });
+    return idCounters.timeslots;
+}
+
+function insertBooking(student_id, timeslot_id, seat_number, attendance_status = 'booked') {
+    idCounters.bookings++;
+    data.bookings.push({
+        id: idCounters.bookings,
+        student_id,
+        timeslot_id,
+        seat_number,
+        attendance_status,
+        created_at: new Date()
+    });
+    return idCounters.bookings;
+}
+
+function insertNotification(user_id, timeslot_id, message, is_read = false) {
+    idCounters.notifications++;
+    data.notifications.push({
+        id: idCounters.notifications,
+        user_id,
+        timeslot_id,
+        message,
+        is_read,
+        created_at: new Date()
+    });
+    return idCounters.notifications;
+}
+
+// Get data statistics
+function getDataStats() {
+    return {
+        users: data.users.length,
+        admins: data.users.filter(u => u.role === 'admin').length,
+        lecturers: data.users.filter(u => u.role === 'lecturer').length,
+        students: data.users.filter(u => u.role === 'student').length,
+        subjects: data.subjects.length,
+        locations: data.locations.length,
+        timeslots: data.timeslots.length,
+        bookings: data.bookings.length,
+        notifications: data.notifications.length
+    };
+}
+
+// Export data and functions
+module.exports = {
+    data,
+    idCounters,
+    initializeData,
+    getDataStats,
+    insertUser,
+    insertSubject,
+    insertLocation,
+    insertTimeslot,
+    insertBooking,
+    insertNotification
+};
