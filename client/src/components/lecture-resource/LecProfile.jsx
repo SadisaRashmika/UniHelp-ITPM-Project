@@ -1,17 +1,48 @@
-import React from 'react';
-import { Download, Clock, Upload, Trophy, ArrowRight, HelpCircle } from 'lucide-react';
-import { LECTURER, LECTURER_STATS, LECTURES } from './SharedData';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Download, Clock, Upload, Trophy, ArrowRight } from 'lucide-react';
 
 const LEVEL_MAP = [
-  { min: 0,    label: 'Bronze', color: 'bg-orange-100 text-orange-700 border-orange-200' },
-  { min: 300,  label: 'Silver', color: 'bg-gray-100 text-gray-700 border-gray-300' },
-  { min: 600,  label: 'Gold',   color: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
+  { min: 0, label: 'Bronze', color: 'bg-orange-100 text-orange-700 border-orange-200' },
+  { min: 300, label: 'Silver', color: 'bg-gray-100 text-gray-700 border-gray-300' },
+  { min: 600, label: 'Gold', color: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
   { min: 1000, label: 'Platinum', color: 'bg-blue-100 text-blue-700 border-blue-200' },
 ];
 
 const getLevel = (pts) => [...LEVEL_MAP].reverse().find(l => pts >= l.min) || LEVEL_MAP[0];
 
-const LecProfile = ({ myPoints, pendingCount, onNavigate }) => {
+const LecProfile = ({ lecturerId, pendingCount, onNavigate }) => {
+  const [lecturer, setLecturer] = useState(null);
+  const [stats, setStats] = useState({
+    downloads: 0,
+    uploadedResources: 0,
+  });
+  const [myPoints, setMyPoints] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch lecturer data and stats from the backend
+  useEffect(() => {
+    const fetchLecturerData = async () => {
+      try {
+        const profileResponse = await axios.get(`http://localhost:5000/api/lecturer/profile?lecturerId=${lecturerId}`);
+        setLecturer(profileResponse.data);
+
+        const statsResponse = await axios.get(`http://localhost:5000/api/lecturer/stats?lecturerId=${lecturerId}`);
+        setStats(statsResponse.data);
+
+        setMyPoints(profileResponse.data.points);
+      } catch (error) {
+        console.error('Error fetching lecturer data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLecturerData();
+  }, [lecturerId]);
+
+  if (loading) return <div>Loading...</div>; // Show loading state
+
   const level = getLevel(myPoints);
 
   return (
@@ -26,23 +57,23 @@ const LecProfile = ({ myPoints, pendingCount, onNavigate }) => {
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         <div className="flex items-center gap-5">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-2xl font-bold shrink-0">
-            {LECTURER.initials}
+            {lecturer.initials}
           </div>
           <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900">{LECTURER.name}</h2>
-            <p className="text-gray-500 text-sm mt-0.5">{LECTURER.subjects?.join(' & ')}</p>
+            <h2 className="text-2xl font-bold text-gray-900">{lecturer.name}</h2>
+            <p className="text-gray-500 text-sm mt-0.5">{lecturer.department}</p>
             <div className="mt-3 grid grid-cols-3 gap-6">
               <div>
                 <p className="text-xs text-gray-400">Employee ID</p>
-                <p className="font-semibold text-gray-800 text-sm mt-0.5">{LECTURER.employeeId}</p>
+                <p className="font-semibold text-gray-800 text-sm mt-0.5">{lecturer.employee_id}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-400">Department</p>
-                <p className="font-semibold text-gray-800 text-sm mt-0.5">{LECTURER.department}</p>
+                <p className="font-semibold text-gray-800 text-sm mt-0.5">{lecturer.department}</p>
               </div>
               <div>
                 <p className="text-xs text-gray-400">Email</p>
-                <p className="font-semibold text-gray-800 text-sm mt-0.5">{LECTURER.email}</p>
+                <p className="font-semibold text-gray-800 text-sm mt-0.5">{lecturer.email}</p>
               </div>
             </div>
           </div>
@@ -55,7 +86,7 @@ const LecProfile = ({ myPoints, pendingCount, onNavigate }) => {
           icon={<Download size={22} className="text-blue-400" />}
           iconBg="bg-blue-50"
           label="Downloads"
-          value={LECTURER_STATS.downloads}
+          value={stats.downloads}
         />
         <StatCard
           icon={<Clock size={22} className="text-yellow-500" />}
@@ -67,7 +98,7 @@ const LecProfile = ({ myPoints, pendingCount, onNavigate }) => {
           icon={<Upload size={22} className="text-green-500" />}
           iconBg="bg-green-50"
           label="Uploaded Resources"
-          value={LECTURER_STATS.uploadedResources}
+          value={stats.uploadedResources}
         />
         <StatCard
           icon={<Trophy size={22} className="text-purple-500" />}

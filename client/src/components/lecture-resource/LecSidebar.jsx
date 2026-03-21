@@ -56,7 +56,7 @@ const LecSidebar = ({ activeTab, onTabChange, pendingCount, extraMarksPending, l
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-gray-800 truncate">{lecturer.name}</p>
-            <p className="text-xs text-gray-400 truncate">{lecturer.employeeId}</p>
+            <p className="text-xs text-gray-400 truncate">{lecturer.employee_id}</p>
           </div>
         </div>
       </div>
