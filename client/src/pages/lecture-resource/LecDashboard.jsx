@@ -1,18 +1,45 @@
-import React, { useState } from 'react';
-import LecSidebar        from '../../components/lecture-resource/LecSidebar';
-import LecProfile        from '../../components/lecture-resource/LecProfile';
-import LecUpload         from '../../components/lecture-resource/LecUpload';
-import LecStudentUploads from '../../components/lecture-resource/LecStudentUploads';
-import LecExtraMarks     from '../../components/lecture-resource/LecExtraMarks';
-import { LECTURER, LECTURER_STATS, PENDING_SUBMISSIONS, BONUS_MARK_REQUESTS } from '../../components/lecture-resource/SharedData';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import LecSidebar from '../../components/lecture-resource/LecSidebar';
+import LecProfile from '../../components/lecture-resource/LecProfile';
 
 const LecDashboard = () => {
-  const [activeTab,         setActiveTab]         = useState('profile');
-  const [myPoints,          setMyPoints]          = useState(LECTURER_STATS.myPoints);
-  const [pendingCount,      setPendingCount]      = useState(PENDING_SUBMISSIONS.length);
-  const [extraMarksPending, setExtraMarksPending] = useState(
-    BONUS_MARK_REQUESTS.filter(r => r.status === 'pending').length
-  );
+  const [activeTab, setActiveTab] = useState('profile');
+  const [lecturer, setLecturer] = useState(null);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [extraMarksPending, setExtraMarksPending] = useState(0);
+  const [myPoints, setMyPoints] = useState(0);
+
+  // Fetch lecturer data and other necessary data from the backend
+  useEffect(() => {
+    const fetchLecturerData = async () => {
+      try {
+        // Use the correct API endpoint to get the lecturer profile
+        const response = await axios.get('http://localhost:5000/api/lecturer/profile?lecturerId=LEC001');
+        console.log('Lecturer Profile:', response.data); // Log data for debugging
+        setLecturer(response.data); // Set the lecturer data in state
+        setMyPoints(response.data.points); // Set the points for the lecturer
+      } catch (error) {
+        console.error('Error fetching lecturer data:', error);
+      }
+    };
+
+    const fetchPendingCounts = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/lecturer/pending-counts?lecturerId=LEC001');
+        console.log('Pending Counts:', response.data); // Log pending counts for debugging
+        setPendingCount(response.data.submissions);
+        setExtraMarksPending(response.data.bonusMarks);
+      } catch (error) {
+        console.error('Error fetching pending counts:', error);
+      }
+    };
+
+    fetchLecturerData();
+    fetchPendingCounts();
+  }, []);
+
+  if (!lecturer) return <div>Loading...</div>; // Loading state
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -21,29 +48,15 @@ const LecDashboard = () => {
         onTabChange={setActiveTab}
         pendingCount={pendingCount}
         extraMarksPending={extraMarksPending}
-        lecturer={LECTURER}
+        lecturer={lecturer}
       />
-
       <main className="flex-1 ml-72 p-10 min-w-0 w-full">
         {activeTab === 'profile' && (
           <LecProfile
+            lecturerId="LEC001"
             myPoints={myPoints}
             pendingCount={pendingCount}
             onNavigate={setActiveTab}
-          />
-        )}
-        {activeTab === 'upload' && (
-          <LecUpload onPublish={() => {}} />
-        )}
-        {activeTab === 'review' && (
-          <LecStudentUploads
-            onPointsEarned={(n) => setMyPoints(p => p + n)}
-            onPendingChange={(d) => setPendingCount(p => Math.max(0, p + d))}
-          />
-        )}
-        {activeTab === 'extramarks' && (
-          <LecExtraMarks
-            onPendingChange={(d) => setExtraMarksPending(p => Math.max(0, p + d))}
           />
         )}
       </main>
