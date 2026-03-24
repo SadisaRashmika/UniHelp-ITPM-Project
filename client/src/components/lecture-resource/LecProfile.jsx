@@ -11,6 +11,12 @@ const LEVEL_MAP = [
 
 const getLevel = (pts) => [...LEVEL_MAP].reverse().find(l => pts >= l.min) || LEVEL_MAP[0];
 
+const getInitials = (lecturer) => {
+  if (lecturer?.initials) return lecturer.initials;
+  const parts = (lecturer?.name || '').trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((p) => p[0]).join('').toUpperCase() || 'L';
+};
+
 const LecProfile = ({ lecturerId, pendingCount, onNavigate }) => {
   const [lecturer, setLecturer] = useState(null);
   const [stats, setStats] = useState({
@@ -57,7 +63,7 @@ const LecProfile = ({ lecturerId, pendingCount, onNavigate }) => {
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         <div className="flex items-center gap-5">
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-2xl font-bold shrink-0">
-            {lecturer.initials}
+            {getInitials(lecturer)}
           </div>
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-900">{lecturer.name}</h2>

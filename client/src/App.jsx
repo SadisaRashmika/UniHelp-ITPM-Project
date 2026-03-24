@@ -6,8 +6,8 @@ import StuDashboard from './pages/lecture-resource/StuDashboard'
 const App = () => {
   return (
     <div>
-      <LecDashboard/>
-      {/* <StuDashboard/> */}
+      {/* <LecDashboard/> */}
+      <StuDashboard/>
     </div>
   )
 }

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import LecSidebar from '../../components/lecture-resource/LecSidebar';
 import LecProfile from '../../components/lecture-resource/LecProfile';
+import LecStudentUploads from '../../components/lecture-resource/LecStudentUploads';
+import LecUpload from '../../components/lecture-resource/LecUpload';
+import LecExtraMarks from '../../components/lecture-resource/LecExtraMarks';
 
 const LecDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -57,6 +60,31 @@ const LecDashboard = () => {
             myPoints={myPoints}
             pendingCount={pendingCount}
             onNavigate={setActiveTab}
+          />
+        )}
+        {activeTab === 'review' && (
+          <LecStudentUploads
+            lecturerId={lecturer?.employee_id || 'LEC001'}
+            onPointsEarned={(pts) => setMyPoints((prev) => prev + pts)}
+            onPendingChange={(delta) => {
+              setPendingCount((prev) => Math.max(0, prev + delta));
+            }}
+          />
+        )}
+        {activeTab === 'upload' && (
+          <LecUpload
+            lecturer={lecturer}
+            onPublish={() => {
+              // For now only local refresh; API-based list will be wired next.
+            }}
+          />
+        )}
+        {activeTab === 'extramarks' && (
+          <LecExtraMarks
+            lecturerId={lecturer?.employee_id || 'LEC001'}
+            onPendingChange={(delta) => {
+              setExtraMarksPending((prev) => Math.max(0, prev + delta));
+            }}
           />
         )}
       </main>
