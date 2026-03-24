@@ -43,6 +43,7 @@ const LecUpload = ({ lecturer, onPublish }) => {
   const [questions, setQs]        = useState([EMPTY_Q()]);
   const [isPublishing, setIsPublishing] = useState(false);
   const [editingLectureId, setEditingLectureId] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const lecturerEmployeeId = lecturer?.employee_id || 'LEC001';
   const lecturerDbId = lecturer?.id;
@@ -68,6 +69,13 @@ const LecUpload = ({ lecturer, onPublish }) => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
   };
+// Simple validation for YouTube URLs (accepts youtube.com and youtu.be links)
+  const isValidYoutubeUrl = (url) => {
+    if (!url) return true;
+    const value = url.trim();
+    if (!value) return true;
+    return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(value);
+  };
 
   const handleFilePick = (e) => {
     const picked = Array.from(e.target.files || []);
@@ -91,6 +99,7 @@ const LecUpload = ({ lecturer, onPublish }) => {
     setTitle(''); setSubject(''); setTopic(''); setYear(''); setSemester('');
     setFiles([]); setYtLink(''); setAddQuiz(false); setQuizTitle(''); setQs([EMPTY_Q()]);
     setEditingLectureId(null);
+    setErrors({});
   };
 
   const startEditLecture = (lecture) => {
@@ -124,15 +133,39 @@ const LecUpload = ({ lecturer, onPublish }) => {
   };
 
   const handlePublish = async () => {
-    if (!lecturerDbId) { showToast('Lecturer profile is not loaded yet.', 'err'); return; }
-    if (!title.trim())  { showToast('Please enter a lecture title.', 'err');  return; }
-    if (!subject)       { showToast('Please select a subject.', 'err');       return; }
-    if (!year)          { showToast('Please select a year.', 'err');          return; }
-    if (!semester)      { showToast('Please select a semester.', 'err');      return; }
+    const nextErrors = {};
+
+    if (!lecturerDbId) {
+      showToast('Lecturer profile is not loaded yet.', 'err');
+      return;
+    }
+    if (!title.trim()) nextErrors.title = 'Lecture title is required.';
+    else if (title.trim().length < 3) nextErrors.title = 'Lecture title must be at least 3 characters.';
+
+    if (!subject) nextErrors.subject = 'Please select a subject.';
+    if (!year) nextErrors.year = 'Please select a year.';
+    if (!semester) nextErrors.semester = 'Please select a semester.';
+
+    if (!isValidYoutubeUrl(ytLink)) {
+      nextErrors.youtubeUrl = 'Enter a valid YouTube URL (youtube.com or youtu.be).';
+    }
+
+    if (!isEditMode && files.length === 0 && !ytLink.trim()) {
+      nextErrors.files = 'Add at least one file or a YouTube link.';
+    }
+
     if (addQuiz) {
-      if (!quizTitle.trim()) { showToast('Please enter a quiz title.', 'err'); return; }
-      const bad = questions.find(q => !q.question.trim() || q.options.some(o => !o.trim()));
-      if (bad) { showToast('Fill in all quiz questions and options.', 'err'); return; }
+      if (!quizTitle.trim()) nextErrors.quizTitle = 'Quiz title is required.';
+      const badIdx = questions.findIndex((q) => !q.question.trim() || q.options.some((o) => !o.trim()));
+      if (badIdx !== -1) {
+        nextErrors.quiz = `Question ${badIdx + 1} has empty fields.`;
+      }
+    }
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      showToast('Please fix form errors before submitting.', 'err');
+      return;
     }
 
     try {
@@ -239,6 +272,7 @@ const LecUpload = ({ lecturer, onPublish }) => {
               <input value={title} onChange={e => setTitle(e.target.value)}
                 placeholder="e.g., Introduction to Machine Learning"
                 className={inputCls} />
+              {errors.title && <p className="text-xs text-red-500 font-medium mt-1">{errors.title}</p>}
             </Field>
             <Field label="Lecturer Name">
               <div>
@@ -254,6 +288,7 @@ const LecUpload = ({ lecturer, onPublish }) => {
               <SelectField value={subject} onChange={setSubject} placeholder="Select subject">
                 {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
               </SelectField>
+              {errors.subject && <p className="text-xs text-red-500 font-medium mt-1">{errors.subject}</p>}
             </Field>
             <Field label="Topic">
               <input value={topic} onChange={e => setTopic(e.target.value)}
@@ -268,11 +303,13 @@ const LecUpload = ({ lecturer, onPublish }) => {
               <SelectField value={year} onChange={setYear} placeholder="Select year">
                 {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
               </SelectField>
+              {errors.year && <p className="text-xs text-red-500 font-medium mt-1">{errors.year}</p>}
             </Field>
             <Field label="Semester">
               <SelectField value={semester} onChange={setSemester} placeholder="Select semester">
                 {SEMESTERS.map(s => <option key={s} value={s}>{s}</option>)}
               </SelectField>
+              {errors.semester && <p className="text-xs text-red-500 font-medium mt-1">{errors.semester}</p>}
             </Field>
           </div>
 
@@ -281,6 +318,7 @@ const LecUpload = ({ lecturer, onPublish }) => {
             <input value={ytLink} onChange={e => setYtLink(e.target.value)}
               placeholder="Enter YouTube link"
               className={inputCls} />
+            {errors.youtubeUrl && <p className="text-xs text-red-500 font-medium mt-1">{errors.youtubeUrl}</p>}
           </Field>
 
         </div>
@@ -299,6 +337,7 @@ const LecUpload = ({ lecturer, onPublish }) => {
               <input type="file" multiple className="hidden" onChange={handleFilePick} accept=".pdf,.pptx,.docx,.zip" />
             </label>
             <p className="text-xs text-gray-400 mt-1.5">You can upload multiple files</p>
+            {errors.files && <p className="text-xs text-red-500 font-medium mt-1.5">{errors.files}</p>}
             {files.length > 0 && (
               <div className="mt-3 space-y-1.5">
                 {files.map((f, i) => (
@@ -342,7 +381,10 @@ const LecUpload = ({ lecturer, onPublish }) => {
                 <input value={quizTitle} onChange={e => setQuizTitle(e.target.value)}
                   placeholder="e.g., ML Basics Quiz"
                   className={inputCls} />
+                {errors.quizTitle && <p className="text-xs text-red-500 font-medium mt-1">{errors.quizTitle}</p>}
               </Field>
+
+              {errors.quiz && <p className="text-xs text-red-500 font-medium">{errors.quiz}</p>}
 
               {questions.map((q, qi) => (
                 <QuestionBlock

@@ -1,4 +1,43 @@
 const lecturerModel = require('../models/lecturerModel'); // Import the lecturer model
+const nodemailer = require('nodemailer');
+
+const emailTransporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+const sendBonusReviewMail = async ({ status, studentEmail, studentName, subject, uniqueCode }) => {
+  if (!studentEmail || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    return;
+  }
+
+  const approved = status === 'approved';
+  const title = approved ? 'Bonus Marks Request Approved' : 'Bonus Marks Request Rejected';
+  const html = approved
+    ? `
+      <p>Dear ${studentName || 'Student'},</p>
+      <p>Your bonus marks request for <b>${subject || 'the selected subject'}</b> has been <b>approved</b>.</p>
+      <p>Bonus Code: <b>${uniqueCode || 'N/A'}</b></p>
+      <p>Points have been deducted according to the system rules.</p>
+      <p>Regards,<br/>Uni-Help Lecturer Panel</p>
+    `
+    : `
+      <p>Dear ${studentName || 'Student'},</p>
+      <p>Your bonus marks request for <b>${subject || 'the selected subject'}</b> has been <b>rejected</b>.</p>
+      <p>Please contact your lecturer for more details if needed.</p>
+      <p>Regards,<br/>Uni-Help Lecturer Panel</p>
+    `;
+
+  await emailTransporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: studentEmail,
+    subject: title,
+    html,
+  });
+};
 
 // Controller to fetch lecturer profile data
 const getLecturerProfile = async (req, res) => {
@@ -220,6 +259,12 @@ const reviewBonusMarkRequest = async (req, res) => {
     const result = await lecturerModel.reviewBonusMarkRequest(lecturerId, Number(requestId), action);
     if (result.error) {
       return res.status(400).json({ message: result.error });
+    }
+
+    try {
+      await sendBonusReviewMail(result);
+    } catch (mailError) {
+      console.error('Error sending bonus review email:', mailError);
     }
 
     res.status(200).json(result);

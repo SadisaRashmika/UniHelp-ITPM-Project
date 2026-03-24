@@ -421,15 +421,23 @@ const reviewBonusMarkRequest = async (employeeId, requestId, action) => {
         bmr.status,
         bmr.subject,
         bmr.student_id,
+        s.name AS student_name,
+        s.email AS student_email,
         s.student_id AS student_code,
-        s.bonus_used,
         GREATEST(
           COALESCE((
             SELECT SUM(sn.likes)
             FROM student_notes sn
             WHERE sn.student_id = s.id
               AND sn.status = 'accepted'
-          ), 0) - CASE WHEN s.bonus_used THEN 100 ELSE 0 END,
+          ), 0) - (
+            100 * COALESCE((
+              SELECT COUNT(*)
+              FROM bonus_mark_requests b2
+              WHERE b2.student_id = s.id
+                AND b2.status = 'approved'
+            ), 0)
+          ),
           0
         )::INT AS points
       FROM bonus_mark_requests bmr
@@ -458,9 +466,23 @@ const reviewBonusMarkRequest = async (employeeId, requestId, action) => {
         await client.query('ROLLBACK');
         return { error: 'Student does not have enough points' };
       }
-      if (req.bonus_used) {
+
+      const alreadyClaimedResult = await client.query(
+        `
+        SELECT id
+        FROM bonus_mark_requests
+        WHERE student_id = $1
+          AND subject = $2
+          AND status = 'approved'
+          AND id <> $3
+        LIMIT 1
+        `,
+        [req.student_id, req.subject, requestId]
+      );
+
+      if (alreadyClaimedResult.rows[0]) {
         await client.query('ROLLBACK');
-        return { error: 'Student already used bonus marks this semester' };
+        return { error: 'Bonus marks already claimed for this subject' };
       }
 
       const subCode = String(req.subject || '').split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 4) || 'SUBJ';
@@ -477,17 +499,14 @@ const reviewBonusMarkRequest = async (employeeId, requestId, action) => {
         [uniqueCode, requestId]
       );
 
-      await client.query(
-        `
-        UPDATE students
-        SET bonus_used = TRUE
-        WHERE id = $1
-        `,
-        [req.student_id]
-      );
-
       await client.query('COMMIT');
-      return { status: 'approved', uniqueCode };
+      return {
+        status: 'approved',
+        uniqueCode,
+        subject: req.subject,
+        studentName: req.student_name,
+        studentEmail: req.student_email,
+      };
     }
 
     await client.query(
@@ -500,7 +519,12 @@ const reviewBonusMarkRequest = async (employeeId, requestId, action) => {
     );
 
     await client.query('COMMIT');
-    return { status: 'rejected' };
+    return {
+      status: 'rejected',
+      subject: req.subject,
+      studentName: req.student_name,
+      studentEmail: req.student_email,
+    };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;

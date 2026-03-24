@@ -40,7 +40,8 @@ const StuDashboard = () => {
     try {
       const response = await axios.get(`${API_BASE}/api/student/notes/my-uploads?studentId=${studentData.student_id}`);
       const uploads = response.data || [];
-      setMyNotesCount(uploads.length);
+      // Active notes in feed should only count accepted notes.
+      setMyNotesCount(uploads.filter((u) => u.status === 'accepted').length);
     } catch (error) {
       console.error('Error fetching upload stats:', error);
     }

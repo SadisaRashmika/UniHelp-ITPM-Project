@@ -15,14 +15,21 @@ const getStudentProfile = async (studentId) => {
       COALESCE(SUM(CASE WHEN sn.status = 'accepted' THEN sn.likes ELSE 0 END), 0)::INT AS full_likes,
       GREATEST(
         COALESCE(SUM(CASE WHEN sn.status = 'accepted' THEN sn.likes ELSE 0 END), 0)
-        - CASE WHEN s.bonus_used THEN 100 ELSE 0 END,
+        - (
+          100 * COALESCE((
+            SELECT COUNT(*)
+            FROM bonus_mark_requests bmr
+            WHERE bmr.student_id = s.id
+              AND bmr.status = 'approved'
+          ), 0)
+        ),
         0
       )::INT AS points,
       s.rank
     FROM students s
     LEFT JOIN student_notes sn ON sn.student_id = s.id
     WHERE s.student_id = $1
-    GROUP BY s.id, s.name, s.initials, s.student_id, s.email, s.year, s.semester, s.rank, s.bonus_used
+    GROUP BY s.id, s.name, s.initials, s.student_id, s.email, s.year, s.semester, s.rank
   `;
   const result = await db.query(query, [studentId]);  // Query by student_id (string)
   return result.rows[0]; // Return the student data if found
@@ -247,16 +254,22 @@ const createBonusMarkRequest = async (studentId, subject, lecturerEmail) => {
     `
     SELECT
       s.id,
-      s.bonus_used,
       GREATEST(
         COALESCE(SUM(CASE WHEN sn.status = 'accepted' THEN sn.likes ELSE 0 END), 0)
-        - CASE WHEN s.bonus_used THEN 100 ELSE 0 END,
+        - (
+          100 * COALESCE((
+            SELECT COUNT(*)
+            FROM bonus_mark_requests bmr
+            WHERE bmr.student_id = s.id
+              AND bmr.status = 'approved'
+          ), 0)
+        ),
         0
       )::INT AS points
     FROM students s
     LEFT JOIN student_notes sn ON sn.student_id = s.id
     WHERE s.student_id = $1
-    GROUP BY s.id, s.bonus_used
+    GROUP BY s.id
     `,
     [studentId]
   );
@@ -264,7 +277,21 @@ const createBonusMarkRequest = async (studentId, subject, lecturerEmail) => {
 
   const student = studentResult.rows[0];
   if (Number(student.points || 0) < 100) return { error: 'You need at least 100 points' };
-  if (student.bonus_used) return { error: 'Bonus marks already used this semester' };
+
+  const approvedForSubject = await db.query(
+    `
+    SELECT id
+    FROM bonus_mark_requests
+    WHERE student_id = $1
+      AND subject = $2
+      AND status = 'approved'
+    LIMIT 1
+    `,
+    [student.id, subject]
+  );
+  if (approvedForSubject.rows[0]) {
+    return { error: 'Bonus marks already claimed for this subject' };
+  }
 
   const lecturerResult = await db.query(
     'SELECT id FROM lecturers WHERE email = $1',
@@ -279,14 +306,13 @@ const createBonusMarkRequest = async (studentId, subject, lecturerEmail) => {
     SELECT id
     FROM bonus_mark_requests
     WHERE student_id = $1
-      AND lecturer_id = $2
-      AND subject = $3
+      AND subject = $2
       AND status = 'pending'
     LIMIT 1
     `,
-    [student.id, lecturerId, subject]
+    [student.id, subject]
   );
-  if (pendingCheck.rows[0]) return { error: 'A pending request already exists for this subject and lecturer' };
+  if (pendingCheck.rows[0]) return { error: 'A pending request already exists for this subject' };
 
   const insertResult = await db.query(
     `
