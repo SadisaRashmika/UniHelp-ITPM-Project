@@ -7,14 +7,8 @@ const API_BASE = 'http://localhost:5000';
 const SORT_OPTIONS = [
   { value: 'recent', label: 'Recent First' },
   { value: 'fifo', label: 'First Uploaded First' },
-  { value: 'rank', label: 'Highest Rank First' },
+  { value: 'likes', label: 'Highest Likes First' },
 ];
-
-const rankLabel = (r) =>
-  r === 1 ? { text: 'Gold', cls: 'bg-yellow-100 text-yellow-700' } :
-  r === 2 ? { text: 'Silver', cls: 'bg-gray-200 text-gray-600' } :
-  r === 3 ? { text: 'Bronze', cls: 'bg-orange-100 text-orange-600' } :
-  { text: `#${r}`, cls: 'bg-gray-100 text-gray-400' };
 
 const formatDate = (iso) => iso ? new Date(iso).toISOString().split('T')[0] : '';
 
@@ -93,7 +87,7 @@ const LecStudentUploads = ({ lecturerId = 'LEC001', onPointsEarned, onPendingCha
       );
     }
 
-    if (sort === 'rank') out.sort((a, b) => a.studentRank - b.studentRank);
+    if (sort === 'likes') out.sort((a, b) => b.studentLikes - a.studentLikes);
     if (sort === 'fifo') out.sort((a, b) => new Date(a.uploadedAt) - new Date(b.uploadedAt));
     if (sort === 'recent') out.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
 
@@ -189,7 +183,6 @@ const LecStudentUploads = ({ lecturerId = 'LEC001', onPointsEarned, onPendingCha
           <p className="text-sm text-gray-400 mb-4">{viewItem.subject}</p>
           <div className="grid grid-cols-2 gap-2 mb-4">
             <InfoCell label="Student" val={viewItem.studentName} />
-            <InfoCell label="Rank" val={`#${viewItem.studentRank}`} />
             <InfoCell label="Likes" val={`❤️ ${viewItem.studentLikes}`} />
             <InfoCell label="Uploaded" val={formatDate(viewItem.uploadedAt)} />
           </div>
@@ -263,49 +256,45 @@ const LecStudentUploads = ({ lecturerId = 'LEC001', onPointsEarned, onPendingCha
 };
 
 const SubmissionCard = ({ resource: r, onView, onAccept, onReject }) => {
-  const rank = rankLabel(r.studentRank);
   const reviewed = r.status !== 'pending';
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5 hover:shadow-sm transition-all">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">
+    <div className="bg-white rounded-2xl border border-gray-200 p-4 hover:shadow-sm transition-all">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">
             {r.studentInitials}
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="font-semibold text-gray-900">{r.title}</p>
+              <p className="font-semibold text-gray-900 text-sm">{r.title}</p>
               <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">{r.subject}</span>
             </div>
-            <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-              <span>By {r.studentName}</span>
-              <span className={`font-semibold px-2 py-0.5 rounded-full ${rank.cls}`}>{rank.text}</span>
-              <span>❤️ {r.studentLikes} likes</span>
+            <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-500 flex-wrap">
+              <span className="font-medium text-gray-700">{r.studentName}</span>
+              <span>❤️ {r.studentLikes}</span>
               <span>{formatDate(r.uploadedAt)}</span>
             </div>
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              <button
-                onClick={() => downloadFile(r.fileUrl, r.file)}
-                className="text-xs bg-gray-100 text-blue-600 px-2.5 py-1 rounded-lg font-medium hover:underline"
-              >
-                {r.file}
-              </button>
-            </div>
+            <button
+              onClick={() => downloadFile(r.fileUrl, r.file)}
+              className="text-xs text-blue-600 px-1.5 py-0.5 rounded font-medium hover:underline mt-1"
+            >
+              {r.file}
+            </button>
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 shrink-0">
+        <div className="flex gap-1.5 shrink-0">
           {!reviewed ? (
             <>
-              <button onClick={onView} className="px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">
+              <button onClick={onView} className="px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-50 whitespace-nowrap">
                 Preview
               </button>
-              <button onClick={onAccept} className="px-4 py-2 bg-green-500 text-white rounded-xl text-sm font-semibold hover:bg-green-600 flex items-center gap-1.5">
-                <CheckCircle size={14} /> Accept (+10pts)
+              <button onClick={onAccept} className="px-2.5 py-1.5 bg-green-500 text-white rounded-lg text-xs font-semibold hover:bg-green-600 flex items-center gap-1 whitespace-nowrap">
+                <CheckCircle size={12} /> Accept
               </button>
-              <button onClick={onReject} className="px-4 py-2 border border-red-200 text-red-500 rounded-xl text-sm font-semibold hover:bg-red-50 flex items-center gap-1.5">
-                <XCircle size={14} /> Reject (+5pts)
+              <button onClick={onReject} className="px-2.5 py-1.5 border border-red-200 text-red-500 rounded-lg text-xs font-semibold hover:bg-red-50 flex items-center gap-1 whitespace-nowrap">
+                <XCircle size={12} /> Reject
               </button>
             </>
           ) : (

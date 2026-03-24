@@ -48,7 +48,7 @@ const StuResourceCard = ({ lecture, onUpload, onQuiz, noteLikes, likedSet, onLik
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-sm transition-all">
       {/* Header image area */}
       <div
-        className={`h-36 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden ${lecture.youtubeUrl ? 'cursor-pointer' : ''}`}
+        className={`h-46 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden ${lecture.youtubeUrl ? 'cursor-pointer' : ''}`}
         onClick={openYoutube}
         title={lecture.youtubeUrl ? 'Open YouTube video' : ''}
       >
@@ -74,7 +74,7 @@ const StuResourceCard = ({ lecture, onUpload, onQuiz, noteLikes, likedSet, onLik
               </span>
             ))}
           </div>
-          <p className="text-sm text-gray-400 font-medium mt-2.5"><GraduationCap size={16} /> {lecture.lecturer}</p>
+          <p className="text-sm text-gray-700 font-medium mt-2.5"><GraduationCap size={16} /> {lecture.lecturer}</p>
           {lecture.lecturerEmail && (
             <p className="text-xs text-blue-400 mt-0.5">{lecture.lecturerEmail}</p>
           )}

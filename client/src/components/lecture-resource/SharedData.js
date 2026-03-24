@@ -18,6 +18,7 @@ export const SUBJECTS = [
   'Data Structures and Algorithms',
   'Database Management Systems',
   'Advanced Algorithms',
+  'Machine Learning',
 ];
 
 export const YEARS = ['1st Year', '2nd Year', '3rd Year', '4th Year'];

@@ -82,10 +82,29 @@ const normalizeAcceptedNote = (row, currentStudentId) => ({
   isMyUpload: row.owner_student_id === currentStudentId,
   tags: [row.subject, row.topic, row.year, row.semester].filter(Boolean),
   file: row.filename,
-  fileUrl: row.file_url ? `${API_BASE}${row.file_url}` : null,
+  fileUrl: normalizeFileUrl({ url: row.file_url, filepath: row.filepath }),
   likes: row.likes || 0,
   uploadedAt: row.uploaded_at,
 });
+
+const downloadFile = async (url, filename) => {
+  if (!url) return;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Download failed');
+    const blob = await res.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename || 'student-note';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+};
 
 const YEAR_OPTIONS = [
   { value: 'all',      label: 'All Years'     },
@@ -310,17 +329,25 @@ const StudentNoteCard = ({ note, likes, liked, onLike }) => (
 
       {/* Uploader */}
       <div>
-      <p className="text-sm text-gray-400 font-medium"><User size={16}/>Uploaded by {note.uploader}</p>
+      <p className="text-sm text-gray-700 font-medium"><User size={16}/>Uploaded by {note.uploader}</p>
       </div>
       {/* File */}
       <div>
         <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Files:</p>
-        <div className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline cursor-pointer">
-          <a href={note.fileUrl || '#'} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:underline">
+        {note.fileUrl ? (
+          <button
+            onClick={() => downloadFile(note.fileUrl, note.file)}
+            className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline cursor-pointer"
+          >
             <FileText size={13} className="shrink-0" />
             {note.file}
-          </a>
-        </div>
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 text-gray-400 text-sm font-medium">
+            <FileText size={13} className="shrink-0" />
+            {note.file || 'File unavailable'}
+          </div>
+        )}
       </div>
 
       {/* Like row */}

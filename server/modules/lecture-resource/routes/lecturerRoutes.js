@@ -26,6 +26,9 @@ router.post('/create-quiz', lecturerController.createQuiz);
 // Route to delete a lecturer resource
 router.delete('/resources/:lectureId', lecturerController.deleteLecturerResource);
 
+// Route to update a lecturer resource and optional quiz
+router.patch('/resources/:lectureId', upload.array('files'), lecturerController.updateLecturerResource);
+
 // Get student note submissions for lecturer review
 router.get('/submissions', lecturerController.getStudentSubmissions);
 

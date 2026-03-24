@@ -109,6 +109,57 @@ const deleteLecturerResource = async (req, res) => {
   }
 };
 
+const updateLecturerResource = async (req, res) => {
+  try {
+    const { lectureId } = req.params;
+    const {
+      lecturerId,
+      title,
+      subject,
+      topic,
+      year,
+      semester,
+      youtubeUrl,
+      addQuiz,
+      quizTitle,
+      questions,
+    } = req.body;
+
+    let parsedQuestions = [];
+    if (typeof questions === 'string' && questions.trim()) {
+      parsedQuestions = JSON.parse(questions);
+    } else if (Array.isArray(questions)) {
+      parsedQuestions = questions;
+    }
+
+    const updated = await lecturerModel.updateLecturerResource(
+      lecturerId,
+      Number(lectureId),
+      {
+        title,
+        subject,
+        topic,
+        year,
+        semester,
+        youtubeUrl,
+        files: req.files || [],
+        addQuiz: addQuiz === true || String(addQuiz).toLowerCase() === 'true',
+        quizTitle,
+        questions: parsedQuestions,
+      }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Lecture not found or not owned by lecturer' });
+    }
+
+    res.status(200).json({ message: 'Resource updated successfully' });
+  } catch (error) {
+    console.error('Error updating resource:', error);
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+};
+
 const getStudentSubmissions = async (req, res) => {
   try {
     const { lecturerId } = req.query;
@@ -201,6 +252,7 @@ module.exports = {
   uploadResource,
   createQuiz,
   deleteLecturerResource,
+  updateLecturerResource,
   getStudentSubmissions,
   reviewStudentSubmission,
   getBonusMarkRequests,

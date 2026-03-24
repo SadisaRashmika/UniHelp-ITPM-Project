@@ -195,13 +195,15 @@ const getStudentSubmissions = async (employeeId) => {
       s.name AS student_name,
       s.initials AS student_initials,
       s.rank AS student_rank,
-      s.likes AS student_likes,
+      COALESCE(SUM(CASE WHEN sn2.status = 'accepted' THEN sn2.likes ELSE 0 END), 0)::INT AS student_likes,
       l.subject
     FROM student_notes sn
     JOIN lectures l ON l.id = sn.lecture_id
     JOIN lecturers lec ON lec.id = l.lecturer_id
     JOIN students s ON s.id = sn.student_id
+    LEFT JOIN student_notes sn2 ON sn2.student_id = s.id AND sn2.status = 'accepted'
     WHERE lec.employee_id = $1
+    GROUP BY sn.id, sn.title, sn.filename, sn.filepath, sn.filesize, sn.status, sn.rejection_note, sn.uploaded_at, s.name, s.initials, s.rank, l.subject
     ORDER BY sn.uploaded_at DESC, sn.id DESC
   `;
 
@@ -277,6 +279,102 @@ const deleteLecturerResource = async (employeeId, lectureId) => {
 
   const result = await db.query(query, [lectureId, employeeId]);
   return result.rows[0] || null;
+};
+
+const updateLecturerResource = async (employeeId, lectureId, payload) => {
+  const {
+    title,
+    subject,
+    topic,
+    year,
+    semester,
+    youtubeUrl,
+    files = [],
+    addQuiz = false,
+    quizTitle = '',
+    questions = [],
+  } = payload;
+
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+
+    const updateLectureResult = await client.query(
+      `
+      UPDATE lectures
+      SET
+        title = $1,
+        subject = $2,
+        topic = $3,
+        year = $4,
+        semester = $5,
+        youtube_url = $6
+      WHERE id = $7
+        AND lecturer_id = (
+          SELECT id FROM lecturers WHERE employee_id = $8
+        )
+      RETURNING id
+      `,
+      [title, subject, topic, year, semester, youtubeUrl, lectureId, employeeId]
+    );
+
+    if (!updateLectureResult.rows[0]) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    if (Array.isArray(files) && files.length > 0) {
+      const fileQuery = `
+        INSERT INTO lecture_files (lecture_id, filename, filepath)
+        VALUES ($1, $2, $3)
+      `;
+
+      for (const file of files) {
+        const filePath = path.join('uploads/notes', file.filename);
+        await client.query(fileQuery, [lectureId, file.originalname, filePath]);
+      }
+    }
+
+    // Replace quiz configuration based on toggle state from frontend.
+    await client.query(
+      `
+      DELETE FROM quizzes
+      WHERE lecture_id = $1
+      `,
+      [lectureId]
+    );
+
+    if (addQuiz) {
+      const quizInsertResult = await client.query(
+        `
+        INSERT INTO quizzes (lecture_id, title)
+        VALUES ($1, $2)
+        RETURNING id
+        `,
+        [lectureId, quizTitle]
+      );
+
+      const quizId = quizInsertResult.rows[0].id;
+      for (const question of questions) {
+        const { questionText, options, answerIndex, orderNum } = question;
+        await client.query(
+          `
+          INSERT INTO quiz_questions (quiz_id, question, options, answer_index, order_num)
+          VALUES ($1, $2, $3, $4, $5)
+          `,
+          [quizId, questionText, JSON.stringify(options), answerIndex, orderNum]
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+    return updateLectureResult.rows[0];
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 const getBonusMarkRequests = async (employeeId) => {
@@ -436,6 +534,7 @@ module.exports = {
   uploadResource,
   createQuiz,
   deleteLecturerResource,
+  updateLecturerResource,
   getStudentSubmissions,
   reviewStudentSubmission,
   getBonusMarkRequests,
