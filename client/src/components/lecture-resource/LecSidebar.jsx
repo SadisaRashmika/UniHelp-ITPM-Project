@@ -1,11 +1,12 @@
 import React from 'react';
-import { User, FileCheck, BookOpen, Award, LogOut } from 'lucide-react';
+import { User, FileCheck, BookOpen, Award, LogOut, Calendar } from 'lucide-react';
 
 const NAV = [
   { key: 'profile',    label: 'Profile',                icon: User      },
   { key: 'review',     label: 'Check Student Uploads',  icon: FileCheck },
   { key: 'upload',     label: 'Resources and Quiz',     icon: BookOpen  },
   { key: 'extramarks', label: 'Extra Marks Approve',    icon: Award     },
+  { key: 'timetable',  label: 'My Timetable',           icon: Calendar  },
 ];
 
 const LecSidebar = ({ activeTab, onTabChange, pendingCount, extraMarksPending, lecturer, onLogout }) => (

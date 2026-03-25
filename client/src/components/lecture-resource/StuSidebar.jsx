@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Trophy, FileText, GraduationCap, Calendar, LogOut } from 'lucide-react';
+import { Heart, Trophy, FileText, GraduationCap, Calendar, LogOut, Clock } from 'lucide-react';
 
 const StuSidebar = ({ points, quizzes, notes, level, user, onLogout }) => {
   const levelColor =
@@ -50,6 +50,14 @@ const StuSidebar = ({ points, quizzes, notes, level, user, onLogout }) => {
             <Calendar size={15} className="text-gray-400" /> Spring 2026
           </div>
         </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="px-4 py-3 border-b border-gray-100">
+        <a href="/timetable" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600 font-medium hover:from-blue-100 hover:to-purple-100 transition-colors">
+          <Clock size={18} className="text-blue-500" />
+          <span>My Timetable</span>
+        </a>
       </div>
 
       {/* Stats */}
