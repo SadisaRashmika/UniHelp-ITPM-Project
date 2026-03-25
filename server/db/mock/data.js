@@ -83,27 +83,34 @@ async function initializeData() {
 
     // Insert timeslots
     // day_of_week: 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday
-    // Lecturer IDs: 2=John Smith, 3=Sarah Johnson, 4=Michael Brown
+    // Subject IDs: 1=IT2120, 2=SE2010, 3=IT2130, 4=IT2140, 5=IT2011, 6=IT2150, 7=SE2020, 8=IT2160
+    // Lecturer IDs: 2=Dr. Sarath Gunasekara, 3=Prof. Chaminda Wijesinghe, 4=Lakmi Siriwardena
+    // Location IDs: 1=Lecture Hall A (100), 2=Lecture Hall B (80), 3=Computer Lab 1 (40), 4=Computer Lab 2 (40), 5=Seminar Room 1 (30)
     
     // Monday
-    insertTimeslot(1, 3, 1, 1, '09:00', '11:00');  // CS101 with Dr. Sarah Johnson in Lecture Hall A
-    insertTimeslot(2, 4, 2, 1, '14:00', '16:00');  // CS201 with Prof. Michael Brown in Lecture Hall B
+    insertTimeslot(1, 2, 1, 1, '08:00', '10:00', 'Probability and Statistics - Introduction');  // IT2120 with Dr. Sarath in Lecture Hall A
+    insertTimeslot(2, 3, 3, 1, '10:00', '12:00', 'OOP - Inheritance and Polymorphism');  // SE2010 with Prof. Chaminda in Computer Lab 1
+    insertTimeslot(7, 4, 4, 1, '14:00', '16:00', 'Web Technologies - React Basics');  // SE2020 with Lakmi in Computer Lab 2
 
     // Tuesday
-    insertTimeslot(3, 3, 3, 2, '09:00', '11:00');  // CS301 with Dr. Sarah Johnson in Computer Lab 1
-    insertTimeslot(4, 2, 4, 2, '14:00', '16:00');  // CS401 with Dr. John Smith in Computer Lab 2
+    insertTimeslot(3, 2, 2, 2, '09:00', '11:00', 'Operating Systems - Process Management');  // IT2130 with Dr. Sarath in Lecture Hall B
+    insertTimeslot(4, 3, 3, 2, '11:00', '13:00', 'Database Design - Normalization');  // IT2140 with Prof. Chaminda in Computer Lab 1
+    insertTimeslot(8, 4, 5, 2, '14:00', '16:00', 'Professional Skills - Report Writing');  // IT2160 with Lakmi in Seminar Room 1
 
     // Wednesday
-    insertTimeslot(1, 3, 1, 3, '10:00', '12:00');  // CS101 with Dr. Sarah Johnson in Lecture Hall A
-    insertTimeslot(5, 4, 5, 3, '14:00', '16:00');  // CS402 with Prof. Michael Brown in Seminar Room 1
+    insertTimeslot(1, 2, 1, 3, '08:00', '10:00', 'Probability - Conditional Probability');  // IT2120 with Dr. Sarath in Lecture Hall A
+    insertTimeslot(5, 3, 2, 3, '10:00', '12:00', 'AI/ML - Neural Networks Introduction');  // IT2011 with Prof. Chaminda in Lecture Hall B
+    insertTimeslot(6, 4, 3, 3, '14:00', '16:00', 'IT Project - Sprint Planning');  // IT2150 with Lakmi in Computer Lab 1
 
     // Thursday
-    insertTimeslot(2, 4, 2, 4, '09:00', '11:00');  // CS201 with Prof. Michael Brown in Lecture Hall B
-    insertTimeslot(3, 3, 3, 4, '14:00', '16:00');  // CS301 with Dr. Sarah Johnson in Computer Lab 1
+    insertTimeslot(2, 2, 3, 4, '09:00', '11:00', 'OOP - Design Patterns');  // SE2010 with Dr. Sarath in Computer Lab 1
+    insertTimeslot(3, 3, 2, 4, '11:00', '13:00', 'Operating Systems - Memory Management');  // IT2130 with Prof. Chaminda in Lecture Hall B
+    insertTimeslot(7, 4, 4, 4, '14:00', '16:00', 'Web Technologies - Backend Development');  // SE2020 with Lakmi in Computer Lab 2
 
     // Friday
-    insertTimeslot(4, 2, 4, 5, '09:00', '11:00');  // CS401 with Dr. John Smith in Computer Lab 2
-    insertTimeslot(5, 4, 1, 5, '13:00', '15:00');  // CS402 with Prof. Michael Brown in Lecture Hall A
+    insertTimeslot(4, 2, 1, 5, '08:00', '10:00', 'Database Design - SQL Queries');  // IT2140 with Dr. Sarath in Lecture Hall A
+    insertTimeslot(5, 3, 5, 5, '10:00', '12:00', 'AI/ML - Supervised Learning');  // IT2011 with Prof. Chaminda in Seminar Room 1
+    insertTimeslot(6, 4, 1, 5, '13:00', '15:00', 'IT Project - Final Presentation Prep');  // IT2150 with Lakmi in Lecture Hall A
 
     // Insert bookings (students booking seats)
     // Student IDs: 5=Alice, 6=Bob, 7=Charlie, 8=Diana, 9=Eva

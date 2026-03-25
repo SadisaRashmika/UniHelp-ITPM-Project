@@ -73,11 +73,12 @@ function executeSelect(sql, params) {
 // Execute SELECT with JOIN
 function executeSelectWithJoin(sql, params) {
     // Parse the main table
-    const fromMatch = sql.match(/FROM\s+(\w+)/i);
+    const fromMatch = sql.match(/FROM\s+(\w+)\s+(\w+)?/i);
     if (!fromMatch) {
         throw new Error('Invalid SELECT: no table specified');
     }
     const mainTable = fromMatch[1].toLowerCase();
+    const mainAlias = fromMatch[2] ? fromMatch[2].toLowerCase() : mainTable;
     
     if (!data[mainTable]) {
         throw new Error(`Table "${mainTable}" does not exist`);
@@ -105,7 +106,7 @@ function executeSelectWithJoin(sql, params) {
         // Perform the join
         rows = rows.map(row => {
             // Determine which column to match
-            const leftValue = leftTable === mainTable || leftTable === mainTable[0] ? row[leftCol] : row[`${leftTable}_${leftCol}`];
+            const leftValue = row[leftCol];
             
             // Find matching row in join table
             const matchingRow = data[joinTable].find(jRow => {
@@ -116,9 +117,7 @@ function executeSelectWithJoin(sql, params) {
             if (matchingRow) {
                 // Add joined columns with prefix
                 Object.keys(matchingRow).forEach(key => {
-                    if (key !== rightCol) { // Skip the join key
-                        row[`${joinAlias}_${key}`] = matchingRow[key];
-                    }
+                    row[`${joinAlias}_${key}`] = matchingRow[key];
                 });
             }
             
@@ -144,13 +143,71 @@ function executeSelectWithJoin(sql, params) {
         });
     }
     
-    // Handle column selection
+    // Handle column selection with proper alias support
     const selectMatch = sql.match(/SELECT\s+(.+?)\s+FROM/i);
     if (selectMatch && selectMatch[1].trim() !== '*') {
-        rows = selectColumns(rows, selectMatch[1]);
+        rows = selectColumnsWithAliases(rows, selectMatch[1], mainAlias);
     }
     
     return { rows, rowCount: rows.length };
+}
+
+// Select columns with proper alias handling
+function selectColumnsWithAliases(rows, columnsStr, mainAlias) {
+    const columns = columnsStr.split(',').map(c => c.trim());
+    
+    return rows.map(row => {
+        const newRow = {};
+        columns.forEach(col => {
+            // Handle table.* (select all from that table)
+            if (col.match(/^\w+\.\*$/)) {
+                const tablePrefix = col.split('.')[0].toLowerCase();
+                // Add all columns that start with this prefix
+                Object.keys(row).forEach(key => {
+                    if (key.startsWith(`${tablePrefix}_`)) {
+                        const colName = key.substring(tablePrefix.length + 1);
+                        newRow[colName] = row[key];
+                    } else if (tablePrefix === mainAlias && !key.includes('_')) {
+                        // Main table columns without prefix
+                        newRow[key] = row[key];
+                    }
+                });
+                return;
+            }
+            
+            // Handle table.column format
+            const parts = col.split('.');
+            let sourceCol, targetCol;
+            
+            if (parts.length === 2) {
+                const tablePrefix = parts[0].toLowerCase();
+                const colPart = parts[1];
+                
+                // Handle alias (e.g., "u.full_name as lecturer_name")
+                const aliasMatch = colPart.match(/(\w+)\s+(?:AS|as)\s+(\w+)/);
+                if (aliasMatch) {
+                    sourceCol = `${tablePrefix}_${aliasMatch[1]}`;
+                    targetCol = aliasMatch[2];
+                } else {
+                    sourceCol = `${tablePrefix}_${colPart}`;
+                    targetCol = colPart;
+                }
+            } else {
+                // Simple column format
+                const aliasMatch = col.match(/(\w+)(?:\s+(?:AS|as)\s+(\w+))?/i);
+                if (aliasMatch) {
+                    sourceCol = aliasMatch[1];
+                    targetCol = aliasMatch[2] || sourceCol;
+                } else {
+                    sourceCol = col;
+                    targetCol = col;
+                }
+            }
+            
+            newRow[targetCol] = row[sourceCol];
+        });
+        return newRow;
+    });
 }
 
 // Select specific columns
