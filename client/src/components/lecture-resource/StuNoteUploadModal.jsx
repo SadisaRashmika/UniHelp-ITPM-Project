@@ -1,10 +1,40 @@
 import React, { useState } from 'react';
 import { X, Upload } from 'lucide-react';
+import axios from 'axios';
 
-const StuNoteUploadModal = ({ isOpen, onClose, lecture }) => {
+const API_BASE = 'http://localhost:5000';
+
+const StuNoteUploadModal = ({ isOpen, onClose, lecture, student, onUploaded }) => {
   const [file, setFile] = useState(null);
+  const [topic, setTopic] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const handleClose = () => { setFile(null); onClose(); };
+  const handleClose = () => {
+    setFile(null);
+    setTopic('');
+    onClose();
+  };
+
+  const handleSubmit = async () => {
+    if (!topic.trim() || !file || !lecture || !student) return;
+    try {
+      setSaving(true);
+      const formData = new FormData();
+      formData.append('studentId', student.student_id || 'STU001');
+      formData.append('lectureId', String(lecture.id));
+      formData.append('title', topic.trim());
+      formData.append('shortNote', topic.trim());
+      formData.append('file', file);
+
+      await axios.post(`${API_BASE}/api/student/notes/upload`, formData);
+      onUploaded?.();
+      handleClose();
+    } catch (error) {
+      console.error('Error uploading student note:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!isOpen || !lecture) return null;
 
@@ -33,19 +63,39 @@ const StuNoteUploadModal = ({ isOpen, onClose, lecture }) => {
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">Note Title</label>
-              <input
-                type="text"
-                placeholder="e.g., ML Summary Notes"
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all placeholder:text-gray-400"
-              />
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">Student Name</label>
+              <input value={student?.name || ''} readOnly className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-500" />
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-1.5">Description</label>
-              <textarea
-                placeholder="Brief description of your note"
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all h-24 resize-none placeholder:text-gray-400"
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">Lecture Name</label>
+              <input value={lecture?.title || ''} readOnly className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-500" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Year</label>
+                <input value={lecture?.year || ''} readOnly className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-500" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Semester</label>
+                <input value={lecture?.semester || ''} readOnly className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-500" />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">Relevant Lecturer</label>
+              <input value={lecture?.lecturer || ''} readOnly className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-500" />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-1.5">Topic for Short Note</label>
+              <input
+                type="text"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="e.g., Graph traversal summary"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all placeholder:text-gray-400"
               />
             </div>
 
@@ -55,9 +105,9 @@ const StuNoteUploadModal = ({ isOpen, onClose, lecture }) => {
                 <Upload size={16} className="text-gray-400 shrink-0" />
                 <span className="text-sm text-gray-500">{file ? file.name : 'Choose File'}</span>
                 {!file && <span className="text-sm text-gray-400">No file chosen</span>}
-                <input type="file" className="hidden" onChange={e => setFile(e.target.files[0])} />
+                <input type="file" accept=".pdf" className="hidden" onChange={e => setFile(e.target.files[0])} />
               </label>
-              <p className="text-xs text-gray-400 mt-1.5">PDF, DOCX, PPTX supported</p>
+              <p className="text-xs text-gray-400 mt-1.5">PDF supported</p>
             </div>
 
             <div className="flex gap-3 pt-2">
@@ -65,9 +115,11 @@ const StuNoteUploadModal = ({ isOpen, onClose, lecture }) => {
                 className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all">
                 Cancel
               </button>
-              <button onClick={handleClose}
+              <button
+                onClick={handleSubmit}
+                disabled={!topic.trim() || !file || saving}
                 className="flex-1 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-black transition-all">
-                Upload
+                {saving ? 'Uploading...' : 'Upload'}
               </button>
             </div>
           </div>

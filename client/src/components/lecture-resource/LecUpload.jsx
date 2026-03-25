@@ -1,11 +1,32 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Plus, Trash2, Upload, ChevronDown, Eye, BookOpen, X, FileText, CheckCircle2 } from 'lucide-react';
-import { LECTURER, SUBJECTS, YEARS, SEMESTERS, LECTURES } from './SharedData';
+import axios from 'axios';
+import { SUBJECTS, YEARS, SEMESTERS } from './SharedData';
 
 const EMPTY_Q = () => ({ id: Date.now() + Math.random(), question: '', options: ['', '', '', ''], answer: 0 });
+const API_BASE = 'http://localhost:5000';
 
-const LecUpload = ({ onPublish }) => {
-  const [lectures,  setLectures]  = useState(LECTURES.filter(l => l.lecturer === LECTURER.name));
+const formatDate = (iso) => {
+  if (!iso) return '';
+  return new Date(iso).toISOString().split('T')[0];
+};
+
+const normalizeLecture = (raw, lecturerName) => ({
+  id: raw.id,
+  title: raw.title,
+  lecturer: raw.lecturer || lecturerName || 'Lecturer',
+  subject: raw.subject,
+  topic: raw.topic,
+  year: raw.year,
+  semester: raw.semester,
+  publishedAt: raw.publishedAt || formatDate(raw.published_at),
+  files: (raw.files || []).map((f) => (typeof f === 'string' ? f : f.filename)).filter(Boolean),
+  quiz: raw.quiz || null,
+});
+
+const LecUpload = ({ lecturer, onPublish }) => {
+  const [lectures, setLectures] = useState([]);
+  //const [lectures,  setLectures]  = useState(LECTURES.filter(l => l.lecturer === LECTURER.name));
   const [viewLec,   setViewLec]   = useState(null);
   const [toast,     setToast]     = useState(null);
 
@@ -14,11 +35,31 @@ const LecUpload = ({ onPublish }) => {
   const [topic,     setTopic]     = useState('');
   const [year,      setYear]      = useState('');
   const [semester,  setSemester]  = useState('');
-  const [desc,      setDesc]      = useState('');
   const [files,     setFiles]     = useState([]);
+  const [ytLink,    setYtLink]    = useState(''); // State for YouTube link
   const [addQuiz,   setAddQuiz]   = useState(false);
   const [quizTitle, setQuizTitle] = useState('');
   const [questions, setQs]        = useState([EMPTY_Q()]);
+  const [isPublishing, setIsPublishing] = useState(false);
+
+  const lecturerEmployeeId = lecturer?.employee_id || 'LEC001';
+  const lecturerDbId = lecturer?.id;
+
+  const loadLectures = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/api/lecturer/resources?lecturerId=${lecturerEmployeeId}`);
+      const normalized = (response.data || []).map((item) => normalizeLecture(item, lecturer?.name));
+      setLectures(normalized);
+    } catch (error) {
+      console.error('Error fetching lectures:', error);
+      showToast('Failed to fetch lectures', 'err');
+    }
+  };
+
+  useEffect(() => {
+    loadLectures();
+  }, [lecturerEmployeeId]);
+
 
   const showToast = (msg, type = 'ok') => {
     setToast({ msg, type });
@@ -27,7 +68,14 @@ const LecUpload = ({ onPublish }) => {
 
   const handleFilePick = (e) => {
     const picked = Array.from(e.target.files || []);
-    setFiles(prev => [...prev, ...picked.map(f => ({ name: f.name, size: (f.size / 1024).toFixed(0) + ' KB' }))]);
+    setFiles(prev => [
+      ...prev,
+      ...picked.map((f) => ({
+        name: f.name,
+        size: (f.size / 1024).toFixed(0) + ' KB',
+        file: f,
+      })),
+    ]);
     e.target.value = '';
   };
 
@@ -38,10 +86,11 @@ const LecUpload = ({ onPublish }) => {
 
   const resetForm = () => {
     setTitle(''); setSubject(''); setTopic(''); setYear(''); setSemester('');
-    setDesc(''); setFiles([]); setAddQuiz(false); setQuizTitle(''); setQs([EMPTY_Q()]);
+    setFiles([]); setAddQuiz(false); setQuizTitle(''); setQs([EMPTY_Q()]);
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
+    if (!lecturerDbId) { showToast('Lecturer profile is not loaded yet.', 'err'); return; }
     if (!title.trim())  { showToast('Please enter a lecture title.', 'err');  return; }
     if (!subject)       { showToast('Please select a subject.', 'err');       return; }
     if (!year)          { showToast('Please select a year.', 'err');          return; }
@@ -52,18 +101,64 @@ const LecUpload = ({ onPublish }) => {
       if (bad) { showToast('Fill in all quiz questions and options.', 'err'); return; }
     }
 
-    const newLecture = {
-      id: Date.now(), title: title.trim(), lecturer: LECTURER.name,
-      subject, topic: topic.trim(), year, semester,
-      description: desc.trim(),
-      files: files.length > 0 ? files.map(f => f.name) : ['(No files uploaded)'],
-      publishedAt: new Date().toISOString().split('T')[0],
-      quiz: addQuiz ? { title: quizTitle.trim(), questions: questions.map(q => ({ question: q.question, options: q.options, answer: q.answer })) } : null,
-    };
-    setLectures(prev => [newLecture, ...prev]);
-    onPublish(newLecture);
-    resetForm();
-    showToast('✅ Lecture published successfully!');
+    try {
+      setIsPublishing(true);
+
+      const formData = new FormData();
+      formData.append('lecturerId', String(lecturerDbId));
+      formData.append('title', title.trim());
+      formData.append('subject', subject);
+      formData.append('topic', topic.trim());
+      formData.append('year', year);
+      formData.append('semester', semester);
+      formData.append('youtubeUrl', ytLink.trim());
+      files.forEach((f) => {
+        if (f.file) formData.append('files', f.file);
+      });
+
+      const resourceRes = await axios.post(`${API_BASE}/api/lecturer/upload-resource`, formData);
+      const lectureId = resourceRes.data?.lectureId;
+
+      if (addQuiz && lectureId) {
+        await axios.post(`${API_BASE}/api/lecturer/create-quiz`, {
+          lectureId,
+          title: quizTitle.trim(),
+          questions: questions.map((q, idx) => ({
+            questionText: q.question,
+            options: q.options,
+            answerIndex: q.answer,
+            orderNum: idx + 1,
+          })),
+        });
+      }
+
+      await loadLectures();
+      onPublish?.({ lectureId });
+      resetForm();
+      showToast('Resource saved to database successfully!');
+    } catch (error) {
+      console.error('Error publishing resource:', error);
+      showToast('Failed to publish resource. Please try again.', 'err');
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
+  const handleDeleteLecture = async (lectureId) => {
+    const confirmed = window.confirm('Are you sure you want to delete this lecture? This action cannot be undone.');
+    if (!confirmed) return;
+
+    try {
+      await axios.delete(`${API_BASE}/api/lecturer/resources/${lectureId}?lecturerId=${lecturerEmployeeId}`);
+      setLectures((prev) => prev.filter((l) => l.id !== lectureId));
+      if (viewLec?.id === lectureId) {
+        setViewLec(null);
+      }
+      showToast('Lecture deleted successfully.');
+    } catch (error) {
+      console.error('Error deleting lecture:', error);
+      showToast('Failed to delete lecture.', 'err');
+    }
   };
 
   return (
@@ -88,14 +183,17 @@ const LecUpload = ({ onPublish }) => {
                 className={inputCls} />
             </Field>
             <Field label="Lecturer Name">
-              <input value={LECTURER.name} readOnly className={`${inputCls} bg-gray-50 text-gray-400 cursor-not-allowed`} />
+              <div>
+                <input value={lecturer?.name || ''} readOnly className={`${inputCls} bg-gray-50 text-gray-400 cursor-not-allowed`} />
+                <p className="text-xs text-gray-400 mt-1">{lecturer?.email || 'No lecturer email available'}</p>
+              </div>
             </Field>
           </div>
 
           {/* Row 2 */}
           <div className="grid grid-cols-2 gap-5">
             <Field label="Subject">
-              <SelectField value={subject} onChange={setSubject} placeholder="e.g., Machine Learning">
+              <SelectField value={subject} onChange={setSubject} placeholder="Select subject">
                 {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
               </SelectField>
             </Field>
@@ -120,12 +218,13 @@ const LecUpload = ({ onPublish }) => {
             </Field>
           </div>
 
-          {/* Description */}
-          <Field label="Description">
-            <textarea value={desc} onChange={e => setDesc(e.target.value)}
-              placeholder="Brief description of the lecture content"
-              className={`${inputCls} h-24 resize-none`} />
+          {/* YouTube Link */}
+          <Field label="YouTube Link (Optional)">
+            <input value={ytLink} onChange={e => setYtLink(e.target.value)}
+              placeholder="Enter YouTube link"
+              className={inputCls} />
           </Field>
+
         </div>
 
         {/* Upload documents section */}
@@ -211,8 +310,9 @@ const LecUpload = ({ onPublish }) => {
               Cancel
             </button>
             <button onClick={handlePublish}
+              disabled={isPublishing}
               className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-black transition-all flex items-center gap-2">
-              <Upload size={15} /> Publish Resource & Quiz
+              <Upload size={15} /> {isPublishing ? 'Publishing...' : 'Publish Resource & Quiz'}
             </button>
           </div>
         </div>
@@ -240,6 +340,13 @@ const LecUpload = ({ onPublish }) => {
                   <button onClick={() => setViewLec(l)}
                     className="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-50">
                     <Eye size={12} /> Preview
+                  </button>
+                  <button
+                    onClick={() => handleDeleteLecture(l.id)}
+                    className="flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg"
+                    title="Delete lecture"
+                  >
+                    <Trash2 size={12} /> Delete
                   </button>
                 </div>
               </div>
@@ -320,7 +427,7 @@ const SelectField = ({ value, onChange, placeholder, children }) => (
   <div className="relative">
     <select value={value} onChange={e => onChange(e.target.value)}
       className={`${inputCls} appearance-none pr-9 cursor-pointer`}>
-      <option value="">{placeholder}</option>
+      <option value="" disabled hidden>{placeholder}</option>
       {children}
     </select>
     <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
