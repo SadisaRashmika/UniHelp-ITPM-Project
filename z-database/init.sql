@@ -95,3 +95,41 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
 	answer_index INTEGER NOT NULL,
 	order_num INTEGER NOT NULL DEFAULT 1
 );
+
+-- Admins
+CREATE TABLE IF NOT EXISTS admins (
+	id SERIAL PRIMARY KEY,
+	name VARCHAR(100) NOT NULL,
+	admin_id VARCHAR(50) UNIQUE NOT NULL,
+	email VARCHAR(150) UNIQUE NOT NULL,
+	password VARCHAR(255) NOT NULL,
+	role VARCHAR(20) DEFAULT 'admin',
+	created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Feedbacks
+CREATE TABLE IF NOT EXISTS feedbacks (
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER REFERENCES students(id) ON DELETE SET NULL,
+    lecturer_id INTEGER REFERENCES lecturers(id) ON DELETE CASCADE,
+    subject VARCHAR(150),
+    rating INTEGER CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- TICKETS (INQUIRIES)
+CREATE TABLE IF NOT EXISTS tickets (
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER REFERENCES students(id) ON DELETE CASCADE,
+    subject VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    screenshot_url VARCHAR(255),
+    category VARCHAR(100) DEFAULT 'Technical',
+    status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_tickets_student_id ON tickets(student_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON tickets(created_at DESC);
+
