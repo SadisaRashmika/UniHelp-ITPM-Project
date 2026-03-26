@@ -337,6 +337,10 @@ const StudentTicketForm = ({ studentId = 1 }) => {
                                                 <Clock size={12} /> {new Date(selectedTicket.created_at).toLocaleString()}
                                             </span>
                                         </div>
+                                        <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex items-center justify-between gap-4">
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact Number</span>
+                                            <span className="text-xs font-bold text-gray-700">{selectedTicket.contact_number || 'N/A'}</span>
+                                        </div>
                                         <h3 className="text-xl font-bold text-gray-900 tracking-tight leading-tight uppercase">{selectedTicket.subject}</h3>
                                         <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
                                             <p className="text-xs text-gray-600 leading-relaxed font-medium italic whitespace-pre-wrap">
