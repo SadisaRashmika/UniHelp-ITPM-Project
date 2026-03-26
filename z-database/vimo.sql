@@ -79,3 +79,11 @@ INSERT INTO tickets (student_id, subject, description, screenshot_url, category,
 (7, 'Module Registration Error', 'Unable to register for the Cloud Computing elective module.', NULL, 'Academic Assistance', 'pending'),
 (8, 'Exam Timetable Issue', 'My elective exam and core exam are scheduled at the same time.', NULL, 'Examination & Results', 'in-review')
 ON CONFLICT DO NOTHING;
+
+
+INSERT INTO admins (name, admin_id, email, password, role) VALUES
+('System Admin', 'ADM001', 'admin1@uni.lk', 'pass123', 'super_admin'),
+('Nuwan Perera', 'ADM002', 'nuwan@uni.lk', 'pass123', 'admin'),
+('Sajith Silva', 'ADM003', 'sajith@uni.lk', 'pass123', 'admin'),
+('Tharindu Fernando', 'ADM004', 'tharindu@uni.lk', 'pass123', 'moderator'),
+('Iresha Jayasinghe', 'ADM005', 'iresha@uni.lk', 'pass123', 'admin');
