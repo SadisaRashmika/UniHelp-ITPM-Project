@@ -31,29 +31,24 @@ const AdminTimetableContent = () => {
     try {
       const token = localStorage.getItem('token');
       
-      const [timeslotsRes, subjectsRes, locationsRes] = await Promise.all([
+      const [timeslotsRes, subjectsRes, locationsRes, lecturersRes] = await Promise.all([
         fetch(`${API_URL}/timetable/timeslots`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API_URL}/timetable/subjects`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_URL}/timetable/locations`, { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`${API_URL}/timetable/locations`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_URL}/admin/lecturers`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
       const timeslotsData = await timeslotsRes.json();
       const subjectsData = await subjectsRes.json();
       const locationsData = await locationsRes.json();
+      const lecturersData = await lecturersRes.json();
 
       if (timeslotsData.success) setTimeslots(timeslotsData.timeslots);
       if (subjectsData.success) setSubjects(subjectsData.subjects);
       if (locationsData.success) setLocations(locationsData.locations);
-
-      // Get lecturers from users (filter by role)
-      // For now, we'll extract from timeslots
-      const lecturerMap = new Map();
-      timeslotsData.timeslots?.forEach(slot => {
-        if (slot.lecturer_id && slot.lecturer_name) {
-          lecturerMap.set(slot.lecturer_id, { id: slot.lecturer_id, name: slot.lecturer_name });
-        }
-      });
-      setLecturers(Array.from(lecturerMap.values()));
+      if (lecturersData.success) {
+        setLecturers(lecturersData.lecturers.map(l => ({ id: l.id, name: l.full_name })));
+      }
 
     } catch (error) {
       console.error('Failed to fetch data:', error);

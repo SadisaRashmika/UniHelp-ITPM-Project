@@ -108,9 +108,9 @@ function Login() {
                 {/* Demo Credentials */}
                 <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-600 font-bold mb-2">Demo Credentials:</p>
-                    <p className="text-xs text-gray-500">Admin: admin@unihelp.com / admin123</p>
-                    <p className="text-xs text-gray-500">Lecturer: john.smith@unihelp.com / lecturer123</p>
-                    <p className="text-xs text-gray-500">Student: alice.williams@student.unihelp.com / student123</p>
+                    <p className="text-xs text-gray-500">| Admin | admin@unihelp.com | admin123 |</p>
+                    <p className="text-xs text-gray-500">| Lecturer | sarath.gunasekara@unihelp.com | lecturer123 |</p>
+                    <p className="text-xs text-gray-500">| Student | kavindu.perera@student.unihelp.com | student123 |</p>
                 </div>
             </div>
         </div>

@@ -427,7 +427,10 @@ function executeDelete(sql, params) {
         throw new Error(`Table "${tableName}" does not exist`);
     }
     
-    const whereMatch = sql.match(/WHERE\s+(.+)/i);
+    // Check for RETURNING clause
+    const returningMatch = sql.match(/RETURNING\s+(.+)/i);
+    
+    const whereMatch = sql.match(/WHERE\s+(.+?)(?:\s+RETURNING|\s*$)/i);
     if (!whereMatch) {
         throw new Error('DELETE without WHERE is not allowed');
     }
@@ -436,6 +439,11 @@ function executeDelete(sql, params) {
     const idsToDelete = rowsToDelete.map(row => row.id);
     
     data[tableName] = data[tableName].filter(row => !idsToDelete.includes(row.id));
+    
+    // Return deleted rows if RETURNING clause is present
+    if (returningMatch) {
+        return { rows: rowsToDelete, rowCount: rowsToDelete.length };
+    }
     
     return { rows: [], rowCount: rowsToDelete.length };
 }
