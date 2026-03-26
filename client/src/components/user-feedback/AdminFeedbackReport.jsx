@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { FileBarChart, History, Star, Users } from 'lucide-react';
+import { FileBarChart, History, Star, Users, Download } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const AdminFeedbackReport = () => {
     const [feedbacks, setFeedbacks] = useState([]);
@@ -49,6 +51,43 @@ const AdminFeedbackReport = () => {
         avg: parseFloat((l.sum / l.count).toFixed(1))
     })).sort((a, b) => b.avg - a.avg).slice(0, 5);
 
+    const exportToPDF = () => {
+        const doc = new jsPDF();
+        
+        doc.setFontSize(22);
+        doc.setTextColor(37, 99, 235);
+        doc.text('Uni-Help Analytical Report', 14, 22);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(156, 163, 175);
+        doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 30);
+        doc.text(`Total Feedbacks: ${feedbacks.length} | Global Average: ${avgRating}/5.0`, 14, 35);
+        
+        doc.line(14, 40, 196, 40);
+
+        const tableColumn = ["Student", "Lecturer", "Subject", "Rating", "Comment", "Date"];
+        const tableRows = feedbacks.map(f => [
+            f.student_name,
+            f.lecturer_name,
+            f.subject,
+            f.rating,
+            f.comment,
+            new Date(f.created_at).toLocaleDateString()
+        ]);
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 45,
+            theme: 'striped',
+            headStyles: { fillStyle: 'dark', fillColor: [37, 99, 235], fontSize: 10 },
+            bodyStyles: { fontSize: 9 },
+            alternateRowStyles: { fillColor: [248, 250, 252] }
+        });
+
+        doc.save(`UniHelp_Report_${new Date().getTime()}.pdf`);
+    };
+
     if (loading) return (
         <div className="flex items-center justify-center p-20 grow">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -67,8 +106,11 @@ const AdminFeedbackReport = () => {
                     <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-100 text-[9px] font-bold text-gray-400 uppercase tracking-widest hover:text-blue-600 transition-all shadow-xs active:scale-95">
                         Refresh
                     </button>
-                    <button className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-[9px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all shadow-sm active:scale-95 flex items-center gap-2">
-                        <FileBarChart size={12} /> Export PDF
+                    <button 
+                        onClick={exportToPDF}
+                        className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-[9px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all shadow-sm active:scale-95 flex items-center gap-2"
+                    >
+                        <Download size={12} /> Export PDF
                     </button>
                 </div>
             </div>

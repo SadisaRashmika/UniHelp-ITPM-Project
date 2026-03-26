@@ -70,6 +70,36 @@ const AdminTicketList = () => {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700">
             
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between group hover:border-amber-200 transition-all">
+                    <div>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Pending Intake</p>
+                        <h4 className="text-xl font-black text-gray-900 leading-none mt-1.5">{tickets.filter(t => t.status === 'pending').length} <span className="text-[10px] text-amber-500 font-bold uppercase tracking-tighter">Nodes</span></h4>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white transition-all">
+                        <Clock size={18} />
+                    </div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between group hover:border-blue-200 transition-all">
+                    <div>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Diagnostic Phase</p>
+                        <h4 className="text-xl font-black text-gray-900 leading-none mt-1.5">{tickets.filter(t => t.status === 'in-review').length} <span className="text-[10px] text-blue-500 font-bold uppercase tracking-tighter">Nodes</span></h4>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-all">
+                        <RefreshCcw size={18} />
+                    </div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between group hover:border-emerald-200 transition-all">
+                    <div>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Cycle Resolved</p>
+                        <h4 className="text-xl font-black text-gray-900 leading-none mt-1.5">{tickets.filter(t => t.status === 'resolved').length} <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-tighter">Nodes</span></h4>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                        <CheckCircle2 size={18} />
+                    </div>
+                </div>
+            </div>
+            
             <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="relative w-full md:w-96 group">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-500 transition-colors" size={16} />

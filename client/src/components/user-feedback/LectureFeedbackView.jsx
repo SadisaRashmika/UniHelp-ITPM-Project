@@ -1,11 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { Star, MessageSquare, Quote, TrendingUp, CheckCircle } from 'lucide-react';
+import { 
+    Star, 
+    MessageCircle, 
+    Calendar, 
+    Filter, 
+    Search,
+    ChevronRight,
+    User,
+    BookOpen,
+    Inbox,
+    Quote,
+    ShieldCheck
+} from 'lucide-react';
 
 const LectureFeedbackView = ({ lecturerId = 1 }) => {
     const [feedbacks, setFeedbacks] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [filter, setFilter] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedFeedback, setSelectedFeedback] = useState(null);
 
     useEffect(() => {
         const fetchFeedback = async () => {
@@ -21,117 +35,196 @@ const LectureFeedbackView = ({ lecturerId = 1 }) => {
         fetchFeedback();
     }, [lecturerId]);
 
-    const avgRating = feedbacks.length > 0 
-        ? (feedbacks.reduce((acc, f) => acc + f.rating, 0) / feedbacks.length).toFixed(1) 
-        : "0.0";
-
-    const ratingDist = [
-        { name: 'Excellent', value: feedbacks.filter(f => f.rating === 5).length, color: '#3b82f6' },
-        { name: 'Good', value: feedbacks.filter(f => f.rating === 4).length, color: '#60a5fa' },
-        { name: 'Satisfactory', value: feedbacks.filter(f => f.rating === 3).length, color: '#93c5fd' },
-        { name: 'Below Avg', value: feedbacks.filter(f => f.rating <= 2).length, color: '#bfdbfe' },
-    ].filter(d => d.value > 0);
+    const filteredFeedbacks = feedbacks.filter(f => {
+        const matchesFilter = filter === 'all' || 
+            (filter === 'excellent' && f.rating === 5) ||
+            (filter === 'critical' && f.rating <= 3);
+        const matchesSearch = f.student_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            f.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            f.comment.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesFilter && matchesSearch;
+    });
 
     if (loading) return (
-        <div className="flex items-center justify-center p-20 animate-pulse text-[10px] font-bold text-blue-500 uppercase tracking-widest">
-            Aggregating Perspective Nodes...
+        <div className="flex items-center justify-center p-20 grow">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
         </div>
     );
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+                        <Inbox size={18} />
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Feedback Inbox</h3>
+                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter mt-0.5">Direct student commentary channel</p>
+                    </div>
+                </div>
                 
-                <div className="lg:col-span-4 space-y-6">
-                    <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-4 text-blue-50 group-hover:scale-110 transition-transform duration-500">
-                            <Star size={80} fill="currentColor" stroke="none" />
-                        </div>
-                        <div className="relative z-10">
-                            <p className="text-[9px] font-bold text-blue-500 uppercase tracking-widest mb-3">Academic Score</p>
-                            <h2 className="text-5xl font-black text-gray-900 tracking-tighter leading-none mb-1">{avgRating}</h2>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">Weight: <span className="text-gray-900">{feedbacks.length} Reviews</span></p>
-                            <div className="mt-6 flex gap-0.5">
-                                {[1,2,3,4,5].map(s => (
-                                    <Star key={s} size={14} fill={s <= Math.round(avgRating) ? "#3b82f6" : "none"} stroke={s <= Math.round(avgRating) ? "none" : "#e2e8f0"} />
-                                ))}
+                <div className="flex items-center gap-2">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={12} />
+                        <input 
+                            type="text" 
+                            placeholder="Search feedback..."
+                            className="pl-8 pr-4 py-1.5 bg-gray-50 border border-gray-100 rounded-lg text-[10px] font-bold outline-none focus:bg-white focus:border-blue-200 focus:ring-4 focus:ring-blue-50/50 transition-all w-48"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <select 
+                        className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg text-[10px] font-bold uppercase tracking-widest outline-none focus:bg-white transition-all cursor-pointer"
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                    >
+                        <option value="all">All Logs</option>
+                        <option value="excellent">Excellent Only</option>
+                        <option value="critical">Critical Only</option>
+                    </select>
+                </div>
+            </div>
+
+            
+            <div className="grid grid-cols-1 gap-3">
+                {filteredFeedbacks.length > 0 ? filteredFeedbacks.map((f) => (
+                    <div 
+                        key={f.id} 
+                        onClick={() => setSelectedFeedback(f)}
+                        className="bg-white rounded-xl border border-gray-100 p-3 shadow-xs hover:shadow-md hover:border-blue-100 transition-all group relative overflow-hidden cursor-pointer active:scale-[0.995]"
+                    >
+                        <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-6">
+                            
+                            <div className="flex items-center gap-3 lg:w-1/5 shrink-0">
+                                <div className="w-8 h-8 rounded-lg bg-linear-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-[10px] font-black shadow-sm group-hover:scale-105 transition-transform">
+                                    {f.student_name[0]}
+                                </div>
+                                <div className="min-w-0">
+                                    <h4 className="text-[10px] font-black text-gray-900 tracking-tight leading-none truncate uppercase">{f.student_name}</h4>
+                                    <div className="flex items-center gap-1 mt-1">
+                                        <BookOpen size={8} className="text-gray-300" />
+                                        <span className="text-[7.5px] font-bold text-gray-400 uppercase tracking-widest truncate">{f.subject}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-0.5 mb-1">
+                                    {[1, 2, 3, 4, 5].map(s => (
+                                        <Star key={s} size={9} fill={s <= f.rating ? "#3b82f6" : "none"} stroke={s <= f.rating ? "none" : "#f1f5f9"} />
+                                    ))}
+                                    <span className={`text-[8px] font-black ml-1.5 uppercase tracking-tighter ${f.rating >= 4 ? 'text-emerald-500' : f.rating <= 2 ? 'text-rose-500' : 'text-blue-500'}`}>
+                                        {f.rating.toFixed(1)}
+                                    </span>
+                                </div>
+                                <p className="text-[10.5px] text-gray-500 font-medium italic leading-tight truncate">
+                                    "{f.comment}"
+                                </p>
+                            </div>
+
+                            
+                            <div className="lg:w-1/6 flex lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-1 shrink-0">
+                                <div className="flex items-center gap-1 text-gray-300">
+                                    <Calendar size={9} />
+                                    <span className="text-[7.5px] font-black uppercase tracking-widest">
+                                        {new Date(f.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                    </span>
+                                </div>
+                                <div className="p-1 bg-gray-50 text-gray-400 rounded-md group-hover:bg-blue-600 group-hover:text-white transition-all shadow-xs group-hover:translate-x-0.5 transition-transform">
+                                    <ChevronRight size={12} />
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-                         <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                             <TrendingUp size={14} className="text-blue-500" /> Distribution
-                         </h3>
-                         <div className="h-[180px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie data={ratingDist} innerRadius={45} outerRadius={65} paddingAngle={8} dataKey="value" stroke="none">
-                                        {ratingDist.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                         </div>
-                         <div className="grid grid-cols-2 gap-2 mt-4">
-                            {ratingDist.map(d => (
-                                <div key={d.name} className="flex flex-col p-2.5 rounded-xl bg-gray-50/50 border border-gray-50 hover:bg-white hover:border-blue-100 transition-all group">
-                                    <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">{d.name}</span>
-                                    <span className="text-sm font-black text-gray-900 group-hover:text-blue-600 transition-colors">{d.value}</span>
-                                </div>
-                            ))}
-                         </div>
+                )) : (
+                    <div className="bg-white rounded-3xl border border-dashed border-gray-200 p-20 flex flex-col items-center justify-center">
+                        <Inbox size={40} className="text-gray-100 mb-4" />
+                        <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest italic text-center">No matching feedback nodes found in archive</p>
                     </div>
-                </div>
+                )}
+            </div>
 
-                
-                <div className="lg:col-span-8 space-y-4">
-                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-2 flex items-center gap-2">
-                        <Quote size={12} className="text-blue-500 rotate-180" /> Structural Sentiment Nodes
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto max-h-[700px] pr-2 custom-scrollbar">
-                        {feedbacks.length > 0 ? feedbacks.map((f) => (
-                            <div key={f.id} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between">
-                                <div>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs">
-                                                {f.student_name[0]}
-                                            </div>
-                                            <div>
-                                                <h4 className="text-[11px] font-bold text-gray-900 tracking-tight leading-none">{f.student_name}</h4>
-                                                <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1 truncate max-w-[100px]">{f.subject}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-0.5 mt-1">
-                                            {[1,2,3,4,5].map(s => (
-                                                <Star key={s} size={10} fill={s <= f.rating ? "#3b82f6" : "none"} stroke={s <= f.rating ? "none" : "#f1f5f9"} />
-                                            ))}
-                                        </div>
+            {selectedFeedback && (
+                <div 
+                    onClick={() => setSelectedFeedback(null)}
+                    className="fixed inset-0 bg-gray-900/60 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-in fade-in duration-300"
+                >
+                    <div 
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-white rounded-[40px] w-full max-w-xl shadow-2xl overflow-hidden border border-white/20 transform animate-in zoom-in-95 duration-500"
+                    >
+                        <div className="bg-linear-to-br from-blue-600 to-indigo-800 p-10 text-white relative">
+                            <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none" />
+                            
+                            <div className="relative z-10">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-2xl font-black border border-white/20 shadow-xl">
+                                        {selectedFeedback.student_name[0]}
                                     </div>
-                                    <div className="relative">
-                                        <p className="text-[10px] font-medium text-gray-500 italic leading-relaxed pl-3 border-l-2 border-blue-100 line-clamp-3">
-                                            "{f.comment}"
+                                    <div>
+                                        <h3 className="text-2xl font-black tracking-tighter uppercase italic">{selectedFeedback.student_name}</h3>
+                                        <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mt-1 opacity-80 flex items-center gap-2">
+                                            <BookOpen size={12} /> {selectedFeedback.subject}
                                         </p>
                                     </div>
                                 </div>
-                                <div className="mt-6 pt-3 border-t border-gray-50 flex justify-between items-center">
-                                    <span className="text-[8px] font-bold text-gray-300 uppercase tracking-widest">{new Date(f.created_at).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}</span>
-                                    <button className="text-[9px] font-extrabold text-blue-600 hover:text-blue-700 uppercase tracking-widest flex items-center gap-1.5 transition-colors">
-                                        Verify <CheckCircle size={10} />
-                                    </button>
+
+                                <div className="flex flex-col md:flex-row md:items-center gap-4 py-4 px-6 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-sm">
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-black text-blue-200 uppercase tracking-widest mb-1 italic">Knowledge Merit</span>
+                                        <div className="flex items-center gap-1">
+                                            {[1, 2, 3, 4, 5].map(s => (
+                                                <Star key={s} size={14} fill={s <= selectedFeedback.rating ? "#fff" : "none"} stroke={s <= selectedFeedback.rating ? "none" : "rgba(255,255,255,0.3)"} />
+                                            ))}
+                                            <span className="text-lg font-black ml-2 mt-0.5">{selectedFeedback.rating.toFixed(1)}</span>
+                                        </div>
+                                    </div>
+                                    <div className="hidden md:block h-10 w-px bg-white/20 mx-4" />
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-black text-blue-200 uppercase tracking-widest mb-1 italic">Transmission Date</span>
+                                        <span className="text-xs font-black tracking-widest uppercase flex items-center gap-2">
+                                            {new Date(selectedFeedback.created_at).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        )) : (
-                            <div className="col-span-2 bg-white rounded-2xl border border-gray-100 p-16 text-center">
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest italic">No perspective data detected</p>
+
+                            <button 
+                                onClick={() => setSelectedFeedback(null)} 
+                                className="absolute top-8 right-8 w-12 h-12 rounded-2xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all text-2xl font-light hover:rotate-90 active:scale-95 border border-white/5 z-50"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="p-12 bg-gray-50/50">
+                            <div className="relative">
+                                <Quote size={40} className="text-blue-100 absolute -top-4 -left-6 -z-10" />
+                                <p className="text-sm font-bold text-gray-700 leading-relaxed italic">
+                                    "{selectedFeedback.comment}"
+                                </p>
                             </div>
-                        )}
+
+                            <div className="mt-12 pt-8 border-t border-gray-100 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Verified Academic Entity</span>
+                                </div>
+                                <button 
+                                    onClick={() => setSelectedFeedback(null)}
+                                    className="px-8 py-4 bg-gray-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-gray-200 active:scale-95"
+                                >
+                                    Acknowledge
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

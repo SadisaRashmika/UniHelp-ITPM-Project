@@ -94,11 +94,23 @@ const deleteFeedback = async (req, res) => {
     }
 };
 
+const getLecturerModules = async (req, res) => {
+    const { lecturer_id } = req.params;
+    try {
+        const modules = await feedbackModel.getLecturerModules(lecturer_id);
+        res.status(200).json(modules);
+    } catch (error) {
+        console.error('Error fetching lecturer modules:', error.message);
+        res.status(500).json({ error: 'Failed to fetch modules' });
+    }
+};
+
 module.exports = {
     submitFeedback,
     getAllFeedback,
     getLecturerFeedback,
     getStudentFeedback,
     updateFeedback,
-    deleteFeedback
+    deleteFeedback,
+    getLecturerModules
 };

@@ -49,6 +49,7 @@ router.put('/feedback/:id', feedbackController.updateFeedback);
 
 
 router.delete('/feedback/:id', feedbackController.deleteFeedback);
+router.get('/modules/:lecturer_id', feedbackController.getLecturerModules);
 
 
 

@@ -59,6 +59,12 @@ const deleteFeedback = async (id) => {
     await db.query(query, [id]);
 };
 
+const getLecturerModules = async (lecturer_id) => {
+    const query = 'SELECT DISTINCT subject FROM lectures WHERE lecturer_id = $1';
+    const result = await db.query(query, [lecturer_id]);
+    return result.rows.map(row => row.subject);
+};
+
 module.exports = {
     submitFeedback,
     getAllFeedback,
@@ -66,5 +72,6 @@ module.exports = {
     getStudentFeedback,
     getFeedbackById,
     updateFeedback,
-    deleteFeedback
+    deleteFeedback,
+    getLecturerModules
 };

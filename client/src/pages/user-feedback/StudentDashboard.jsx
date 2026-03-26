@@ -59,13 +59,6 @@ const StudentDashboard = () => {
                         onClick={() => setView('submit')}
                     />
                     <SidebarItem 
-                        icon={<History size={14} className="text-purple-500" />} 
-                        iconBg="bg-purple-50"
-                        label="Past Reviews" 
-                        active={view === 'history'} 
-                        onClick={() => setView('history')}
-                    />
-                    <SidebarItem 
                         icon={<LifeBuoy size={14} className="text-blue-500" />} 
                         iconBg="bg-blue-50"
                         label="Inquiry Support" 
@@ -102,13 +95,11 @@ const StudentDashboard = () => {
                         <h2 className="text-2xl font-bold text-gray-900 tracking-tight leading-none">
                             {view === 'overview' && 'Personal Perspective'}
                             {view === 'submit' && 'Feedback Operations'}
-                            {view === 'history' && 'Audit History'}
                             {view === 'support' && 'Support Inquiries'}
                         </h2>
                         <p className="text-gray-400 text-[11px] mt-1.5 font-medium italic opacity-80">
                             {view === 'overview' && 'Review your analytical contributions and reward trajectories.'}
                             {view === 'submit' && 'Manage your active feedback nodes and submission windows.'}
-                            {view === 'history' && 'A secure archive of your previous structural evaluations.'}
                             {view === 'support' && 'Direct technical and academic troubleshooting gateway.'}
                         </p>
                     </div>
@@ -118,12 +109,6 @@ const StudentDashboard = () => {
                     {view === 'overview' && <StudentOverview studentId={1} />}
                     {view === 'submit' && <StudentFeedbackForm studentId={1} />}
                     {view === 'support' && <StudentTicketForm studentId={1} />}
-
-                    {view === 'history' && (
-                        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center text-[10px] font-bold uppercase tracking-widest text-gray-400 italic">
-                             Syncing historical data archive...
-                        </div>
-                    )}
                 </div>
             </main>
         </div>

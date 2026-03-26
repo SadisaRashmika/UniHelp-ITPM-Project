@@ -65,13 +65,6 @@ const AdminDashboard = () => {
                         active={view === 'inquiries'} 
                         onClick={() => setView('inquiries')}
                     />
-                    <SidebarItem 
-                        icon={<Settings size={14} className="text-orange-500" />} 
-                        iconBg="bg-orange-50"
-                        label="Settings" 
-                        active={view === 'settings'} 
-                        onClick={() => setView('settings')}
-                    />
                 </div>
 
                 
@@ -97,24 +90,22 @@ const AdminDashboard = () => {
 
             
             <main className="grow ml-64 p-8 min-w-0 w-full">
-                <header className="mb-6 flex items-start justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold text-gray-900 tracking-tight leading-none">
-                            {view === 'overview' && 'System Analytics'}
-                            {view === 'users' && 'Identity Core'}
-                            {view === 'reports' && 'Feedback Intelligence'}
-                            {view === 'inquiries' && 'Support Logistics'}
-                            {view === 'settings' && 'Portal Config'}
-                        </h2>
-                        <p className="text-gray-400 text-[11px] mt-1.5 font-medium italic opacity-80">
-                            {view === 'overview' && 'System-wide performance metrics and live activity oversight.'}
-                            {view === 'users' && 'Managing authenticated university entities and access levels.'}
-                            {view === 'reports' && 'Quantitative and qualitative student feedback analysis.'}
-                            {view === 'inquiries' && 'Processing student technical and academic help tickets.'}
-                            {view === 'settings' && 'Global system parameters and module configuration.'}
-                        </p>
-                    </div>
-                </header>
+                {view !== 'overview' && (
+                    <header className="mb-6 flex items-start justify-between">
+                        <div>
+                            <h2 className="text-2xl font-bold text-gray-900 tracking-tight leading-none italic uppercase">
+                                {view === 'users' && 'Identity Core'}
+                                {view === 'reports' && 'Feedback Intelligence'}
+                                {view === 'inquiries' && 'Support Logistics'}
+                            </h2>
+                            <p className="text-gray-400 text-[10px] mt-2 font-bold uppercase tracking-widest opacity-60">
+                                {view === 'users' && 'Managing authenticated university entities and access levels.'}
+                                {view === 'reports' && 'Quantitative and qualitative student feedback analysis.'}
+                                {view === 'inquiries' && 'Processing student technical and academic help tickets.'}
+                            </p>
+                        </div>
+                    </header>
+                )}
 
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {view === 'overview' && <AdminSystemOverview />}
@@ -122,11 +113,6 @@ const AdminDashboard = () => {
                     {view === 'reports' && <AdminFeedbackReport />}
                     {view === 'inquiries' && <AdminTicketList />}
 
-                    {view === 'settings' && (
-                        <div className="bg-white rounded-2xl border border-gray-200 p-16 text-center italic text-gray-400 text-sm">
-                            Portal settings menu is currently under development.
-                        </div>
-                    )}
                 </div>
             </main>
         </div>

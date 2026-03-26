@@ -184,6 +184,7 @@ const AdminUserList = () => {
                                 type="email"
                                 value={editingUser.email}
                                 onChange={(val) => setEditingUser({...editingUser, email: val})}
+                                disabled={editingUser.role === 'Admin'}
                             />
                             <div className="grid grid-cols-2 gap-6">
                                 <InputField 

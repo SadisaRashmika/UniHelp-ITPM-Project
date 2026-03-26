@@ -3,6 +3,7 @@ import { Presentation, Users, FileBarChart, LogOut, ArrowLeft, BookOpen, LayoutD
 import { useNavigate } from 'react-router-dom';
 import LectureFeedbackView from '../../components/user-feedback/LectureFeedbackView';
 import LectureOverview from '../../components/user-feedback/LectureOverview';
+import LecturePerformance from '../../components/user-feedback/LecturePerformance';
 
 const LectureDashboard = () => {
     const navigate = useNavigate();
@@ -106,11 +107,7 @@ const LectureDashboard = () => {
                     {view === 'overview' && <LectureOverview lecturerId={1} />}
                     {view === 'reviews' && <LectureFeedbackView lecturerId={1} />}
 
-                    {view === 'analysis' && (
-                        <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center text-[10px] font-bold uppercase tracking-widest text-gray-400 italic">
-                             Aggregating performance metrics...
-                        </div>
-                    )}
+                    {view === 'analysis' && <LecturePerformance lecturerId={1} />}
                 </div>
             </main>
         </div>

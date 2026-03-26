@@ -16,6 +16,7 @@ const StudentFeedbackForm = ({ studentId = 1 }) => {
     const [status, setStatus] = useState({ type: '', msg: '' });
     const [submitting, setSubmitting] = useState(false);
     const [hover, setHover] = useState(0);
+    const [availableModules, setAvailableModules] = useState([]);
 
     const fetchData = async () => {
         try {
@@ -23,12 +24,31 @@ const StudentFeedbackForm = ({ studentId = 1 }) => {
                 axios.get('http://localhost:5000/api/user-feedback/users'),
                 axios.get(`http://localhost:5000/api/user-feedback/feedback/student/${studentId}`)
             ]);
-            setLecturers(lecturersRes.data.filter(u => u.role === 'lecturer'));
+            setLecturers(lecturersRes.data.filter(u => u.role === 'Lecturer'));
             setMySubmissions(myFeedbackRes.data);
         } catch (err) {
             console.error(err);
         }
     };
+
+    useEffect(() => {
+        const fetchModules = async () => {
+            if (formData.lecturer_id && !editingId) {
+                try {
+                    const res = await axios.get(`http://localhost:5000/api/user-feedback/modules/${formData.lecturer_id}`);
+                    setAvailableModules(res.data);
+                    if (res.data.length > 0) {
+                        setFormData(prev => ({ ...prev, subject: res.data[0] }));
+                    } else {
+                        setFormData(prev => ({ ...prev, subject: '' }));
+                    }
+                } catch (err) {
+                    console.error('Error fetching modules:', err);
+                }
+            }
+        };
+        fetchModules();
+    }, [formData.lecturer_id, editingId]);
 
     useEffect(() => {
         fetchData();
@@ -141,14 +161,27 @@ const StudentFeedbackForm = ({ studentId = 1 }) => {
                                 <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Knowledge Module</label>
                                 <div className="relative group">
                                     <BookOpen className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={14} />
-                                    <input 
-                                        type="text"
-                                        placeholder="e.g. System Control"
-                                        className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-lg text-[11px] font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all shadow-xs"
-                                        value={formData.subject}
-                                        onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                                        required
-                                    />
+                                    {availableModules.length > 0 ? (
+                                        <select 
+                                            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-lg text-[11px] font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all appearance-none cursor-pointer"
+                                            value={formData.subject}
+                                            onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                                            required
+                                        >
+                                            {availableModules.map((m, i) => (
+                                                <option key={i} value={m}>{m}</option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <input 
+                                            type="text"
+                                            placeholder="e.g. System Control"
+                                            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-lg text-[11px] font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all shadow-xs"
+                                            value={formData.subject}
+                                            onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                                            required
+                                        />
+                                    )}
                                 </div>
                             </div>
                         </div>
