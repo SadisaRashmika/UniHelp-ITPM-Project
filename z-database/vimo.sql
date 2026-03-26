@@ -69,15 +69,15 @@ INSERT INTO feedbacks (student_id, lecturer_id, subject, rating, comment) VALUES
 ON CONFLICT DO NOTHING;
 
 -- TICKETS (INQUIRIES)
-INSERT INTO tickets (student_id, subject, description, screenshot_url, category, status) VALUES
-(1, 'Portal Login Failure', 'I cannot login to the student portal despite using correct credentials.', NULL, 'System Access (Login)', 'pending'),
-(2, 'Resource Link Broken', 'The PDF link for "OOP Summary" seems to be broken.', NULL, 'Technical Support', 'in-review'),
-(3, 'Quiz Submission Bug', 'My quiz was submitted automatically before I could finish the last question.', NULL, 'Technical Support', 'resolved'),
-(4, 'Grade Discrepancy', 'The grades shown in my overview do not match my actual results.', NULL, 'Examination & Results', 'pending'),
-(5, 'Image Content Missing', 'Some images in the Web Architecture slides are not loading.', NULL, 'Technical Support', 'in-review'),
-(6, 'Access Denied: SQL', 'I am getting an access denied error when trying to view SQL advanced notes.', NULL, 'System Access (Login)', 'resolved'),
-(7, 'Module Registration Error', 'Unable to register for the Cloud Computing elective module.', NULL, 'Academic Assistance', 'pending'),
-(8, 'Exam Timetable Issue', 'My elective exam and core exam are scheduled at the same time.', NULL, 'Examination & Results', 'in-review')
+INSERT INTO tickets (student_id, subject, description, screenshot_url, category, contact_number, status) VALUES
+(1, 'Portal Login Failure', 'I cannot login to the student portal despite using correct credentials.', NULL, 'System Access (Login)', '0712345678', 'pending'),
+(2, 'Resource Link Broken', 'The PDF link for "OOP Summary" seems to be broken.', NULL, 'Technical Support', '0722345678', 'in-review'),
+(3, 'Quiz Submission Bug', 'My quiz was submitted automatically before I could finish the last question.', NULL, 'Technical Support', '0752345678', 'resolved'),
+(4, 'Grade Discrepancy', 'The grades shown in my overview do not match my actual results.', NULL, 'Examination & Results', '0762345678', 'pending'),
+(5, 'Image Content Missing', 'Some images in the Web Architecture slides are not loading.', NULL, 'Technical Support', '0772345678', 'in-review'),
+(6, 'Access Denied: SQL', 'I am getting an access denied error when trying to view SQL advanced notes.', NULL, 'System Access (Login)', '0782345678', 'resolved'),
+(7, 'Module Registration Error', 'Unable to register for the Cloud Computing elective module.', NULL, 'Academic Assistance', '0702345678', 'pending'),
+(8, 'Exam Timetable Issue', 'My elective exam and core exam are scheduled at the same time.', NULL, 'Examination & Results', '0719876543', 'in-review')
 ON CONFLICT DO NOTHING;
 
 

@@ -2,12 +2,12 @@ const ticketModel = require('../models/ticketModel');
 
 
 const submitTicket = async (req, res) => {
-    const { student_id, subject, description, category } = req.body;
+    const { student_id, subject, description, category, contact_number } = req.body;
     
     const screenshot_url = req.file ? `/uploads/tickets/${req.file.filename}` : null;
 
     try {
-        const ticket = await ticketModel.submitTicket(student_id, subject, description, screenshot_url, category);
+        const ticket = await ticketModel.submitTicket(student_id, subject, description, screenshot_url, category, contact_number);
         res.status(201).json({ message: 'Ticket submitted successfully', ticket });
     } catch (error) {
         console.error('Error submitting ticket:', error.message);

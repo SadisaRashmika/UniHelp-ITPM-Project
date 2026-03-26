@@ -23,7 +23,8 @@ const StudentTicketForm = ({ studentId = 1 }) => {
     const [formData, setFormData] = useState({
         subject: '',
         description: '',
-        category: 'Technical Support'
+        category: 'Technical Support',
+        contact_number: ''
     });
     const [screenshot, setScreenshot] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -62,6 +63,7 @@ const StudentTicketForm = ({ studentId = 1 }) => {
         data.append('subject', formData.subject);
         data.append('description', formData.description);
         data.append('category', formData.category);
+        data.append('contact_number', formData.contact_number);
         if (screenshot) {
             data.append('screenshot', screenshot);
         }
@@ -71,7 +73,7 @@ const StudentTicketForm = ({ studentId = 1 }) => {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setStatus({ type: 'success', msg: 'Inquiry submitted successfully!' });
-            setFormData({ subject: '', description: '', category: 'Technical Support' });
+            setFormData({ subject: '', description: '', category: 'Technical Support', contact_number: '' });
             setScreenshot(null);
             setPreviewUrl(null);
             setView('list');
@@ -142,6 +144,22 @@ const StudentTicketForm = ({ studentId = 1 }) => {
                                     className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all"
                                     value={formData.subject}
                                     onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Contact Number (Mobile)</label>
+                                <input 
+                                    type="tel"
+                                    placeholder="e.g. 0716834567"
+                                    pattern="^07\d{8}$"
+                                    title="Contact number must be 10 digits and start with 07"
+                                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all font-mono"
+                                    value={formData.contact_number}
+                                    onChange={(e) => setFormData({...formData, contact_number: e.target.value.replace(/\D/g, '').slice(0, 10)})}
                                     required
                                 />
                             </div>

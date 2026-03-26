@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS tickets (
     description TEXT NOT NULL,
     screenshot_url VARCHAR(255),
     category VARCHAR(100) DEFAULT 'Technical',
+    contact_number VARCHAR(10),
     status VARCHAR(50) DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
