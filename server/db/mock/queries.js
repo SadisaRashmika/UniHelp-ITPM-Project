@@ -267,7 +267,17 @@ function applyWhereClause(rows, whereClause, params, tableName) {
             const column = eqMatch[1];
             const paramIndex = parseInt(eqMatch[2]) - 1;
             const value = params[paramIndex];
-            filteredRows = filteredRows.filter(row => row[column] === value);
+            filteredRows = filteredRows.filter(row => {
+                const rowValue = row[column];
+                // Handle type coercion for comparisons
+                if (typeof rowValue === 'number' && typeof value === 'string') {
+                    return rowValue === parseInt(value);
+                }
+                if (typeof rowValue === 'string' && typeof value === 'number') {
+                    return rowValue === String(value);
+                }
+                return rowValue === value;
+            });
         }
         
         // Handle column IN ($1, $2, ...)
@@ -279,7 +289,18 @@ function applyWhereClause(rows, whereClause, params, tableName) {
                 const paramIndex = parseInt(ref.substring(1)) - 1;
                 return params[paramIndex];
             });
-            filteredRows = filteredRows.filter(row => values.includes(row[column]));
+            filteredRows = filteredRows.filter(row => {
+                const rowValue = row[column];
+                return values.some(v => {
+                    if (typeof rowValue === 'number' && typeof v === 'string') {
+                        return rowValue === parseInt(v);
+                    }
+                    if (typeof rowValue === 'string' && typeof v === 'number') {
+                        return rowValue === String(v);
+                    }
+                    return rowValue === v;
+                });
+            });
         }
         
         // Handle column > $N, column < $N, etc.
@@ -292,11 +313,15 @@ function applyWhereClause(rows, whereClause, params, tableName) {
             
             filteredRows = filteredRows.filter(row => {
                 const rowValue = row[column];
+                // Convert to numbers for comparison
+                const numRowValue = typeof rowValue === 'number' ? rowValue : parseFloat(rowValue);
+                const numValue = typeof value === 'number' ? value : parseFloat(value);
+                
                 switch (operator) {
-                    case '>': return rowValue > value;
-                    case '<': return rowValue < value;
-                    case '>=': return rowValue >= value;
-                    case '<=': return rowValue <= value;
+                    case '>': return numRowValue > numValue;
+                    case '<': return numRowValue < numValue;
+                    case '>=': return numRowValue >= numValue;
+                    case '<=': return numRowValue <= numValue;
                     default: return true;
                 }
             });

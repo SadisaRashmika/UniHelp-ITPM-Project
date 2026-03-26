@@ -66,19 +66,22 @@ router.post('/timeslots', async (req, res) => {
             });
         }
         
-        // Check for conflicts
-        const conflictCheck = await db.query(`
+        // Check for conflicts - get all timeslots for this location and day
+        const existingSlots = await db.query(`
             SELECT * FROM timeslots 
             WHERE location_id = $1 
-            AND day_of_week = $2 
-            AND (
-                (start_time <= $3 AND end_time > $3) OR
-                (start_time < $4 AND end_time >= $4) OR
-                (start_time >= $3 AND end_time <= $4)
-            )
-        `, [location_id, day_of_week, start_time, end_time]);
+            AND day_of_week = $2
+        `, [location_id, day_of_week]);
         
-        if (conflictCheck.rows.length > 0) {
+        // Check time overlap in JavaScript
+        const hasConflict = existingSlots.rows.some(slot => {
+            const existingStart = slot.start_time;
+            const existingEnd = slot.end_time;
+            // Check if times overlap
+            return (start_time < existingEnd && end_time > existingStart);
+        });
+        
+        if (hasConflict) {
             return res.status(400).json({
                 success: false,
                 message: 'Room is already booked at this time.'
