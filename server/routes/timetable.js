@@ -117,5 +117,45 @@ router.get('/timeslots/:id', authMiddleware, async (req, res) => {
     }
 });
 
+// PUT /api/timetable/timeslots/:id/details
+// Update lecture topic and notice (lecturer only)
+router.put('/timeslots/:id/details', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { lecture_topic, notice } = req.body;
+        const lecturerId = req.user.userId;
+        
+        // Verify this timeslot belongs to the lecturer
+        const checkResult = await db.query(
+            'SELECT * FROM timeslots WHERE id = $1 AND lecturer_id = $2',
+            [id, lecturerId]
+        );
+        
+        if (checkResult.rows.length === 0) {
+            return res.status(403).json({
+                success: false,
+                message: 'You can only edit your own lectures.'
+            });
+        }
+        
+        const result = await db.query(
+            'UPDATE timeslots SET lecture_topic = $1, notice = $2 WHERE id = $3 RETURNING *',
+            [lecture_topic, notice, id]
+        );
+        
+        res.json({
+            success: true,
+            message: 'Lecture details updated successfully.',
+            timeslot: result.rows[0]
+        });
+    } catch (error) {
+        console.error('Update timeslot error:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Server error. Please try again later.'
+        });
+    }
+});
+
 // Export the router
 module.exports = router;

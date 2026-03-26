@@ -209,5 +209,74 @@ router.get('/timeslot/:timeslotId', authMiddleware, async (req, res) => {
     }
 });
 
+// PUT /api/bookings/:id/attendance
+// Mark attendance for a booking (lecturer only)
+router.put('/:id/attendance', authMiddleware, async (req, res) => {
+    try {
+        // Only lecturers can mark attendance
+        if (req.user.role !== 'lecturer' && req.user.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                message: 'Only lecturers can mark attendance.'
+            });
+        }
+        
+        const bookingId = req.params.id;
+        const { status } = req.body;
+        const lecturerId = req.user.userId;
+        
+        // Validate status
+        if (!['attended', 'absent', 'pending'].includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Status must be attended, absent, or pending.'
+            });
+        }
+        
+        // Verify this booking belongs to a timeslot taught by this lecturer
+        const bookingResult = await db.query(`
+            SELECT b.*, t.lecturer_id 
+            FROM bookings b 
+            JOIN timeslots t ON b.timeslot_id = t.id 
+            WHERE b.id = $1
+        `, [bookingId]);
+        
+        if (bookingResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Booking not found.'
+            });
+        }
+        
+        const booking = bookingResult.rows[0];
+        
+        // Check if lecturer owns this timeslot (or is admin)
+        if (req.user.role !== 'admin' && booking.lecturer_id !== lecturerId) {
+            return res.status(403).json({
+                success: false,
+                message: 'You can only mark attendance for your own lectures.'
+            });
+        }
+        
+        // Update attendance status
+        const result = await db.query(
+            'UPDATE bookings SET attendance_status = $1 WHERE id = $2 RETURNING *',
+            [status, bookingId]
+        );
+        
+        res.json({
+            success: true,
+            message: 'Attendance updated successfully.',
+            booking: result.rows[0]
+        });
+    } catch (error) {
+        console.error('Mark attendance error:', error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Server error. Please try again later.'
+        });
+    }
+});
+
 // Export the router
 module.exports = router;

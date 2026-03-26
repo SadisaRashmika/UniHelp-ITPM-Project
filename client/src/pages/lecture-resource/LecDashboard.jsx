@@ -4,10 +4,11 @@ import LecProfile        from '../../components/lecture-resource/LecProfile';
 import LecUpload         from '../../components/lecture-resource/LecUpload';
 import LecStudentUploads from '../../components/lecture-resource/LecStudentUploads';
 import LecExtraMarks     from '../../components/lecture-resource/LecExtraMarks';
+import LecturerTimetableContent from '../../components/timetable/LecturerTimetableContent';
 import { LECTURER_STATS, PENDING_SUBMISSIONS, BONUS_MARK_REQUESTS } from '../../components/lecture-resource/SharedData';
 
 const LecDashboard = ({ user, onLogout }) => {
-  const [activeTab,         setActiveTab]         = useState('profile');
+  const [activeTab,         setActiveTab]         = useState('timetable');
   const [myPoints,          setMyPoints]          = useState(LECTURER_STATS.myPoints);
   const [pendingCount,      setPendingCount]      = useState(PENDING_SUBMISSIONS.length);
   const [extraMarksPending, setExtraMarksPending] = useState(
@@ -56,6 +57,9 @@ const LecDashboard = ({ user, onLogout }) => {
           <LecExtraMarks
             onPendingChange={(d) => setExtraMarksPending(p => Math.max(0, p + d))}
           />
+        )}
+        {activeTab === 'timetable' && (
+          <LecturerTimetableContent lecturerId={user?.id} />
         )}
       </main>
     </div>

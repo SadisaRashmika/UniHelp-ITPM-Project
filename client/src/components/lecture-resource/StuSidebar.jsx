@@ -1,7 +1,12 @@
 import React from 'react';
-import { Heart, Trophy, FileText, GraduationCap, Calendar, LogOut, Clock } from 'lucide-react';
+import { Heart, Trophy, FileText, GraduationCap, Calendar, LogOut, Clock, Home } from 'lucide-react';
 
-const StuSidebar = ({ points, quizzes, notes, level, user, onLogout }) => {
+const NAV = [
+  // { key: 'home', label: 'Home', icon: Home },
+  { key: 'timetable', label: 'My Timetable', icon: Clock },
+];
+
+const StuSidebar = ({ points, quizzes, notes, level, user, onLogout, activeTab, onTabChange }) => {
   const levelColor =
     level === 'Gold'     ? 'bg-yellow-100 text-yellow-700 border border-yellow-300' :
     level === 'Silver'   ? 'bg-gray-100 text-gray-700 border border-gray-300' :
@@ -53,11 +58,24 @@ const StuSidebar = ({ points, quizzes, notes, level, user, onLogout }) => {
       </div>
 
       {/* Navigation */}
-      <div className="px-4 py-3 border-b border-gray-100">
-        <a href="/timetable" className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600 font-medium hover:from-blue-100 hover:to-purple-100 transition-colors">
-          <Clock size={18} className="text-blue-500" />
-          <span>My Timetable</span>
-        </a>
+      <div className="px-4 py-3 border-b border-gray-100 space-y-1">
+        {NAV.map(({ key, label, icon: Icon }) => {
+          const active = activeTab === key;
+          return (
+            <button
+              key={key}
+              onClick={() => onTabChange && onTabChange(key)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                active
+                  ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600'
+                  : 'text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              <Icon size={18} className={active ? 'text-blue-500' : 'text-gray-400'} />
+              <span>{label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Stats */}

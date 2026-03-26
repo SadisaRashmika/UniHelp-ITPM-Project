@@ -4,8 +4,10 @@ import StuHome            from '../../components/lecture-resource/StuHome';
 import StuNoteUploadModal from '../../components/lecture-resource/StuNoteUploadModal';
 import StuQuizModal       from '../../components/lecture-resource/StuQuizModal';
 import StuBonusMarksModal from '../../components/lecture-resource/StuBonusMarkModal';
+import StudentTimetableContent from '../../components/timetable/StudentTimetableContent';
 
 const StuDashboard = ({ user, onLogout }) => {
+  const [activeTab, setActiveTab] = useState('timetable');
   const [uploadLecture, setUploadLecture] = useState(null);
   const [quizLecture,   setQuizLecture]   = useState(null);
   const [bonusOpen,     setBonusOpen]     = useState(false);
@@ -26,15 +28,22 @@ const StuDashboard = ({ user, onLogout }) => {
         level="Bronze"
         user={user}
         onLogout={onLogout}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
 
       <main className="flex-1 ml-72 p-10 min-w-0 w-full">
-        <StuHome
-          onUploadClick={(lecture) => setUploadLecture(lecture)}
-          onTakeQuiz={(lecture)    => setQuizLecture(lecture)}
-          onBonusMarks={()         => setBonusOpen(true)}
-          onLikeEarned={handleLikeEarned}
-        />
+        {activeTab === 'home' && (
+          <StuHome
+            onUploadClick={(lecture) => setUploadLecture(lecture)}
+            onTakeQuiz={(lecture)    => setQuizLecture(lecture)}
+            onBonusMarks={()         => setBonusOpen(true)}
+            onLikeEarned={handleLikeEarned}
+          />
+        )}
+        {activeTab === 'timetable' && (
+          <StudentTimetableContent studentId={user?.id} />
+        )}
       </main>
 
       <StuNoteUploadModal
