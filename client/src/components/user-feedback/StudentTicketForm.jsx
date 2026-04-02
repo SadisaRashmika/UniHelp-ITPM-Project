@@ -13,8 +13,7 @@ import {
     Loader2,
     ChevronRight,
     Eye,
-    MessageSquare,
-    Send as SendIcon
+    MessageSquare
 } from 'lucide-react';
 
 const StudentTicketForm = ({ studentId = 1 }) => {
@@ -498,7 +497,7 @@ const StudentTicketForm = ({ studentId = 1 }) => {
                                                 disabled={sendingChat || !chatMessage.trim()}
                                                 className="shrink-0 p-3 bg-blue-600 text-white rounded-2xl hover:bg-black transition-all disabled:opacity-50 shadow-lg shadow-blue-100 active:scale-95"
                                             >
-                                                <SendIcon size={16} />
+                                                <Send size={16} />
                                             </button>
                                         </div>
                                     </form>
