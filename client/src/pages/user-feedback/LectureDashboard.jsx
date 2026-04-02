@@ -4,6 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import LectureFeedbackView from '../../components/user-feedback/LectureFeedbackView';
 import LectureOverview from '../../components/user-feedback/LectureOverview';
 import LecturePerformance from '../../components/user-feedback/LecturePerformance';
+import LectureAdminSystemOverview from '../../components/user-feedback/LectureAdminSystemOverview';
+import LectureAdminUserList from '../../components/user-feedback/LectureAdminUserList';
+import LectureAdminFeedbackReport from '../../components/user-feedback/LectureAdminFeedbackReport';
+import LectureAdminTicketList from '../../components/user-feedback/LectureAdminTicketList';
+import { ShieldCheck, BarChart3, LifeBuoy } from 'lucide-react';
 
 const LectureDashboard = () => {
     const navigate = useNavigate();
@@ -16,7 +21,7 @@ const LectureDashboard = () => {
                 
                 <div className="px-5 py-4 border-b border-gray-100">
                     <h1 className="text-base font-extrabold text-gray-900 tracking-tight leading-none">Uni-Help</h1>
-                    <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest font-bold opacity-60">Lecturer Portal</p>
+                    <p className="text-[10px] text-gray-400 mt-1 uppercase tracking-widest font-bold opacity-60">Academic Portal</p>
                 </div>
 
                 
@@ -27,7 +32,7 @@ const LectureDashboard = () => {
                         </div>
                         <div className="min-w-0">
                             <p className="text-xs font-bold text-gray-900 truncate tracking-tight">Dr. Sarah Johnson</p>
-                            <p className="text-[10px] text-gray-400 font-medium truncate italic tracking-tighter">Academic Lead</p>
+                            <p className="text-[10px] text-gray-400 font-medium truncate italic tracking-tighter">Academic Head</p>
                         </div>
                     </div>
                 </div>
@@ -38,24 +43,56 @@ const LectureDashboard = () => {
                     <SidebarItem 
                         icon={<LayoutDashboard size={14} className="text-blue-500" />} 
                         iconBg="bg-blue-50"
-                        label="Overview" 
+                        label="Personal Overview" 
                         active={view === 'overview'} 
                         onClick={() => setView('overview')}
                     />
                     <SidebarItem 
                         icon={<Users size={14} className="text-emerald-500" />} 
                         iconBg="bg-emerald-50"
-                        label="Student Reviews" 
+                        label="My Reviews" 
                         active={view === 'reviews'} 
                         onClick={() => setView('reviews')}
                     />
                     <SidebarItem 
                         icon={<FileBarChart size={14} className="text-purple-500" />} 
                         iconBg="bg-purple-50"
-                        label="Performance" 
+                        label="My Performance" 
                         active={view === 'analysis'} 
                         onClick={() => setView('analysis')}
                     />
+
+                    <div className="my-4 border-t border-gray-50 pt-4">
+                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-2 opacity-50">System Administration</p>
+                        <SidebarItem 
+                            icon={<BarChart3 size={14} className="text-blue-500" />} 
+                            iconBg="bg-blue-50"
+                            label="System Overview" 
+                            active={view === 'sys-overview'} 
+                            onClick={() => setView('sys-overview')}
+                        />
+                        <SidebarItem 
+                            icon={<ShieldCheck size={14} className="text-emerald-500" />} 
+                            iconBg="bg-emerald-50"
+                            label="User Management" 
+                            active={view === 'sys-users'} 
+                            onClick={() => setView('sys-users')}
+                        />
+                        <SidebarItem 
+                            icon={<Presentation size={14} className="text-purple-500" />} 
+                            iconBg="bg-purple-50"
+                            label="Analytical Reports" 
+                            active={view === 'sys-reports'} 
+                            onClick={() => setView('sys-reports')}
+                        />
+                        <SidebarItem 
+                            icon={<LifeBuoy size={14} className="text-amber-500" />} 
+                            iconBg="bg-amber-50"
+                            label="System Inquiries" 
+                            active={view === 'sys-inquiries'} 
+                            onClick={() => setView('sys-inquiries')}
+                        />
+                    </div>
                 </div>
 
                 
@@ -87,11 +124,19 @@ const LectureDashboard = () => {
                             {view === 'overview' && 'Academic Command Center'}
                             {view === 'reviews' && 'Student Sentiment Analytics'}
                             {view === 'analysis' && 'Metric Deep-Dive'}
+                            {view === 'sys-overview' && 'System Health & Vitality'}
+                            {view === 'sys-users' && 'Identity & Access Management'}
+                            {view === 'sys-reports' && 'Institutional Intelligence'}
+                            {view === 'sys-inquiries' && 'Technical Support Logistics'}
                         </h2>
                         <p className="text-gray-400 text-[11px] mt-1.5 font-medium italic opacity-80">
                             {view === 'overview' && 'Real-time performance monitoring and engagement trajectories.'}
                             {view === 'reviews' && 'Comprehensive breakdown of student feedback nodes.'}
                             {view === 'analysis' && 'Statistical cross-evaluation of academic impact.'}
+                            {view === 'sys-overview' && 'Global system metrics and operational status overview.'}
+                            {view === 'sys-users' && 'Managing authenticated university entities and access levels.'}
+                            {view === 'sys-reports' && 'Aggregated institutional feedback and performance data.'}
+                            {view === 'sys-inquiries' && 'Processing student technical and academic help tickets.'}
                         </p>
                     </div>
                     
@@ -106,8 +151,12 @@ const LectureDashboard = () => {
                 <div className="animate-in fade-in slide-in-from-bottom-2 duration-700">
                     {view === 'overview' && <LectureOverview lecturerId={1} />}
                     {view === 'reviews' && <LectureFeedbackView lecturerId={1} />}
-
                     {view === 'analysis' && <LecturePerformance lecturerId={1} />}
+                    
+                    {view === 'sys-overview' && <LectureAdminSystemOverview />}
+                    {view === 'sys-users' && <LectureAdminUserList />}
+                    {view === 'sys-reports' && <LectureAdminFeedbackReport />}
+                    {view === 'sys-inquiries' && <LectureAdminTicketList />}
                 </div>
             </main>
         </div>

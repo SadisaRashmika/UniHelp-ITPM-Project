@@ -4,7 +4,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import LecDashboard from './pages/lecture-resource/LecDashboard'
 import StuDashboard from './pages/lecture-resource/StuDashboard'
 import VimoHome from './pages/user-feedback/VimoHome'
-import AdminDashboard from './pages/user-feedback/AdminDashboard'
 import StudentDashboard from './pages/user-feedback/StudentDashboard'
 import LectureDashboard from './pages/user-feedback/LectureDashboard'
 
@@ -13,7 +12,6 @@ const App = () => {
     <Router>
       <Routes>
         <Route path="/VimoHome" element={<VimoHome />} />
-        <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/student" element={<StudentDashboard />} />
         <Route path="/lecture" element={<LectureDashboard />} />
 

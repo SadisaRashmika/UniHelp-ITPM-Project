@@ -18,9 +18,7 @@ const updateUser = async (req, res) => {
 
     try {
         let result;
-        if (role === 'Admin') {
-            result = await userModel.updateAdmin(id, name, email, category, user_id);
-        } else if (role === 'Lecturer') {
+        if (role === 'Lecturer') {
             result = await userModel.updateLecturer(id, name, email, category, user_id);
         } else if (role === 'Student') {
             result = await userModel.updateStudent(id, name, email, category, user_id);

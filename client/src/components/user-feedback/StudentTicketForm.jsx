@@ -11,7 +11,10 @@ import {
     X, 
     FileText,
     Loader2,
-    ChevronRight
+    ChevronRight,
+    Eye,
+    MessageSquare,
+    Send as SendIcon
 } from 'lucide-react';
 
 const StudentTicketForm = ({ studentId = 1 }) => {
@@ -19,6 +22,10 @@ const StudentTicketForm = ({ studentId = 1 }) => {
     const [view, setView] = useState('list'); 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [selectedTicket, setSelectedTicket] = useState(null);
+    const [chats, setChats] = useState([]);
+    const [chatMessage, setChatMessage] = useState('');
+    const [sendingChat, setSendingChat] = useState(false);
     
     const [formData, setFormData] = useState({
         subject: '',
@@ -29,7 +36,6 @@ const StudentTicketForm = ({ studentId = 1 }) => {
     const [screenshot, setScreenshot] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
     const [status, setStatus] = useState({ type: '', msg: '' });
-    const [selectedTicket, setSelectedTicket] = useState(null);
 
     const fetchTickets = async () => {
         try {
@@ -39,6 +45,43 @@ const StudentTicketForm = ({ studentId = 1 }) => {
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchChats = async (ticketId) => {
+        try {
+            const res = await axios.get(`http://localhost:5000/api/user-feedback/tickets/${ticketId}/chats`);
+            setChats(res.data);
+        } catch (err) {
+            console.error('Error fetching chats:', err);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedTicket) {
+            fetchChats(selectedTicket.id);
+            const interval = setInterval(() => fetchChats(selectedTicket.id), 5000);
+            return () => clearInterval(interval);
+        }
+    }, [selectedTicket]);
+
+    const handleSendMessage = async (e) => {
+        e.preventDefault();
+        if (!chatMessage.trim() || !selectedTicket) return;
+
+        setSendingChat(true);
+        try {
+            await axios.post(`http://localhost:5000/api/user-feedback/tickets/${selectedTicket.id}/chats`, {
+                sender_id: studentId,
+                sender_role: 'student',
+                message: chatMessage
+            });
+            setChatMessage('');
+            fetchChats(selectedTicket.id);
+        } catch (err) {
+            console.error('Error sending message:', err);
+        } finally {
+            setSendingChat(false);
         }
     };
 
@@ -246,42 +289,42 @@ const StudentTicketForm = ({ studentId = 1 }) => {
             ) : (
                 <div className="grid grid-cols-1 gap-4">
                     {tickets.map((ticket) => (
-                        <div key={ticket.id} className="bg-white rounded-xl border border-gray-100 p-4 shadow-xs hover:shadow-md transition-all group overflow-hidden relative">
-                            <div className={`absolute top-0 right-0 w-24 h-24 opacity-10 rounded-full blur-3xl -mr-12 -mt-12 transition-all duration-500 group-hover:scale-150 ${getStatusColor(ticket.status)}`} />
+                        <div key={ticket.id} className="bg-white rounded-xl border border-gray-100 p-3 shadow-xs hover:shadow-md transition-all group overflow-hidden relative">
+                            <div className={`absolute top-0 right-0 w-20 h-20 opacity-5 rounded-full blur-3xl -mr-10 -mt-10 transition-all duration-500 group-hover:scale-150 ${getStatusColor(ticket.status)}`} />
                             
-                            <div className="relative z-10 lg:flex items-center gap-6">
-                                <div className="lg:w-2/5 flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0 ${getStatusColor(ticket.status)}`}>
-                                        <AlertCircle size={16} />
+                            <div className="relative z-10 lg:flex items-center gap-4">
+                                <div className="lg:w-8/12 flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm shrink-0 ${getStatusColor(ticket.status)}`}>
+                                        <AlertCircle size={14} />
                                     </div>
-                                    <div className="min-w-0">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest text-nowrap">TKT-{ticket.id.toString().padStart(4, '0')}</span>
-                                            <div className="w-1 h-1 bg-gray-100 rounded-full" />
-                                            <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest text-nowrap bg-blue-50/50 px-2 py-0.5 rounded leading-none border border-blue-100/20">
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2 mb-0.5">
+                                            <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest text-nowrap">TKT-{ticket.id.toString().padStart(4, '0')}</span>
+                                            <div className="w-0.5 h-0.5 bg-gray-100 rounded-full" />
+                                            <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest text-nowrap bg-blue-50/50 px-1.5 py-0.5 rounded leading-none border border-blue-100/20">
                                                 {ticket.category.split(' ')[0]}
                                             </span>
-                                            <div className="w-1 h-1 bg-gray-100 rounded-full" />
-                                            <h4 className="text-[11px] font-black text-gray-900 tracking-tight leading-none group-hover:text-blue-600 transition-colors uppercase truncate">{ticket.subject}</h4>
+                                            <div className="w-0.5 h-0.5 bg-gray-100 rounded-full" />
+                                            <h4 className="text-[10px] font-black text-gray-900 tracking-tight leading-none group-hover:text-blue-600 transition-colors uppercase truncate">{ticket.subject}</h4>
                                         </div>
-                                        <p className="text-[9px] text-gray-400 font-medium mt-1.5 italic line-clamp-1 opacity-70">"{ticket.description}"</p>
+                                        <p className="text-[9px] text-gray-400 font-medium line-clamp-1 opacity-70 italic leading-none">"{ticket.description}"</p>
                                     </div>
                                 </div>
 
                                 <div className="hidden lg:flex flex-1 items-center justify-center">
-                                    <div className={`px-3 py-1 rounded-lg border flex items-center gap-2
+                                    <div className={`px-2 py-0.5 rounded-md border flex items-center gap-1.5
                                         ${ticket.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100/30' : 
                                           ticket.status === 'in-review' ? 'bg-blue-50 text-blue-600 border-blue-100/30' : 
                                           'bg-emerald-50 text-emerald-600 border-emerald-100/30'}`}>
                                         <div className={`w-1 h-1 rounded-full animate-pulse ${getStatusColor(ticket.status)}`} />
-                                        <span className="text-[9px] font-black uppercase tracking-widest">{ticket.status}</span>
+                                        <span className="text-[8px] font-black uppercase tracking-widest">{ticket.status}</span>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-end gap-3 lg:w-1/4 mt-4 lg:mt-0 pt-3 lg:pt-0 border-t lg:border-t-0 border-gray-50">
-                                    <div className="flex flex-col items-end mr-2">
-                                        <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest leading-none">Logged</span>
-                                        <span className="text-[9px] font-bold text-gray-500 mt-1">{new Date(ticket.created_at).toLocaleDateString()}</span>
+                                <div className="flex items-center justify-end gap-3 lg:w-3/12 mt-3 lg:mt-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-gray-50">
+                                    <div className="flex flex-col items-end mr-1">
+                                        <span className="text-[7px] font-black text-gray-300 uppercase tracking-widest leading-none">Logged</span>
+                                        <span className="text-[8px] font-bold text-gray-400 mt-0.5">{new Date(ticket.created_at).toLocaleDateString()}</span>
                                     </div>
                                     <div className="flex gap-1.5">
                                         {ticket.screenshot_url && (
@@ -289,9 +332,14 @@ const StudentTicketForm = ({ studentId = 1 }) => {
                                                 href={`http://localhost:5000${ticket.screenshot_url}`} 
                                                 target="_blank" 
                                                 rel="noreferrer"
-                                                className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-blue-50 hover:text-blue-500 transition-all border border-gray-100 shadow-sm"
+                                                className="relative w-10 h-7 rounded-md overflow-hidden border border-gray-200 hover:border-blue-400 hover:ring-4 hover:ring-blue-50 transition-all shrink-0 group/img shadow-xs"
+                                                title="View Submitted Evidence"
                                             >
-                                                <ImageIcon size={12} />
+                                                <img 
+                                                    src={`http://localhost:5000${ticket.screenshot_url}`} 
+                                                    alt="Evidence" 
+                                                    className="w-full h-full object-cover group-hover/img:scale-125 transition-transform"
+                                                />
                                             </a>
                                         )}
                                         <button 
@@ -307,95 +355,186 @@ const StudentTicketForm = ({ studentId = 1 }) => {
                     ))}
 
                     {selectedTicket && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-                            <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                                <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg ${getStatusColor(selectedTicket.status)}`}>
-                                            <AlertCircle size={20} />
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300 text-left">
+                        <div className="bg-white w-full max-w-6xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
+                            {/* Header */}
+                            <div className="px-6 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-lg ${getStatusColor(selectedTicket.status)}`}>
+                                        <AlertCircle size={16} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-xs font-black text-gray-900 uppercase tracking-widest">Inquiry Overview</h4>
+                                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest leading-none mt-0.5">REF-{selectedTicket.id.toString().padStart(4, '0')}</p>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={() => setSelectedTicket(null)}
+                                    className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            {/* Body Split View */}
+                            <div className="flex h-[550px] overflow-hidden">
+                                {/* Left: Details */}
+                                <div className="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-5 border-r border-gray-100 bg-white">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[9px] font-black text-blue-500 bg-blue-50 px-2.5 py-1 rounded-md uppercase tracking-widest border border-blue-100/50">
+                                            {selectedTicket.category}
+                                        </span>
+                                        <span className="text-[9px] font-bold text-gray-400 flex items-center gap-1.5 uppercase tracking-tighter">
+                                            <Clock size={10} /> {new Date(selectedTicket.created_at).toLocaleString()}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="bg-gray-50/50 rounded-xl p-3 border border-gray-100 flex items-center justify-between">
+                                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Contact Number</span>
+                                            <span className="text-[10px] font-mono font-bold text-gray-700">{selectedTicket.contact_number || 'N/A'}</span>
                                         </div>
-                                        <div>
-                                            <h4 className="text-sm font-black text-gray-900 uppercase tracking-widest">Inquiry Details</h4>
-                                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">TKT-{selectedTicket.id.toString().padStart(4, '0')}</p>
+                                        <div className="bg-gray-50/50 rounded-xl p-3 border border-gray-100 flex items-center justify-between">
+                                            <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">Current Status</span>
+                                            <span className={`text-[8px] font-black uppercase text-white px-2.5 py-0.5 rounded shadow-xs ${getStatusColor(selectedTicket.status)}`}>{selectedTicket.status}</span>
                                         </div>
                                     </div>
-                                    <button 
-                                        onClick={() => setSelectedTicket(null)}
-                                        className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400"
-                                    >
-                                        <X size={20} />
-                                    </button>
-                                </div>
 
-                                <div className="p-8 space-y-8 max-h-[80vh] overflow-y-auto">
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-black text-blue-500 bg-blue-50 px-3 py-1 rounded-full uppercase tracking-widest border border-blue-100/50">
-                                                {selectedTicket.category}
-                                            </span>
-                                            <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1.5 uppercase">
-                                                <Clock size={12} /> {new Date(selectedTicket.created_at).toLocaleString()}
-                                            </span>
-                                        </div>
-                                        <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 flex items-center justify-between gap-4">
-                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact Number</span>
-                                            <span className="text-xs font-bold text-gray-700">{selectedTicket.contact_number || 'N/A'}</span>
-                                        </div>
-                                        <h3 className="text-xl font-bold text-gray-900 tracking-tight leading-tight uppercase">{selectedTicket.subject}</h3>
-                                        <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                                            <p className="text-xs text-gray-600 leading-relaxed font-medium italic whitespace-pre-wrap">
+                                    <div className="space-y-2">
+                                        <h3 className="text-base font-black text-gray-900 tracking-tight leading-tight uppercase border-l-4 border-blue-500 pl-4">{selectedTicket.subject}</h3>
+                                        <div className="bg-gray-50/30 rounded-2xl p-5 border border-gray-100 shadow-inner">
+                                            <p className="text-[11px] text-gray-600 leading-relaxed font-semibold italic whitespace-pre-wrap">
                                                 "{selectedTicket.description}"
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="space-y-4">
-                                        <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Structural Progress Bar</h5>
+                                    {/* Evidence Area */}
+                                    {selectedTicket.screenshot_url && (
+                                        <div className="mt-6 pt-6 border-t border-gray-50">
+                                            <h5 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                                                <ImageIcon size={12} className="text-blue-500" /> Evidence Capture Archive
+                                            </h5>
+                                            <div className="rounded-2xl border border-gray-200 overflow-hidden bg-gray-50 group cursor-zoom-in relative">
+                                                <img 
+                                                    src={`http://localhost:5000${selectedTicket.screenshot_url}`} 
+                                                    alt="Evidence" 
+                                                    className="w-full h-40 object-cover transition-transform duration-700 group-hover:scale-110"
+                                                    onClick={() => window.open(`http://localhost:5000${selectedTicket.screenshot_url}`, '_blank')}
+                                                />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity text-white gap-1" onClick={() => window.open(`http://localhost:5000${selectedTicket.screenshot_url}`, '_blank')}>
+                                                    <Eye size={20} />
+                                                    <span className="text-[8px] font-black uppercase tracking-widest mt-1">Enlarge Node</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="pt-6 border-t border-gray-50 space-y-4">
+                                        <h5 className="text-[9px] font-black text-gray-400 uppercase tracking-widest">System Processing Trajectory</h5>
                                         <div className="relative pt-1">
-                                            <div className="flex mb-2 items-center justify-between">
-                                                {['Deployment', 'Diagnostic', 'Resolved'].map((label, i) => (
+                                            <div className="flex mb-3 items-center justify-between px-3">
+                                                {['Log', 'Review', 'Resolved'].map((label, i) => (
                                                     <div key={label} className="text-center">
-                                                        <span className={`text-[9px] font-black uppercase tracking-widest inline-block py-1 px-2 rounded-full ${getStatusStep(selectedTicket.status) > i ? 'text-blue-600 bg-blue-50' : 'text-gray-300 bg-gray-50'}`}>
+                                                        <span className={`text-[8px] font-black uppercase tracking-widest inline-block py-1.5 px-3 rounded-lg shadow-sm ${getStatusStep(selectedTicket.status) > i ? 'text-blue-600 bg-blue-50 border border-blue-100' : 'text-gray-300 bg-gray-50 border border-gray-100'}`}>
                                                             {label}
                                                         </span>
                                                     </div>
                                                 ))}
                                             </div>
-                                            <div className="overflow-hidden h-2 mb-4 text-xs flex rounded-full bg-gray-100 shadow-inner">
+                                            <div className="overflow-hidden h-2.5 mb-4 flex rounded-full bg-gray-100 shadow-inner">
                                                 <div 
                                                     style={{ width: `${(getStatusStep(selectedTicket.status) / 3) * 100}%` }}
-                                                    className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-1000 ${getStatusColor(selectedTicket.status)}`}
+                                                    className={`shadow-lg flex flex-col text-center whitespace-nowrap text-white justify-center transition-all duration-1000 ${getStatusColor(selectedTicket.status)}`}
                                                 />
                                             </div>
                                         </div>
                                     </div>
-
-                                    {selectedTicket.screenshot_url && (
-                                        <div className="space-y-4">
-                                            <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Visual Evidence Archive</h5>
-                                            <div className="rounded-2xl border border-gray-100 overflow-hidden bg-gray-50 group cursor-zoom-in">
-                                                <img 
-                                                    src={`http://localhost:5000${selectedTicket.screenshot_url}`} 
-                                                    alt="Evidence" 
-                                                    className="w-full h-auto max-h-96 object-contain transition-transform duration-500 group-hover:scale-105"
-                                                    onClick={() => window.open(`http://localhost:5000${selectedTicket.screenshot_url}`, '_blank')}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
 
-                                <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end">
-                                    <button 
-                                        onClick={() => setSelectedTicket(null)}
-                                        className="px-8 py-3 bg-gray-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-gray-200"
-                                    >
-                                        Synchronize & Close
-                                    </button>
+                                {/* Right: Chat */}
+                                <div className="w-[400px] flex flex-col bg-gray-50/50">
+                                    <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2.5 bg-white">
+                                        <MessageSquare size={14} className="text-blue-500" />
+                                        <h5 className="text-[10px] font-black text-gray-700 uppercase tracking-widest">Communication History</h5>
+                                    </div>
+                                    
+                                    <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
+                                        {chats.map((chat) => (
+                                            <div key={chat.id} className={`flex ${chat.sender_role === 'student' ? 'justify-end' : 'justify-start'}`}>
+                                                <div className={`max-w-[90%] rounded-2xl px-4 py-3 text-[10px] shadow-sm transform transition-all hover:scale-[1.02]
+                                                    ${chat.sender_role === 'student' 
+                                                        ? 'bg-blue-600 text-white rounded-br-none border border-blue-700' 
+                                                        : chat.sender_role === 'system'
+                                                            ? 'bg-gray-100 text-gray-400 italic text-center w-full mx-auto font-black uppercase tracking-tighter border border-gray-200'
+                                                            : 'bg-white text-gray-700 border border-gray-200 rounded-bl-none shadow-xs'
+                                                    }`}>
+                                                    <p className="leading-relaxed font-semibold">{chat.message}</p>
+                                                    <p className={`text-[7px] mt-1.5 font-bold opacity-60 ${chat.sender_role === 'student' ? 'text-right' : 'text-left'}`}>
+                                                        {new Date(chat.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {chats.length === 0 && (
+                                            <div className="h-full flex flex-col items-center justify-center opacity-30 gap-3">
+                                                <MessageSquare size={40} className="text-gray-300" />
+                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Zero active signals detected</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-100 shadow-2xl">
+                                        <div className="relative flex items-center gap-2">
+                                            <input 
+                                                type="text"
+                                                value={chatMessage}
+                                                onChange={(e) => setChatMessage(e.target.value)}
+                                                placeholder="Broadcast command..."
+                                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-300 transition-all placeholder:text-gray-300"
+                                            />
+                                            <button 
+                                                type="submit"
+                                                disabled={sendingChat || !chatMessage.trim()}
+                                                className="shrink-0 p-3 bg-blue-600 text-white rounded-2xl hover:bg-black transition-all disabled:opacity-50 shadow-lg shadow-blue-100 active:scale-95"
+                                            >
+                                                <SendIcon size={16} />
+                                            </button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
+
+                            {/* Footer */}
+                            <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    {selectedTicket.status !== 'resolved' && (
+                                        <button 
+                                            onClick={async () => {
+                                                try {
+                                                    await axios.patch(`http://localhost:5000/api/user-feedback/tickets/${selectedTicket.id}`, { status: 'resolved' });
+                                                    setSelectedTicket(prev => ({ ...prev, status: 'resolved' }));
+                                                    fetchTickets();
+                                                } catch (err) {
+                                                    console.error('Error closing ticket:', err);
+                                                }
+                                            }}
+                                            className="px-4 py-2.5 bg-white text-emerald-600 border border-emerald-100 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-50 transition-all shadow-sm flex items-center gap-2 active:scale-95"
+                                        >
+                                            <CheckCircle2 size={12} /> Resolve Ticket
+                                        </button>
+                                    )}
+                                </div>
+                                <button 
+                                    onClick={() => setSelectedTicket(null)}
+                                    className="px-8 py-3 bg-gray-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-wider hover:bg-black transition-all shadow-2xl active:scale-95 border border-white/10"
+                                >
+                                    Close Overview
+                                </button>
+                            </div>
                         </div>
-                    )}
+                    </div>
+                )}
 
                     {tickets.length === 0 && (
                         <div className="p-20 bg-white rounded-3xl border border-dashed border-gray-200 flex flex-col items-center justify-center text-center">

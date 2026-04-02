@@ -9,7 +9,12 @@ INSERT INTO lecturers (name, initials, title, department, employee_id, email, pa
 ('Ruwan Jayasinghe', 'R.J.', 'Senior Lecturer', 'SE', 'EMP005', 'ruwan@uni.lk', 'pass123', 150),
 ('Chathura Dias', 'C.D.', 'Lecturer', 'CS', 'EMP006', 'chathura@uni.lk', 'pass123', 80),
 ('Thilini Perera', 'T.P.', 'Assistant Lecturer', 'IT', 'EMP007', 'thilini@uni.lk', 'pass123', 55),
-('Dilshan Wickrama', 'D.W.', 'Lecturer', 'SE', 'EMP008', 'dilshan@uni.lk', 'pass123', 95)
+('Dilshan Wickrama', 'D.W.', 'Lecturer', 'SE', 'EMP008', 'dilshan@uni.lk', 'pass123', 95),
+('System Admin', 'S.A.', 'Academic Head', 'Administration', 'ADM001', 'admin1@uni.lk', 'pass123', 0),
+('Nuwan Perera', 'N.P.', 'Administrator', 'Administration', 'ADM002', 'nuwan@uni.lk', 'pass123', 0),
+('Sajith Silva', 'S.S.', 'Administrator', 'Administration', 'ADM003', 'sajith@uni.lk', 'pass123', 0),
+('Tharindu Fernando', 'T.F.', 'Support Moderator', 'Administration', 'ADM004', 'tharindu@uni.lk', 'pass123', 0),
+('Iresha Jayasinghe', 'I.J.', 'Administrator', 'Administration', 'ADM005', 'iresha@uni.lk', 'pass123', 0)
 ON CONFLICT (employee_id) DO UPDATE SET 
     name = EXCLUDED.name, 
     email = EXCLUDED.email, 
@@ -43,6 +48,22 @@ INSERT INTO lectures (lecturer_id, title, subject, topic, year, semester, youtub
 (7, 'Networking Intro', 'Networks', 'OSI Model', 'Y3', 'S1', 'https://youtu.be/vid7'),
 (8, 'Cyber Security', 'Security', 'Basics', 'Y4', 'S2', 'https://youtu.be/vid8')
 ON CONFLICT DO NOTHING;
+
+CREATE INDEX idx_tickets_student_id ON tickets (student_id);
+CREATE INDEX idx_tickets_created_at ON tickets (created_at DESC);
+
+-- TICKET CHATS (COMMUNICATION LOGS)
+CREATE TABLE IF NOT EXISTS ticket_chats (
+    id SERIAL PRIMARY KEY,
+    ticket_id INTEGER REFERENCES tickets(id) ON DELETE CASCADE,
+    sender_id INTEGER, 
+    sender_role VARCHAR(20), -- 'student' or 'lecturer' or 'system'
+    message TEXT NOT NULL,
+    is_system_message BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_ticket_chats_ticket_id ON ticket_chats(ticket_id);
 
 -- STUDENT NOTES
 INSERT INTO student_notes (student_id, lecture_id, title, filename, filepath, filesize, likes, status) VALUES
@@ -80,10 +101,3 @@ INSERT INTO tickets (student_id, subject, description, screenshot_url, category,
 (8, 'Exam Timetable Issue', 'My elective exam and core exam are scheduled at the same time.', NULL, 'Examination & Results', '0719876543', 'in-review')
 ON CONFLICT DO NOTHING;
 
-
-INSERT INTO admins (name, admin_id, email, password, role) VALUES
-('System Admin', 'ADM001', 'admin1@uni.lk', 'pass123', 'super_admin'),
-('Nuwan Perera', 'ADM002', 'nuwan@uni.lk', 'pass123', 'admin'),
-('Sajith Silva', 'ADM003', 'sajith@uni.lk', 'pass123', 'admin'),
-('Tharindu Fernando', 'ADM004', 'tharindu@uni.lk', 'pass123', 'moderator'),
-('Iresha Jayasinghe', 'ADM005', 'iresha@uni.lk', 'pass123', 'admin');

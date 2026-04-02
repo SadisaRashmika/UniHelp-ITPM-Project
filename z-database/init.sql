@@ -96,17 +96,6 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
 	order_num INTEGER NOT NULL DEFAULT 1
 );
 
--- Admins
-CREATE TABLE IF NOT EXISTS admins (
-	id SERIAL PRIMARY KEY,
-	name VARCHAR(100) NOT NULL,
-	admin_id VARCHAR(50) UNIQUE NOT NULL,
-	email VARCHAR(150) UNIQUE NOT NULL,
-	password VARCHAR(255) NOT NULL,
-	role VARCHAR(20) DEFAULT 'admin',
-	created_at TIMESTAMP DEFAULT NOW()
-);
-
 -- Feedbacks
 CREATE TABLE IF NOT EXISTS feedbacks (
     id SERIAL PRIMARY KEY,
@@ -133,4 +122,17 @@ CREATE TABLE IF NOT EXISTS tickets (
 
 CREATE INDEX IF NOT EXISTS idx_tickets_student_id ON tickets(student_id);
 CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON tickets(created_at DESC);
+
+-- TICKET CHATS (COMMUNICATION LOGS)
+CREATE TABLE IF NOT EXISTS ticket_chats (
+    id SERIAL PRIMARY KEY,
+    ticket_id INTEGER REFERENCES tickets(id) ON DELETE CASCADE,
+    sender_id INTEGER, 
+    sender_role VARCHAR(20), -- 'student' or 'lecturer' or 'system'
+    message TEXT NOT NULL,
+    is_system_message BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_ticket_chats_ticket_id ON ticket_chats(ticket_id);
 

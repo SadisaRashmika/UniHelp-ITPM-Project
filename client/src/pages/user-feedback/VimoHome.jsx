@@ -43,7 +43,7 @@ const VimoHome = () => {
                     </p>
                 </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
                     <DashboardCard 
                         title="Student Portal" 
                         desc="Submit feedback, track points, and view your academic achievements in a single unified dashboard."
@@ -52,18 +52,11 @@ const VimoHome = () => {
                         onClick={() => navigate('/student')}
                     />
                     <DashboardCard 
-                        title="Lecturer Portal" 
-                        desc="Analyze student sentiment, respond to reviews, and manage course materials effectively."
+                        title="Academic Portal" 
+                        desc="The central hub for lecturers to manage student sentiment, analyze performance, and institutional logistics."
                         icon={<Presentation size={28} />}
                         color="bg-gradient-to-br from-purple-500 to-purple-700"
                         onClick={() => navigate('/lecture')}
-                    />
-                    <DashboardCard 
-                        title="Admin Console" 
-                        desc="System-wide analytics, user management, and institutional reporting tools."
-                        icon={<ShieldCheck size={28} />}
-                        color="bg-gradient-to-br from-gray-700 to-gray-900"
-                        onClick={() => navigate('/admin')}
                     />
                 </div>
 

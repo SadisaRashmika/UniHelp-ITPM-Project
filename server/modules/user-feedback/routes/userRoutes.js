@@ -64,4 +64,8 @@ router.get('/tickets', ticketController.getAllTickets);
 
 router.patch('/tickets/:id', ticketController.updateTicketStatus);
 
+// --- CHAT ROUTES ---
+router.get('/tickets/:id/chats', ticketController.getTicketChats);
+router.post('/tickets/:id/chats', ticketController.addChatMessage);
+
 module.exports = router;
