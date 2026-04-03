@@ -1,17 +1,10 @@
 import LecDashboard from '../../pages/lecture-resource/LecDashboard';
 import StuDashboard from '../../pages/lecture-resource/StuDashboard';
+import PortalHomeContent from './PortalHomeContent';
 
-const PortalTabContent = ({ tab, user }) => {
+const PortalTabContent = ({ tab, user, onLogin, onNavigate }) => {
   if (tab === 'home') {
-    return (
-      <section className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
-        <h2 className="text-3xl font-bold text-slate-900">Welcome to UniHelp</h2>
-        <p className="mt-4 text-slate-600 max-w-2xl">
-          Home page is open for all users. To access Timetable, Resource, Jobs, and Ticket,
-          login with your university account and role.
-        </p>
-      </section>
-    );
+    return <PortalHomeContent user={user} onLogin={onLogin} onNavigate={onNavigate} />;
   }
 
   if (!user) {
