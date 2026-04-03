@@ -1,6 +1,7 @@
 BEGIN;
 
 DROP TABLE IF EXISTS auth_otp_codes CASCADE;
+DROP TABLE IF EXISTS student_note_likes CASCADE;
 DROP TABLE IF EXISTS quiz_questions CASCADE;
 DROP TABLE IF EXISTS quizzes CASCADE;
 DROP TABLE IF EXISTS bonus_mark_requests CASCADE;
@@ -83,6 +84,14 @@ CREATE TABLE student_notes (
 	status VARCHAR(20) DEFAULT 'pending',
 	rejection_note TEXT,
 	uploaded_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE student_note_likes (
+	id BIGSERIAL PRIMARY KEY,
+	note_id INTEGER NOT NULL REFERENCES student_notes(id) ON DELETE CASCADE,
+	liked_by_student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+	liked_at TIMESTAMP NOT NULL DEFAULT NOW(),
+	UNIQUE (note_id, liked_by_student_id)
 );
 
 -- Bonus requests

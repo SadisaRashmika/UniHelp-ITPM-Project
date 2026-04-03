@@ -80,6 +80,7 @@ const normalizeAcceptedNote = (row, currentStudentId) => ({
   title: row.title,
   uploader: row.uploader,
   isMyUpload: row.owner_student_id === currentStudentId,
+  likedByMe: Boolean(row.liked_by_me),
   tags: [row.subject, row.topic, row.year, row.semester].filter(Boolean),
   file: row.filename,
   fileUrl: normalizeFileUrl({ url: row.file_url, filepath: row.filepath }),
@@ -142,11 +143,14 @@ const StuHome = ({ student, onUploadClick, onTakeQuiz, onBonusMarks, onLikeEarne
   useEffect(() => {
     const loadAcceptedNotes = async () => {
       try {
-        const response = await axios.get(`${API_BASE}/api/student/notes/accepted`);
         const currentStudentId = student?.student_id || 'STU001';
+        const response = await axios.get(`${API_BASE}/api/student/notes/accepted`, {
+          params: { studentId: currentStudentId },
+        });
         const notes = (response.data || []).map((n) => normalizeAcceptedNote(n, currentStudentId));
         setAcceptedNotes(notes);
         setNoteLikes(Object.fromEntries(notes.map((n) => [n.id, n.likes])));
+        setLikedSet(new Set(notes.filter((n) => n.likedByMe).map((n) => n.id)));
       } catch (error) {
         console.error('Error fetching accepted notes:', error);
       }

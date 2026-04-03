@@ -31,6 +31,18 @@ const findUserByEmail = async (email) => {
   return result.rows[0] || null;
 };
 
+const findUserByIdentifier = async (identifier) => {
+  const query = `
+    SELECT *
+    FROM (${buildAccountSelect()}) AS accounts
+    WHERE LOWER(accounts.email) = LOWER($1)
+       OR UPPER(accounts.id_number) = UPPER($1)
+    LIMIT 1
+  `;
+  const result = await pool.query(query, [identifier]);
+  return result.rows[0] || null;
+};
+
 const findPendingUserByIdAndEmail = async (idNumber, email) => {
   const query = `
     SELECT *
@@ -333,6 +345,7 @@ const upsertSeedUser = async ({ idNumber, fullName, email, role }) => {
 
 module.exports = {
   findUserByEmail,
+  findUserByIdentifier,
   findPendingUserByIdAndEmail,
   findUserByRoleAndIdNumber,
   createOtp,

@@ -65,6 +65,15 @@ CREATE TABLE IF NOT EXISTS student_notes (
 	uploaded_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Student note likes (one like per student per note)
+CREATE TABLE IF NOT EXISTS student_note_likes (
+	id BIGSERIAL PRIMARY KEY,
+	note_id INTEGER NOT NULL REFERENCES student_notes(id) ON DELETE CASCADE,
+	liked_by_student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+	liked_at TIMESTAMP NOT NULL DEFAULT NOW(),
+	UNIQUE (note_id, liked_by_student_id)
+);
+
 -- Bonus requests
 CREATE TABLE IF NOT EXISTS bonus_mark_requests (
 	id SERIAL PRIMARY KEY,

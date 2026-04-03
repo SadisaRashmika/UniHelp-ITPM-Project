@@ -12,7 +12,7 @@ import {
 const MODES = { LOGIN: 'login', ACTIVATE: 'activate', FORGOT: 'forgot' };
 
 const initialForms = {
-  login: { email: '', password: '' },
+  login: { identifier: '', password: '' },
   activateRequest: { idNumber: '', email: '' },
   activateVerify: { otp: '', password: '' },
   forgotRequest: { email: '' },
@@ -250,7 +250,7 @@ const AuthModal = ({ isOpen, onClose, onAuthenticated, initialMode = MODES.LOGIN
 
 const LoginForm = ({ forms, updateForm, loading, onLogin, onForgot, onActivate }) => (
   <form className="space-y-3" onSubmit={onLogin}>
-    <Field icon={Mail} label="University email" type="email" placeholder="you@university.edu" value={forms.login.email} onChange={(value) => updateForm('login', 'email', value)} required />
+    <Field icon={Mail} label="University email or ID" type="text" placeholder="you@university.edu or STU001" value={forms.login.identifier} onChange={(value) => updateForm('login', 'identifier', value)} required />
     <PasswordField label="Password" placeholder="Enter your password" value={forms.login.password} onChange={(value) => updateForm('login', 'password', value)} required />
 
     <div className="flex items-center justify-between gap-3 pt-1">

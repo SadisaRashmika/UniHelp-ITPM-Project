@@ -169,13 +169,14 @@ const verifyActivationOtpAndSetPassword = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { identifier, email, idNumber, password } = req.body;
+    const loginIdentifier = String(identifier || email || idNumber || '').trim();
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'email and password are required' });
+    if (!loginIdentifier || !password) {
+      return res.status(400).json({ message: 'identifier and password are required' });
     }
 
-    const user = await authModel.findUserByEmail(email.trim());
+    const user = await authModel.findUserByIdentifier(loginIdentifier);
     if (!user || !user.password_hash) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
