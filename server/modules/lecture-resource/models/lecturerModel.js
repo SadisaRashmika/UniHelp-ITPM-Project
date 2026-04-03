@@ -195,13 +195,15 @@ const getStudentSubmissions = async (employeeId) => {
       s.name AS student_name,
       s.initials AS student_initials,
       s.rank AS student_rank,
-      s.likes AS student_likes,
+      COALESCE(SUM(CASE WHEN sn2.status = 'accepted' THEN sn2.likes ELSE 0 END), 0)::INT AS student_likes,
       l.subject
     FROM student_notes sn
     JOIN lectures l ON l.id = sn.lecture_id
     JOIN lecturers lec ON lec.id = l.lecturer_id
     JOIN students s ON s.id = sn.student_id
+    LEFT JOIN student_notes sn2 ON sn2.student_id = s.id AND sn2.status = 'accepted'
     WHERE lec.employee_id = $1
+    GROUP BY sn.id, sn.title, sn.filename, sn.filepath, sn.filesize, sn.status, sn.rejection_note, sn.uploaded_at, s.name, s.initials, s.rank, l.subject
     ORDER BY sn.uploaded_at DESC, sn.id DESC
   `;
 
@@ -279,6 +281,102 @@ const deleteLecturerResource = async (employeeId, lectureId) => {
   return result.rows[0] || null;
 };
 
+const updateLecturerResource = async (employeeId, lectureId, payload) => {
+  const {
+    title,
+    subject,
+    topic,
+    year,
+    semester,
+    youtubeUrl,
+    files = [],
+    addQuiz = false,
+    quizTitle = '',
+    questions = [],
+  } = payload;
+
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+
+    const updateLectureResult = await client.query(
+      `
+      UPDATE lectures
+      SET
+        title = $1,
+        subject = $2,
+        topic = $3,
+        year = $4,
+        semester = $5,
+        youtube_url = $6
+      WHERE id = $7
+        AND lecturer_id = (
+          SELECT id FROM lecturers WHERE employee_id = $8
+        )
+      RETURNING id
+      `,
+      [title, subject, topic, year, semester, youtubeUrl, lectureId, employeeId]
+    );
+
+    if (!updateLectureResult.rows[0]) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+
+    if (Array.isArray(files) && files.length > 0) {
+      const fileQuery = `
+        INSERT INTO lecture_files (lecture_id, filename, filepath)
+        VALUES ($1, $2, $3)
+      `;
+
+      for (const file of files) {
+        const filePath = path.join('uploads/notes', file.filename);
+        await client.query(fileQuery, [lectureId, file.originalname, filePath]);
+      }
+    }
+
+    // Replace quiz configuration based on toggle state from frontend.
+    await client.query(
+      `
+      DELETE FROM quizzes
+      WHERE lecture_id = $1
+      `,
+      [lectureId]
+    );
+
+    if (addQuiz) {
+      const quizInsertResult = await client.query(
+        `
+        INSERT INTO quizzes (lecture_id, title)
+        VALUES ($1, $2)
+        RETURNING id
+        `,
+        [lectureId, quizTitle]
+      );
+
+      const quizId = quizInsertResult.rows[0].id;
+      for (const question of questions) {
+        const { questionText, options, answerIndex, orderNum } = question;
+        await client.query(
+          `
+          INSERT INTO quiz_questions (quiz_id, question, options, answer_index, order_num)
+          VALUES ($1, $2, $3, $4, $5)
+          `,
+          [quizId, questionText, JSON.stringify(options), answerIndex, orderNum]
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+    return updateLectureResult.rows[0];
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 const getBonusMarkRequests = async (employeeId) => {
   const query = `
     SELECT
@@ -323,15 +421,23 @@ const reviewBonusMarkRequest = async (employeeId, requestId, action) => {
         bmr.status,
         bmr.subject,
         bmr.student_id,
+        s.name AS student_name,
+        s.email AS student_email,
         s.student_id AS student_code,
-        s.bonus_used,
         GREATEST(
           COALESCE((
             SELECT SUM(sn.likes)
             FROM student_notes sn
             WHERE sn.student_id = s.id
               AND sn.status = 'accepted'
-          ), 0) - CASE WHEN s.bonus_used THEN 100 ELSE 0 END,
+          ), 0) - (
+            100 * COALESCE((
+              SELECT COUNT(*)
+              FROM bonus_mark_requests b2
+              WHERE b2.student_id = s.id
+                AND b2.status = 'approved'
+            ), 0)
+          ),
           0
         )::INT AS points
       FROM bonus_mark_requests bmr
@@ -360,9 +466,23 @@ const reviewBonusMarkRequest = async (employeeId, requestId, action) => {
         await client.query('ROLLBACK');
         return { error: 'Student does not have enough points' };
       }
-      if (req.bonus_used) {
+
+      const alreadyClaimedResult = await client.query(
+        `
+        SELECT id
+        FROM bonus_mark_requests
+        WHERE student_id = $1
+          AND subject = $2
+          AND status = 'approved'
+          AND id <> $3
+        LIMIT 1
+        `,
+        [req.student_id, req.subject, requestId]
+      );
+
+      if (alreadyClaimedResult.rows[0]) {
         await client.query('ROLLBACK');
-        return { error: 'Student already used bonus marks this semester' };
+        return { error: 'Bonus marks already claimed for this subject' };
       }
 
       const subCode = String(req.subject || '').split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 4) || 'SUBJ';
@@ -379,17 +499,14 @@ const reviewBonusMarkRequest = async (employeeId, requestId, action) => {
         [uniqueCode, requestId]
       );
 
-      await client.query(
-        `
-        UPDATE students
-        SET bonus_used = TRUE
-        WHERE id = $1
-        `,
-        [req.student_id]
-      );
-
       await client.query('COMMIT');
-      return { status: 'approved', uniqueCode };
+      return {
+        status: 'approved',
+        uniqueCode,
+        subject: req.subject,
+        studentName: req.student_name,
+        studentEmail: req.student_email,
+      };
     }
 
     await client.query(
@@ -402,7 +519,12 @@ const reviewBonusMarkRequest = async (employeeId, requestId, action) => {
     );
 
     await client.query('COMMIT');
-    return { status: 'rejected' };
+    return {
+      status: 'rejected',
+      subject: req.subject,
+      studentName: req.student_name,
+      studentEmail: req.student_email,
+    };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -436,6 +558,7 @@ module.exports = {
   uploadResource,
   createQuiz,
   deleteLecturerResource,
+  updateLecturerResource,
   getStudentSubmissions,
   reviewStudentSubmission,
   getBonusMarkRequests,

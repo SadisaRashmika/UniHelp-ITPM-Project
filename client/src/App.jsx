@@ -1,15 +1,7 @@
-import React from 'react'
-
-import LecDashboard from './pages/lecture-resource/LecDashboard'
-import StuDashboard from './pages/lecture-resource/StuDashboard'
+import MainPortalPage from './pages/login-signin/MainPortalPage';
 
 const App = () => {
-  return (
-    <div>
-      {/* <LecDashboard/> */}
-      <StuDashboard/>
-    </div>
-  )
-}
+  return <MainPortalPage />;
+};
 
-export default App
+export default App;

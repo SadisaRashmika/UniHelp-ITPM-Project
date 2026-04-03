@@ -1,6 +1,18 @@
 const db = require('../../../config/db'); // Import the database module
 const path = require('path');
 
+const ensureStudentNoteLikesTable = async (client) => {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS student_note_likes (
+      id BIGSERIAL PRIMARY KEY,
+      note_id INTEGER NOT NULL REFERENCES student_notes(id) ON DELETE CASCADE,
+      liked_by_student_id INTEGER NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+      liked_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      UNIQUE (note_id, liked_by_student_id)
+    )
+  `);
+};
+
 // Fetch student profile data from the database
 const getStudentProfile = async (studentId) => {
   const query = `
@@ -15,14 +27,21 @@ const getStudentProfile = async (studentId) => {
       COALESCE(SUM(CASE WHEN sn.status = 'accepted' THEN sn.likes ELSE 0 END), 0)::INT AS full_likes,
       GREATEST(
         COALESCE(SUM(CASE WHEN sn.status = 'accepted' THEN sn.likes ELSE 0 END), 0)
-        - CASE WHEN s.bonus_used THEN 100 ELSE 0 END,
+        - (
+          100 * COALESCE((
+            SELECT COUNT(*)
+            FROM bonus_mark_requests bmr
+            WHERE bmr.student_id = s.id
+              AND bmr.status = 'approved'
+          ), 0)
+        ),
         0
       )::INT AS points,
       s.rank
     FROM students s
     LEFT JOIN student_notes sn ON sn.student_id = s.id
     WHERE s.student_id = $1
-    GROUP BY s.id, s.name, s.initials, s.student_id, s.email, s.year, s.semester, s.rank, s.bonus_used
+    GROUP BY s.id, s.name, s.initials, s.student_id, s.email, s.year, s.semester, s.rank
   `;
   const result = await db.query(query, [studentId]);  // Query by student_id (string)
   return result.rows[0]; // Return the student data if found
@@ -163,41 +182,59 @@ const getMyUploads = async (studentId) => {
   }));
 };
 
-const getAcceptedStudentNotes = async () => {
-  const query = `
-    SELECT
-      sn.id,
-      sn.title,
-      sn.lecture_id,
-      sn.filename,
-      sn.filepath,
-      sn.likes,
-      sn.uploaded_at,
-      s.id AS owner_student_db_id,
-      s.student_id AS owner_student_id,
-      s.name AS uploader,
-      l.subject,
-      l.topic,
-      l.year,
-      l.semester
-    FROM student_notes sn
-    JOIN students s ON s.id = sn.student_id
-    JOIN lectures l ON l.id = sn.lecture_id
-    WHERE sn.status = 'accepted'
-    ORDER BY sn.likes DESC, sn.uploaded_at DESC
-  `;
+const getAcceptedStudentNotes = async (viewerStudentId = null) => {
+  const client = await db.connect();
+  try {
+    await ensureStudentNoteLikesTable(client);
 
-  const result = await db.query(query);
-  return result.rows.map((row) => ({
-    ...row,
-    file_url: `/${String(row.filepath || '').replace(/\\/g, '/')}`,
-  }));
+    let viewerDbId = null;
+    if (viewerStudentId) {
+      const viewerResult = await client.query('SELECT id FROM students WHERE student_id = $1', [viewerStudentId]);
+      viewerDbId = viewerResult.rows[0]?.id ?? null;
+    }
+
+    const query = `
+      SELECT
+        sn.id,
+        sn.title,
+        sn.lecture_id,
+        sn.filename,
+        sn.filepath,
+        sn.likes,
+        sn.uploaded_at,
+        s.id AS owner_student_db_id,
+        s.student_id AS owner_student_id,
+        s.name AS uploader,
+        l.subject,
+        l.topic,
+        l.year,
+        l.semester,
+        CASE WHEN snl.id IS NULL THEN false ELSE true END AS liked_by_me
+      FROM student_notes sn
+      JOIN students s ON s.id = sn.student_id
+      JOIN lectures l ON l.id = sn.lecture_id
+      LEFT JOIN student_note_likes snl
+        ON snl.note_id = sn.id
+       AND snl.liked_by_student_id = $1
+      WHERE sn.status = 'accepted'
+      ORDER BY sn.likes DESC, sn.uploaded_at DESC
+    `;
+
+    const result = await client.query(query, [viewerDbId]);
+    return result.rows.map((row) => ({
+      ...row,
+      file_url: `/${String(row.filepath || '').replace(/\\/g, '/')}`,
+    }));
+  } finally {
+    client.release();
+  }
 };
 
 const likeStudentNote = async (noteId, likerStudentId) => {
   const client = await db.connect();
   try {
     await client.query('BEGIN');
+    await ensureStudentNoteLikesTable(client);
 
     const likerResult = await client.query(
       'SELECT id FROM students WHERE student_id = $1',
@@ -211,29 +248,58 @@ const likeStudentNote = async (noteId, likerStudentId) => {
     const likerDbId = likerResult.rows[0].id;
     const noteResult = await client.query(
       `
-      UPDATE student_notes
-      SET likes = likes + 1
+      SELECT id, student_id
+      FROM student_notes
       WHERE id = $1
-        AND student_id <> $2
         AND status = 'accepted'
-      RETURNING id, student_id, likes
+      FOR UPDATE
       `,
-      [noteId, likerDbId]
+      [noteId]
     );
 
     if (!noteResult.rows[0]) {
       await client.query('ROLLBACK');
-      return { error: 'Note not found or cannot like own note' };
+      return { error: 'Note not found' };
     }
 
     const ownerDbId = noteResult.rows[0].student_id;
+    if (Number(ownerDbId) === Number(likerDbId)) {
+      await client.query('ROLLBACK');
+      return { error: 'You cannot like your own note' };
+    }
+
+    const likeInsert = await client.query(
+      `
+      INSERT INTO student_note_likes (note_id, liked_by_student_id)
+      VALUES ($1, $2)
+      ON CONFLICT (note_id, liked_by_student_id) DO NOTHING
+      RETURNING id
+      `,
+      [noteId, likerDbId]
+    );
+
+    if (!likeInsert.rows[0]) {
+      await client.query('ROLLBACK');
+      return { error: 'You already liked this note' };
+    }
+
+    const updatedNote = await client.query(
+      `
+      UPDATE student_notes
+      SET likes = likes + 1
+      WHERE id = $1
+      RETURNING likes
+      `,
+      [noteId]
+    );
+
     await client.query(
       'UPDATE students SET likes = likes + 1 WHERE id = $1',
       [ownerDbId]
     );
 
     await client.query('COMMIT');
-    return { likes: noteResult.rows[0].likes };
+    return { likes: updatedNote.rows[0].likes };
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -247,16 +313,22 @@ const createBonusMarkRequest = async (studentId, subject, lecturerEmail) => {
     `
     SELECT
       s.id,
-      s.bonus_used,
       GREATEST(
         COALESCE(SUM(CASE WHEN sn.status = 'accepted' THEN sn.likes ELSE 0 END), 0)
-        - CASE WHEN s.bonus_used THEN 100 ELSE 0 END,
+        - (
+          100 * COALESCE((
+            SELECT COUNT(*)
+            FROM bonus_mark_requests bmr
+            WHERE bmr.student_id = s.id
+              AND bmr.status = 'approved'
+          ), 0)
+        ),
         0
       )::INT AS points
     FROM students s
     LEFT JOIN student_notes sn ON sn.student_id = s.id
     WHERE s.student_id = $1
-    GROUP BY s.id, s.bonus_used
+    GROUP BY s.id
     `,
     [studentId]
   );
@@ -264,7 +336,21 @@ const createBonusMarkRequest = async (studentId, subject, lecturerEmail) => {
 
   const student = studentResult.rows[0];
   if (Number(student.points || 0) < 100) return { error: 'You need at least 100 points' };
-  if (student.bonus_used) return { error: 'Bonus marks already used this semester' };
+
+  const approvedForSubject = await db.query(
+    `
+    SELECT id
+    FROM bonus_mark_requests
+    WHERE student_id = $1
+      AND subject = $2
+      AND status = 'approved'
+    LIMIT 1
+    `,
+    [student.id, subject]
+  );
+  if (approvedForSubject.rows[0]) {
+    return { error: 'Bonus marks already claimed for this subject' };
+  }
 
   const lecturerResult = await db.query(
     'SELECT id FROM lecturers WHERE email = $1',
@@ -279,14 +365,13 @@ const createBonusMarkRequest = async (studentId, subject, lecturerEmail) => {
     SELECT id
     FROM bonus_mark_requests
     WHERE student_id = $1
-      AND lecturer_id = $2
-      AND subject = $3
+      AND subject = $2
       AND status = 'pending'
     LIMIT 1
     `,
-    [student.id, lecturerId, subject]
+    [student.id, subject]
   );
-  if (pendingCheck.rows[0]) return { error: 'A pending request already exists for this subject and lecturer' };
+  if (pendingCheck.rows[0]) return { error: 'A pending request already exists for this subject' };
 
   const insertResult = await db.query(
     `
