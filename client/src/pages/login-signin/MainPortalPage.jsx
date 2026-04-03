@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import AuthModal from '../../components/login-signin/AuthModal';
+import HomeFooter from '../../components/login-signin/HomeFooter';
 import PortalTabContent from '../../components/login-signin/PortalTabContent';
 import TopNavHeader from '../../components/login-signin/TopNavHeader';
 import { getMe } from '../../services/authService';
@@ -85,9 +86,16 @@ const MainPortalPage = () => {
         {booting ? (
           <p className="text-slate-600">Loading your session...</p>
         ) : (
-          <PortalTabContent tab={activeTab} user={user} />
+          <PortalTabContent
+            tab={activeTab}
+            user={user}
+            onLogin={openAuth}
+            onNavigate={setActiveTab}
+          />
         )}
       </main>
+
+      <HomeFooter show={activeTab === 'home' && !booting} />
 
       <AuthModal
         isOpen={authOpen}
