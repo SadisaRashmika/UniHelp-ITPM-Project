@@ -11,6 +11,8 @@ import {
 import image1 from '../../assets/image1.jpg';
 import image2 from '../../assets/image2.jpg';
 import image3 from '../../assets/image3.jpg';
+import stublue from '../../assets/stublue.png';
+import lecblue from '../../assets/lecblue.png';
 
 const modules = [
   {
@@ -126,7 +128,7 @@ const PortalHomeContent = ({ user, onLogin, onNavigate }) => {
           </>
         )}
 
-        <div className={`relative grid ${user ? 'min-h-[240px] items-center' : 'min-h-[520px] items-end'}`}>
+        <div className={`relative grid ${user ? 'min-h-[240px] items-center lg:grid-cols-[1.2fr_0.8fr] lg:gap-8' : 'min-h-[520px] items-end'}`}>
           <div className="max-w-2xl space-y-4 pb-1">
             <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold tracking-wide text-blue-700">
               <Sparkles size={14} /> UNIVERSITY SUPPORT PLATFORM
@@ -177,6 +179,16 @@ const PortalHomeContent = ({ user, onLogin, onNavigate }) => {
             </div>
 
           </div>
+
+          {user && (
+            <div className="relative hidden h-full items-end justify-end lg:flex">
+              <img
+                src={role === 'lecturer' ? lecblue : stublue}
+                alt={role === 'lecturer' ? 'Lecturer illustration' : 'Student illustration'}
+                className="pointer-events-none max-h-[280px] w-auto select-none object-contain drop-shadow-[0_18px_35px_rgba(30,64,175,0.22)]"
+              />
+            </div>
+          )}
         </div>
       </div>
 

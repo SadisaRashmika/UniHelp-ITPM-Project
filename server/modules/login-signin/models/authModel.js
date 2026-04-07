@@ -2,21 +2,25 @@ const pool = require('../../../config/db');
 
 const buildAccountSelect = () => `
   SELECT
+    l.id,
     l.employee_id AS id_number,
     l.name AS full_name,
     l.email,
     'lecturer' AS role,
     l.status,
-    l.password_hash
+    l.password_hash,
+    l.profile_image_url
   FROM lecturers l
   UNION ALL
   SELECT
+    s.id,
     s.student_id AS id_number,
     s.name AS full_name,
     s.email,
     'student' AS role,
     s.status,
-    s.password_hash
+    s.password_hash,
+    s.profile_image_url
   FROM students s
 `;
 
@@ -63,12 +67,14 @@ const findUserByRoleAndIdNumber = async ({ role, idNumber }) => {
     const result = await pool.query(
       `
       SELECT
+        id,
         employee_id AS id_number,
         name AS full_name,
         email,
         'lecturer' AS role,
         status,
-        password_hash
+        password_hash,
+        profile_image_url
       FROM lecturers
       WHERE employee_id = $1
       LIMIT 1
@@ -82,12 +88,14 @@ const findUserByRoleAndIdNumber = async ({ role, idNumber }) => {
     const result = await pool.query(
       `
       SELECT
+        id,
         student_id AS id_number,
         name AS full_name,
         email,
         'student' AS role,
         status,
-        password_hash
+        password_hash,
+        profile_image_url
       FROM students
       WHERE student_id = $1
       LIMIT 1
@@ -299,6 +307,34 @@ const updateProfileByUserId = async ({ role, idNumber, fullName }) => {
   return findUserByRoleAndIdNumber({ role, idNumber });
 };
 
+const updateProfileImageByUserId = async ({ role, idNumber, profileImageUrl }) => {
+  if (role === 'lecturer') {
+    await pool.query(
+      `
+      UPDATE lecturers
+      SET
+        profile_image_url = $2,
+        updated_at = NOW()
+      WHERE employee_id = $1
+      `,
+      [idNumber, profileImageUrl]
+    );
+  } else {
+    await pool.query(
+      `
+      UPDATE students
+      SET
+        profile_image_url = $2,
+        updated_at = NOW()
+      WHERE student_id = $1
+      `,
+      [idNumber, profileImageUrl]
+    );
+  }
+
+  return findUserByRoleAndIdNumber({ role, idNumber });
+};
+
 const upsertSeedUser = async ({ idNumber, fullName, email, role }) => {
   const initials = fullName
     .split(/\s+/)
@@ -356,5 +392,6 @@ module.exports = {
   activateUserPassword,
   updatePasswordByUserId,
   updateProfileByUserId,
+  updateProfileImageByUserId,
   upsertSeedUser,
 };

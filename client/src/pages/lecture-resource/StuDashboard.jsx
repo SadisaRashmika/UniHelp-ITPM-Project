@@ -9,7 +9,7 @@ import StuBonusMarksModal from '../../components/lecture-resource/StuBonusMarkMo
 
 const API_BASE = 'http://localhost:5000';
 
-const StuDashboard = ({ userId = 'STU001' }) => {
+const StuDashboard = ({ userId = 'STU001', profilePhoto = '' }) => {
   const [myNotesCount, setMyNotesCount] = useState(0);
   const [studentData, setStudentData] = useState(null);
   const [quizLecture, setQuizLecture] = useState(null);
@@ -52,12 +52,13 @@ const StuDashboard = ({ userId = 'STU001' }) => {
     await refreshMyUploadsCount();
   };
 
-  if (!studentData) return <div>Loading...</div>; // Loading state
+  if (!studentData) return <div className="p-6 text-slate-700">Loading...</div>; // Loading state
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-transparent flex">
       <StuSidebar
         student={studentData}
+        profilePhoto={profilePhoto}
         fullLikes={studentData?.full_likes ?? 0}
         points={studentData?.points ?? 0}
         notes={myNotesCount}

@@ -6,7 +6,7 @@ import LecStudentUploads from '../../components/lecture-resource/LecStudentUploa
 import LecUpload from '../../components/lecture-resource/LecUpload';
 import LecExtraMarks from '../../components/lecture-resource/LecExtraMarks';
 
-const LecDashboard = ({ userId = 'LEC001' }) => {
+const LecDashboard = ({ userId = 'LEC001', profilePhoto = '' }) => {
   const [activeTab, setActiveTab] = useState('profile');
   const [lecturer, setLecturer] = useState(null);
   const [pendingCount, setPendingCount] = useState(0);
@@ -42,16 +42,17 @@ const LecDashboard = ({ userId = 'LEC001' }) => {
     fetchPendingCounts();
   }, [userId]);
 
-  if (!lecturer) return <div>Loading...</div>; // Loading state
+  if (!lecturer) return <div className="p-6 text-slate-700">Loading...</div>; // Loading state
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-transparent flex">
       <LecSidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
         pendingCount={pendingCount}
         extraMarksPending={extraMarksPending}
         lecturer={lecturer}
+        profilePhoto={profilePhoto}
       />
       <main className="flex-1 ml-72 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 min-w-0 w-full">
         {activeTab === 'profile' && (
@@ -60,6 +61,7 @@ const LecDashboard = ({ userId = 'LEC001' }) => {
             myPoints={myPoints}
             pendingCount={pendingCount}
             onNavigate={setActiveTab}
+            profilePhoto={profilePhoto}
           />
         )}
         {activeTab === 'review' && (

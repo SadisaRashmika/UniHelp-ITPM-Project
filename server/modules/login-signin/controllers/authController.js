@@ -2,6 +2,8 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+const fs = require('fs');
+const path = require('path');
 const authModel = require('../models/authModel');
 
 const OTP_EXPIRY_MINUTES = Number(process.env.OTP_EXPIRY_MINUTES || 10);
@@ -89,7 +91,20 @@ const sanitizeUser = (user) => ({
   email: user.email,
   role: user.role,
   status: user.status,
+  profileImageUrl: user.profile_image_url || null,
 });
+
+const deleteStoredProfileImage = (profileImageUrl) => {
+  if (!profileImageUrl || !String(profileImageUrl).startsWith('/uploads/profile-images/')) {
+    return;
+  }
+
+  const relativePath = String(profileImageUrl).replace(/^\//, '');
+  const absolutePath = path.join(__dirname, '../../../', relativePath);
+  if (fs.existsSync(absolutePath)) {
+    fs.unlinkSync(absolutePath);
+  }
+};
 
 const requestActivationOtp = async (req, res) => {
   try {
@@ -331,6 +346,76 @@ const updateCurrentUserProfile = async (req, res) => {
   }
 };
 
+const uploadCurrentUserProfileImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Profile image file is required' });
+    }
+
+    const existing = await authModel.findUserByRoleAndIdNumber({
+      role: req.auth.role,
+      idNumber: req.auth.idNumber,
+    });
+    if (!existing) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const profileImageUrl = `/uploads/profile-images/${req.file.filename}`;
+    const updated = await authModel.updateProfileImageByUserId({
+      role: req.auth.role,
+      idNumber: req.auth.idNumber,
+      profileImageUrl,
+    });
+
+    // Best effort cleanup of previous image.
+    try {
+      deleteStoredProfileImage(existing.profile_image_url);
+    } catch (_cleanupError) {
+      // ignore cleanup failures
+    }
+
+    return res.status(200).json({
+      message: 'Profile image updated',
+      user: sanitizeUser(updated),
+    });
+  } catch (error) {
+    console.error('uploadCurrentUserProfileImage error:', error);
+    return res.status(500).json({ message: 'Failed to upload profile image' });
+  }
+};
+
+const removeCurrentUserProfileImage = async (req, res) => {
+  try {
+    const existing = await authModel.findUserByRoleAndIdNumber({
+      role: req.auth.role,
+      idNumber: req.auth.idNumber,
+    });
+    if (!existing) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const updated = await authModel.updateProfileImageByUserId({
+      role: req.auth.role,
+      idNumber: req.auth.idNumber,
+      profileImageUrl: null,
+    });
+
+    try {
+      deleteStoredProfileImage(existing.profile_image_url);
+    } catch (_cleanupError) {
+      // ignore cleanup failures
+    }
+
+    return res.status(200).json({
+      message: 'Profile image removed',
+      user: sanitizeUser(updated),
+    });
+  } catch (error) {
+    console.error('removeCurrentUserProfileImage error:', error);
+    return res.status(500).json({ message: 'Failed to remove profile image' });
+  }
+};
+
 module.exports = {
   requestActivationOtp,
   verifyActivationOtpAndSetPassword,
@@ -339,4 +424,6 @@ module.exports = {
   verifyForgotPasswordOtpAndReset,
   getCurrentUser,
   updateCurrentUserProfile,
+  uploadCurrentUserProfileImage,
+  removeCurrentUserProfileImage,
 };

@@ -4,6 +4,11 @@ import axios from 'axios';
 
 const API_BASE = 'http://localhost:5000';
 
+const normalizeProfileUrl = (value) => {
+  if (!value) return '';
+  return String(value).startsWith('http') ? value : `${API_BASE}${value}`;
+};
+
 const SORT_OPTIONS = [
   { value: 'recent', label: 'Recent First' },
   { value: 'fifo', label: 'First Uploaded First' },
@@ -22,10 +27,12 @@ const mapSubmission = (row) => ({
   status: row.status,
   rejectionNote: row.rejection_note,
   uploadedAt: row.uploaded_at,
+  studentId: row.student_id,
   studentName: row.student_name,
   studentInitials: row.student_initials,
   studentRank: row.student_rank,
   studentLikes: row.student_likes,
+  studentPhoto: normalizeProfileUrl(row.student_profile_image_url),
 });
 
 const downloadFile = async (url, filename) => {
@@ -262,9 +269,17 @@ const SubmissionCard = ({ resource: r, onView, onAccept, onReject }) => {
     <div className="bg-white rounded-2xl border border-gray-200 p-4 hover:shadow-sm transition-all">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">
-            {r.studentInitials}
-          </div>
+          {r.studentPhoto ? (
+            <img
+              src={r.studentPhoto}
+              alt={r.studentName || 'Student'}
+              className="w-9 h-9 rounded-full border border-blue-200 object-cover shrink-0 mt-0.5"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">
+              {r.studentInitials}
+            </div>
+          )}
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="font-semibold text-gray-900 text-sm">{r.title}</p>

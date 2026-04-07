@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS lecturers (
 	employee_id VARCHAR(50) UNIQUE NOT NULL,
 	email VARCHAR(150) UNIQUE NOT NULL,
 	password VARCHAR(255) NOT NULL,
+	profile_image_url TEXT,
 	points INTEGER DEFAULT 0,
 	created_at TIMESTAMP DEFAULT NOW()
 );
@@ -20,6 +21,7 @@ CREATE TABLE IF NOT EXISTS students (
 	student_id VARCHAR(50) UNIQUE NOT NULL,
 	email VARCHAR(150) UNIQUE NOT NULL,
 	password VARCHAR(255) NOT NULL,
+	profile_image_url TEXT,
 	year VARCHAR(20),
 	semester VARCHAR(20),
 	likes INTEGER DEFAULT 0,
@@ -104,6 +106,9 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
 	answer_index INTEGER NOT NULL,
 	order_num INTEGER NOT NULL DEFAULT 1
 );
+
+ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS profile_image_url TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS profile_image_url TEXT;
 
 -- =====================================================================================
 -- Login/Signin (No-Admin) Authentication Tables
