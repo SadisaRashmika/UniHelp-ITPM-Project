@@ -64,3 +64,30 @@ export const updateMe = (token, payload) =>
     },
     body: JSON.stringify(payload),
   });
+
+export const uploadProfileImage = async (token, file) => {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const response = await fetch(`${API_BASE}/api/auth/me/profile-image`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || 'Failed to upload profile image');
+  }
+  return data;
+};
+
+export const removeProfileImage = (token) =>
+  request('/api/auth/me/profile-image', {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });

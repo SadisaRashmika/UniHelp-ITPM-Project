@@ -1,4 +1,4 @@
-import { LogOut, Menu, ChevronDown, X } from 'lucide-react';
+import { LogOut, Menu, ChevronDown, X, UserCircle2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import logo from "../../assets/logo3.png";
 
@@ -10,7 +10,7 @@ const tabs = [
   { key: 'ticket',    label: 'Ticket',    public: false },
 ];
 
-const TopNavHeader = ({ activeTab, onTabClick, user, initials, onLogin, onLogout }) => {
+const TopNavHeader = ({ activeTab, onTabClick, user, initials, onLogin, onLogout, onOpenProfile, profilePhoto }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen,   setUserMenuOpen]   = useState(false);
   const userMenuRef = useRef(null);
@@ -72,12 +72,20 @@ const TopNavHeader = ({ activeTab, onTabClick, user, initials, onLogin, onLogout
                   className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-all duration-150"
                 >
                   {/* Avatar */}
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
-                    style={{ background: 'linear-gradient(135deg,#6366f1,#a855f7)' }}
-                  >
-                    {initials}
-                  </div>
+                  {profilePhoto ? (
+                    <img
+                      src={profilePhoto}
+                      alt="Profile"
+                      className="w-8 h-8 rounded-full border border-indigo-200 object-cover shrink-0"
+                    />
+                  ) : (
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0"
+                      style={{ background: 'linear-gradient(135deg,#6366f1,#a855f7)' }}
+                    >
+                      {initials}
+                    </div>
+                  )}
                   <div className="hidden sm:block text-left leading-tight">
                     <p className="text-[13px] font-semibold text-gray-900 leading-none">{user.fullName}</p>
                     <p className="text-[10.5px] text-gray-400 leading-none mt-0.5 uppercase tracking-wider">{user.idNumber}</p>
@@ -87,7 +95,14 @@ const TopNavHeader = ({ activeTab, onTabClick, user, initials, onLogin, onLogout
 
                 {/* Dropdown */}
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-100 rounded-xl overflow-hidden z-50" style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}>
+                  <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl overflow-hidden z-50" style={{ boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}>
+                    <button
+                      onClick={() => { setUserMenuOpen(false); onOpenProfile(); }}
+                      className="w-full flex items-center gap-2 px-4 py-3 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                    >
+                      <UserCircle2 size={14} />
+                      My Profile
+                    </button>
                     <button
                       onClick={() => { setUserMenuOpen(false); onLogout(); }}
                       className="w-full flex items-center gap-2 px-4 py-3 text-[13px] text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
@@ -133,12 +148,20 @@ const TopNavHeader = ({ activeTab, onTabClick, user, initials, onLogin, onLogout
           {/* Mobile user info */}
           {user && (
             <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-xl bg-gray-50">
-              <div
-                className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[13px] font-bold shrink-0"
-                style={{ background: 'linear-gradient(135deg,#6366f1,#a855f7)' }}
-              >
-                {initials}
-              </div>
+              {profilePhoto ? (
+                <img
+                  src={profilePhoto}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full border border-indigo-200 object-cover shrink-0"
+                />
+              ) : (
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-white text-[13px] font-bold shrink-0"
+                  style={{ background: 'linear-gradient(135deg,#6366f1,#a855f7)' }}
+                >
+                  {initials}
+                </div>
+              )}
               <div>
                 <p className="text-[14px] font-semibold text-gray-900">{user.fullName}</p>
                 <p className="text-[11px] text-gray-400 uppercase tracking-wider">{user.idNumber}</p>
@@ -160,6 +183,16 @@ const TopNavHeader = ({ activeTab, onTabClick, user, initials, onLogin, onLogout
               </button>
             );
           })}
+
+          {user && (
+            <button
+              onClick={() => { onOpenProfile(); setMobileMenuOpen(false); }}
+              className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-blue-200 text-[14px] font-medium text-blue-700 hover:bg-blue-50 transition-all"
+            >
+              <UserCircle2 size={15} />
+              My Profile
+            </button>
+          )}
 
           {user && (
             <button

@@ -6,12 +6,17 @@ import html2canvas from 'html2canvas';
 
 const API_BASE = 'http://localhost:5000';
 const formatDate = (iso) => (iso ? new Date(iso).toISOString().split('T')[0] : '');
+const normalizeProfileUrl = (value) => {
+  if (!value) return '';
+  return String(value).startsWith('http') ? value : `${API_BASE}${value}`;
+};
 
 const mapReq = (r) => ({
   id: r.id,
   studentName: r.student_name,
   studentInitials: r.student_initials,
   studentId: r.student_id,
+  studentPhoto: normalizeProfileUrl(r.student_profile_image_url),
   totalLikes: r.total_likes,
   subject: r.subject,
   status: r.status,
@@ -255,9 +260,17 @@ const LecExtraMarks = ({ lecturerId = 'LEC001', onPendingChange = () => {} }) =>
             <div key={r.id} className="bg-white rounded-2xl border border-gray-200 p-5">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                    {r.studentInitials}
-                  </div>
+                  {r.studentPhoto ? (
+                    <img
+                      src={r.studentPhoto}
+                      alt={r.studentName || 'Student'}
+                      className="w-11 h-11 rounded-full border border-indigo-200 object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                      {r.studentInitials}
+                    </div>
+                  )}
                   <div>
                     <p className="font-semibold text-gray-900">{r.studentName}</p>
                     <p className="text-sm text-gray-400">ID: {r.studentId}</p>
@@ -300,9 +313,17 @@ const LecExtraMarks = ({ lecturerId = 'LEC001', onPendingChange = () => {} }) =>
             {approved.map((r) => (
               <div key={r.id} className="grid grid-cols-5 items-center px-5 py-4 border-b border-gray-50 last:border-0 hover:bg-gray-50">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                    {r.studentInitials}
-                  </div>
+                  {r.studentPhoto ? (
+                    <img
+                      src={r.studentPhoto}
+                      alt={r.studentName || 'Student'}
+                      className="w-8 h-8 rounded-full border border-indigo-200 object-cover shrink-0"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                      {r.studentInitials}
+                    </div>
+                  )}
                   <span className="text-sm font-medium text-gray-800">{r.studentName}</span>
                 </div>
                 <span className="text-sm text-gray-500">{r.studentId}</span>
@@ -342,9 +363,17 @@ const LecExtraMarks = ({ lecturerId = 'LEC001', onPendingChange = () => {} }) =>
             {rejected.map((r) => (
               <div key={r.id} className="flex items-center justify-between px-5 py-4 border-b border-gray-50 last:border-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold">
-                    {r.studentInitials}
-                  </div>
+                  {r.studentPhoto ? (
+                    <img
+                      src={r.studentPhoto}
+                      alt={r.studentName || 'Student'}
+                      className="w-9 h-9 rounded-full border border-slate-200 object-cover"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold">
+                      {r.studentInitials}
+                    </div>
+                  )}
                   <div>
                     <p className="text-sm font-medium text-gray-700">{r.studentName}</p>
                     <p className="text-xs text-gray-400">{r.subject} \u00b7 {formatDate(r.requestedAt)}</p>

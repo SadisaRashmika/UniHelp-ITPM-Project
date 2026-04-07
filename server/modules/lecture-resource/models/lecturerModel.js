@@ -194,6 +194,8 @@ const getStudentSubmissions = async (employeeId) => {
       sn.uploaded_at,
       s.name AS student_name,
       s.initials AS student_initials,
+      s.student_id,
+      s.profile_image_url AS student_profile_image_url,
       s.rank AS student_rank,
       COALESCE(SUM(CASE WHEN sn2.status = 'accepted' THEN sn2.likes ELSE 0 END), 0)::INT AS student_likes,
       l.subject
@@ -203,7 +205,7 @@ const getStudentSubmissions = async (employeeId) => {
     JOIN students s ON s.id = sn.student_id
     LEFT JOIN student_notes sn2 ON sn2.student_id = s.id AND sn2.status = 'accepted'
     WHERE lec.employee_id = $1
-    GROUP BY sn.id, sn.title, sn.filename, sn.filepath, sn.filesize, sn.status, sn.rejection_note, sn.uploaded_at, s.name, s.initials, s.rank, l.subject
+    GROUP BY sn.id, sn.title, sn.filename, sn.filepath, sn.filesize, sn.status, sn.rejection_note, sn.uploaded_at, s.name, s.initials, s.student_id, s.profile_image_url, s.rank, l.subject
     ORDER BY sn.uploaded_at DESC, sn.id DESC
   `;
 
@@ -390,6 +392,7 @@ const getBonusMarkRequests = async (employeeId) => {
       s.name AS student_name,
       s.initials AS student_initials,
       s.student_id,
+      s.profile_image_url AS student_profile_image_url,
       COALESCE((
         SELECT SUM(sn.likes)
         FROM student_notes sn

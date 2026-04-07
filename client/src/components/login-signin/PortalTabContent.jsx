@@ -2,7 +2,7 @@ import LecDashboard from '../../pages/lecture-resource/LecDashboard';
 import StuDashboard from '../../pages/lecture-resource/StuDashboard';
 import PortalHomeContent from './PortalHomeContent';
 
-const PortalTabContent = ({ tab, user, onLogin, onNavigate }) => {
+const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
   if (tab === 'home') {
     return <PortalHomeContent user={user} onLogin={onLogin} onNavigate={onNavigate} />;
   }
@@ -19,9 +19,9 @@ const PortalTabContent = ({ tab, user, onLogin, onNavigate }) => {
   if (tab === 'resource') {
     const userId = user.role === 'lecturer' ? user.idNumber : user.idNumber;
     return user.role === 'lecturer' ? (
-      <LecDashboard userId={userId} />
+      <LecDashboard userId={userId} profilePhoto={profilePhoto} />
     ) : (
-      <StuDashboard userId={userId} />
+      <StuDashboard userId={userId} profilePhoto={profilePhoto} />
     );
   }
 
