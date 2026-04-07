@@ -9,7 +9,7 @@ import StuBonusMarksModal from '../../components/lecture-resource/StuBonusMarkMo
 
 const API_BASE = 'http://localhost:5000';
 
-const StuDashboard = () => {
+const StuDashboard = ({ userId = 'STU001', profilePhoto = '' }) => {
   const [myNotesCount, setMyNotesCount] = useState(0);
   const [studentData, setStudentData] = useState(null);
   const [quizLecture, setQuizLecture] = useState(null);
@@ -19,7 +19,7 @@ const StuDashboard = () => {
 
   const fetchStudentData = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/api/student/profile?studentId=STU001`);
+      const response = await axios.get(`${API_BASE}/api/student/profile?studentId=${userId}`);
       setStudentData(response.data);
     } catch (error) {
       console.error('Error fetching student data:', error);
@@ -29,7 +29,7 @@ const StuDashboard = () => {
   // Fetch student data from the backend
   useEffect(() => {
     fetchStudentData();
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     refreshMyUploadsCount();
@@ -52,17 +52,18 @@ const StuDashboard = () => {
     await refreshMyUploadsCount();
   };
 
-  if (!studentData) return <div>Loading...</div>; // Loading state
+  if (!studentData) return <div className="p-6 text-slate-700">Loading...</div>; // Loading state
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-transparent flex">
       <StuSidebar
         student={studentData}
+        profilePhoto={profilePhoto}
         fullLikes={studentData?.full_likes ?? 0}
         points={studentData?.points ?? 0}
         notes={myNotesCount}
       />
-      <main className="flex-1 ml-72 p-10 min-w-0 w-full">
+      <main className="flex-1 ml-72 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 min-w-0 w-full">
         <StuHome
           student={studentData}
           onUploadClick={(lecture) => setUploadLecture(lecture)}
@@ -90,7 +91,7 @@ const StuDashboard = () => {
       <StuMyUploadsModal
         isOpen={myUploadsOpen}
         onClose={() => setMyUploadsOpen(false)}
-        studentId={studentData?.student_id || 'STU001'}
+        studentId={studentData?.student_id || userId}
         onChanged={refreshDashboardData}
       />
       <StuBonusMarksModal

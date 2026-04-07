@@ -17,7 +17,7 @@ const getInitials = (lecturer) => {
   return parts.slice(0, 2).map((p) => p[0]).join('').toUpperCase() || 'L';
 };
 
-const LecProfile = ({ lecturerId, pendingCount, onNavigate }) => {
+const LecProfile = ({ lecturerId, pendingCount, onNavigate, profilePhoto }) => {
   const [lecturer, setLecturer] = useState(null);
   const [stats, setStats] = useState({
     downloads: 0,
@@ -67,9 +67,17 @@ const LecProfile = ({ lecturerId, pendingCount, onNavigate }) => {
       {/* Profile card */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         <div className="flex items-center gap-5">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-2xl font-bold shrink-0">
-            {getInitials(lecturer)}
-          </div>
+          {profilePhoto ? (
+            <img
+              src={profilePhoto}
+              alt="Profile"
+              className="w-20 h-20 rounded-full border border-indigo-200 object-cover shrink-0"
+            />
+          ) : (
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-2xl font-bold shrink-0">
+              {getInitials(lecturer)}
+            </div>
+          )}
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-900">{lecturer.name}</h2>
             <p className="text-gray-500 text-sm mt-0.5">{lecturer.department}</p>
