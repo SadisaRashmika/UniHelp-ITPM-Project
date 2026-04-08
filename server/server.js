@@ -22,6 +22,7 @@ app.set('io', io);
 // Import routes
 const lecturerRoutes = require('./modules/lecture-resource/routes/lecturerRoutes');
 const studentRoutes = require('./modules/lecture-resource/routes/studentRoutes');
+const userFeedbackRoutes = require('./modules/user-feedback/routes/userRoutes');
 const authRoutes = require('./modules/login-signin/routes/authRoutes');
 const timetableRoutes = require('./modules/timetable/routes/timetableRoutes');
 
@@ -71,6 +72,7 @@ if (process.env.NODE_ENV !== 'production') {
 // Use routes (auth routes come AFTER dev-login to avoid routing conflict)
 app.use('/api/lecturer', lecturerRoutes);
 app.use('/api/student', studentRoutes);
+app.use('/api/user-feedback', userFeedbackRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/timetable', timetableRoutes);
 

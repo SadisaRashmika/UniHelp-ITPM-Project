@@ -1,0 +1,98 @@
+const ticketModel = require('../models/ticketModel');
+const chatModel = require('../models/chatModel');
+const { sendInquiryEmail } = require('../services/email-services');
+const { notifyStatusChange } = require('../services/chat-services');
+const db = require('../../../config/db');
+
+const submitTicket = async (req, res) => {
+    const { student_id, subject, description, category, contact_number } = req.body;
+    const screenshot_url = req.file ? `/uploads/tickets/${req.file.filename}` : null;
+
+    try {
+        const ticket = await ticketModel.submitTicket(student_id, subject, description, screenshot_url, category, contact_number);
+        
+        // Fetch student name for email
+        const student = await db.query('SELECT name FROM students WHERE id = $1', [student_id]);
+        const studentName = student.rows[0]?.name || 'N/A';
+        
+        // Trigger automated email notification
+        await sendInquiryEmail(ticket, studentName);
+        
+        res.status(201).json({ message: 'Ticket submitted successfully', ticket });
+    } catch (error) {
+        console.error('Error submitting ticket:', error.message);
+        res.status(500).json({ error: 'Failed to submit ticket' });
+    }
+};
+
+const getStudentTickets = async (req, res) => {
+    const { student_id } = req.params;
+    const { limit = 50 } = req.query;
+    try {
+        const tickets = await ticketModel.getStudentTickets(student_id, parseInt(limit));
+        res.status(200).json(tickets);
+    } catch (error) {
+        console.error('Error fetching student tickets:', error.message);
+        res.status(500).json({ error: 'Failed to fetch tickets' });
+    }
+};
+
+const getAllTickets = async (req, res) => {
+    const { limit = 100 } = req.query;
+    try {
+        const tickets = await ticketModel.getAllTickets(parseInt(limit));
+        res.status(200).json(tickets);
+    } catch (error) {
+        console.error('Error fetching all tickets:', error.message);
+        res.status(500).json({ error: 'Failed to fetch tickets' });
+    }
+};
+
+const updateTicketStatus = async (req, res) => {
+    const { id } = req.params;
+    const { status, role } = req.body; // role can be passed from frontend
+    try {
+        const ticket = await ticketModel.updateTicketStatus(id, status);
+        
+        // Trigger automated chat message for status change
+        await notifyStatusChange(id, status, role);
+        
+        res.status(200).json({ message: 'Ticket status updated', ticket });
+    } catch (error) {
+        console.error('Error updating ticket status:', error.message);
+        res.status(500).json({ error: 'Failed to update ticket' });
+    }
+};
+
+// --- CHAT INTERFACE ---
+const getTicketChats = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const chats = await chatModel.getTicketChats(id);
+        res.status(200).json(chats);
+    } catch (error) {
+        console.error('Error fetching ticket chats:', error.message);
+        res.status(500).json({ error: 'Failed to fetch chats' });
+    }
+};
+
+const addChatMessage = async (req, res) => {
+    const { id: ticket_id } = req.params;
+    const { sender_id, sender_role, message } = req.body;
+    try {
+        const chat = await chatModel.addChatMessage(ticket_id, sender_id, sender_role, message);
+        res.status(201).json(chat);
+    } catch (error) {
+        console.error('Error adding chat message:', error.message);
+        res.status(500).json({ error: 'Failed to add message' });
+    }
+};
+
+module.exports = {
+    submitTicket,
+    getStudentTickets,
+    getAllTickets,
+    updateTicketStatus,
+    getTicketChats,
+    addChatMessage
+};

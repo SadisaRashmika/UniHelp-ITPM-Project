@@ -107,6 +107,46 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
 	order_num INTEGER NOT NULL DEFAULT 1
 );
 
+-- Feedbacks
+CREATE TABLE IF NOT EXISTS feedbacks (
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER REFERENCES students(id) ON DELETE SET NULL,
+    lecturer_id INTEGER REFERENCES lecturers(id) ON DELETE CASCADE,
+    subject VARCHAR(150),
+    rating INTEGER CHECK (rating BETWEEN 1 AND 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- TICKETS (INQUIRIES)
+CREATE TABLE IF NOT EXISTS tickets (
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER REFERENCES students(id) ON DELETE CASCADE,
+    subject VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    screenshot_url VARCHAR(255),
+    category VARCHAR(100) DEFAULT 'Technical',
+    contact_number VARCHAR(10),
+    status VARCHAR(50) DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_tickets_student_id ON tickets(student_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON tickets(created_at DESC);
+
+-- TICKET CHATS (COMMUNICATION LOGS)
+CREATE TABLE IF NOT EXISTS ticket_chats (
+    id SERIAL PRIMARY KEY,
+    ticket_id INTEGER REFERENCES tickets(id) ON DELETE CASCADE,
+    sender_id INTEGER, 
+    sender_role VARCHAR(20), -- 'student' or 'lecturer' or 'system'
+    message TEXT NOT NULL,
+    is_system_message BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_ticket_chats_ticket_id ON ticket_chats(ticket_id);
+
 ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS profile_image_url TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS profile_image_url TEXT;
 
