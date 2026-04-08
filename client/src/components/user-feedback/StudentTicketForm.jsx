@@ -13,7 +13,9 @@ import {
     Loader2,
     ChevronRight,
     Eye,
-    MessageSquare
+    MessageSquare,
+    ArrowLeft,
+    Zap
 } from 'lucide-react';
 
 const StudentTicketForm = ({ studentId = 1, onTicketSubmitted }) => {
@@ -164,127 +166,142 @@ const StudentTicketForm = ({ studentId = 1, onTicketSubmitted }) => {
 
     if (view === 'create') {
         return (
-            <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h3 className="text-xl font-bold text-gray-900 tracking-tight">Open New Inquiry</h3>
-                        <p className="text-xs text-gray-400 font-medium mt-1 uppercase tracking-widest leading-none opacity-60">Technical & Academic Support Hub</p>
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-xl shadow-gray-100/50 animate-in zoom-in-95 duration-500 max-w-4xl mx-auto">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <Plus size={20} />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black tracking-tight text-gray-900 leading-none">Initiate Support Protocol</h3>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Fill all required nodes to proceed</p>
+                        </div>
                     </div>
                     <button 
                         onClick={() => setView('list')}
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        className="p-2 hover:bg-gray-50 rounded-xl text-gray-400 transition-colors"
                     >
-                        <X size={20} className="text-gray-400" />
+                        <ArrowLeft size={18} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2 relative">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Inquiry Category</label>
-                                <select 
-                                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all appearance-none cursor-pointer"
-                                    value={formData.category}
-                                    onChange={(e) => setFormData({...formData, category: e.target.value})}
-                                >
-                                    <option>Technical Support</option>
-                                    <option>Academic Assistance</option>
-                                    <option>Examination & Results</option>
-                                    <option>System Access (Login)</option>
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Inquiry Subject</label>
-                                <input 
-                                    type="text"
-                                    placeholder="Summarize your issue..."
-                                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all"
-                                    value={formData.subject}
-                                    onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                                    required
-                                />
-                            </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Subject / Header</label>
+                            <input 
+                                type="text"
+                                placeholder="Brief subject of inquiry"
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all"
+                                value={formData.subject}
+                                onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                                required
+                            />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Contact Number (Mobile)</label>
-                                <input 
-                                    type="tel"
-                                    placeholder="e.g. 0716834567"
-                                    pattern="^07\d{8}$"
-                                    title="Contact number must be 10 digits and start with 07"
-                                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all font-mono"
-                                    value={formData.contact_number}
-                                    onChange={(e) => setFormData({...formData, contact_number: e.target.value.replace(/\D/g, '').slice(0, 10)})}
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2 relative">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Direct to Lecturer</label>
-                                <select 
-                                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all appearance-none cursor-pointer"
-                                    value={formData.lecturer_id}
-                                    onChange={(e) => setFormData({...formData, lecturer_id: e.target.value})}
-                                    required
-                                >
-                                    <option value="">Select Target Lecturer</option>
-                                    {lecturers.map(l => (
-                                        <option key={l.id} value={l.id}>{l.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Detailed Description</label>
-                            <div className="relative">
-                                <textarea 
-                                    placeholder="Explain the technical or academic roadblock in detail..."
-                                    className="w-full px-4 py-4 bg-gray-50 border border-transparent rounded-xl text-xs font-medium text-gray-900 h-48 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all resize-none"
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                                    required
-                                />
-                                <div className="absolute bottom-4 right-4 text-gray-300 pointer-events-none">
-                                    <FileText size={24} opacity={0.15} />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Visual Evidence (Screenshot)</label>
-                            <div className="flex gap-4">
-                                <label className="flex-1 cursor-pointer">
-                                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                                    <div className="w-full px-4 py-3 bg-gray-50 border border-dashed border-gray-200 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase text-gray-400 hover:bg-blue-50 hover:border-blue-200 transition-all">
-                                        <ImageIcon size={14} /> {screenshot ? screenshot.name : 'Select Screenshot'}
-                                    </div>
-                                </label>
-                                {previewUrl && (
-                                    <div className="relative w-12 h-12">
-                                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover rounded-xl border border-gray-100 shadow-sm" />
-                                        <button 
-                                            onClick={() => { setScreenshot(null); setPreviewUrl(null); }}
-                                            className="absolute -top-2 -right-2 p-1 bg-white border border-gray-100 rounded-full text-rose-500 shadow-sm"
-                                        >
-                                            <X size={10} />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Inquiry Category</label>
+                            <select 
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all appearance-none cursor-pointer"
+                                value={formData.category}
+                                onChange={(e) => setFormData({...formData, category: e.target.value})}
+                            >
+                                <option>Technical Support</option>
+                                <option>Academic Assistance</option>
+                                <option>Examination & Results</option>
+                                <option>System Access (Login)</option>
+                                <option>Other / General</option>
+                            </select>
                         </div>
                     </div>
 
-                    <button 
-                        type="submit" 
-                        disabled={submitting}
-                        className="w-full py-4 bg-linear-to-br from-blue-500 to-indigo-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-200 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                    >
-                        {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                        {submitting ? 'Executing Transmission...' : 'Deploy Inquiry Node'}
-                    </button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Contact Number</label>
+                            <input 
+                                type="tel"
+                                placeholder="07XXXXXXXX"
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all font-mono"
+                                value={formData.contact_number}
+                                onChange={(e) => setFormData({...formData, contact_number: e.target.value.replace(/\D/g, '').slice(0, 10)})}
+                                required
+                            />
+                        </div>
+                        <div className="space-y-1.5 relative">
+                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Direct to Lecturer</label>
+                            <select 
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all appearance-none cursor-pointer"
+                                value={formData.lecturer_id}
+                                onChange={(e) => setFormData({...formData, lecturer_id: e.target.value})}
+                                required
+                            >
+                                <option value="">Select Target Lecturer</option>
+                                {lecturers.map(l => (
+                                    <option key={l.id} value={l.id}>{l.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Detailed Description</label>
+                        <textarea 
+                            placeholder="Describe your technical or academic issue in detail..."
+                            rows="3"
+                            className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all resize-none"
+                            value={formData.description}
+                            onChange={(e) => setFormData({...formData, description: e.target.value})}
+                            required
+                        />
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4 pt-1">
+                        <div className="relative group/file">
+                            <input 
+                                type="file" 
+                                id="ticket-screenshot" 
+                                className="hidden" 
+                                accept="image/*"
+                                onChange={handleFileChange}
+                            />
+                            <label 
+                                htmlFor="ticket-screenshot"
+                                className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-blue-50 text-[10px] font-black text-gray-500 hover:text-blue-600 rounded-xl cursor-pointer border border-dashed border-gray-200 hover:border-blue-200 transition-all"
+                            >
+                                <Zap size={14} />
+                                {screenshot ? screenshot.name : 'Attach Diagnostic Image'}
+                            </label>
+                        </div>
+                        {previewUrl && (
+                            <div className="relative group">
+                                <img src={previewUrl} alt="Preview" className="h-10 w-10 rounded-lg object-cover border border-gray-200 shadow-sm" />
+                                <button 
+                                    type="button"
+                                    onClick={() => {setScreenshot(null); setPreviewUrl(null);}}
+                                    className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <Plus size={10} className="rotate-45" />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="pt-2">
+                            <button 
+                            type="submit"
+                            disabled={submitting}
+                            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-100 flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-50"
+                        >
+                            {submitting ? (
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <>
+                                    <Send size={16} />
+                                    Transmit Inquiry
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </form>
             </div>
         );
