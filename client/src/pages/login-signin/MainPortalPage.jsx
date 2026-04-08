@@ -19,6 +19,8 @@ const tabFromPath = (pathname) => {
   if (pathname.endsWith('/timetable')) return 'timetable';
   if (pathname.endsWith('/jobs')) return 'jobs';
   if (pathname.endsWith('/ticket')) return 'ticket';
+  if (pathname.endsWith('/support')) return 'support';
+  if (pathname.endsWith('/feedback')) return 'feedback';
   return 'home';
 };
 
@@ -153,7 +155,7 @@ const MainPortalPage = () => {
   return (
     <div
       className={`min-h-screen text-slate-900 ${
-        blueThemeOpen ? 'bg-gradient-to-br from-blue-200 via-blue-50 to-sky-200' : 'bg-slate-50'
+        blueThemeOpen ? 'bg-linear-to-br from-blue-200 via-blue-50 to-sky-200' : 'bg-slate-50'
       }`}
     >
       <TopNavHeader

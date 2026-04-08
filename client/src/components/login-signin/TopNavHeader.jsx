@@ -8,6 +8,8 @@ const tabs = [
   { key: 'resource',  label: 'Resource',  public: false },
   { key: 'jobs',      label: 'Jobs',      public: false },
   { key: 'ticket',    label: 'Ticket',    public: false },
+  { key: 'support',   label: 'Inquiry Support', public: false },
+  { key: 'feedback',  label: 'Feedback Manage', public: false },
 ];
 
 const TopNavHeader = ({ activeTab, onTabClick, user, initials, onLogin, onLogout, onOpenProfile, profilePhoto }) => {

@@ -8,9 +8,10 @@ const submitTicket = async (student_id, subject, description, screenshot_url, ca
 
 const getStudentTickets = async (student_id, limit = 50) => {
     const query = `
-        SELECT * FROM tickets 
-        WHERE student_id = $1
-        ORDER BY created_at DESC
+        SELECT t.* FROM tickets t
+        JOIN students s ON t.student_id = s.id
+        WHERE s.student_id = $1
+        ORDER BY t.created_at DESC
         LIMIT $2
     `;
     const result = await db.query(query, [student_id, limit]);

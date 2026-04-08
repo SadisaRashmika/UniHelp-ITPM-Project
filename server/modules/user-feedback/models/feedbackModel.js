@@ -23,7 +23,8 @@ const getLecturerFeedback = async (lecturer_id) => {
         SELECT f.*, s.name as student_name 
         FROM feedbacks f
         LEFT JOIN students s ON f.student_id = s.id
-        WHERE f.lecturer_id = $1
+        JOIN lecturers l ON f.lecturer_id = l.id
+        WHERE l.employee_id = $1
         ORDER BY f.created_at DESC
     `;
     const result = await db.query(query, [lecturer_id]);
@@ -35,7 +36,8 @@ const getStudentFeedback = async (student_id) => {
         SELECT f.*, l.name as lecturer_name 
         FROM feedbacks f
         LEFT JOIN lecturers l ON f.lecturer_id = l.id
-        WHERE f.student_id = $1
+        JOIN students s ON f.student_id = s.id
+        WHERE s.student_id = $1
         ORDER BY f.created_at DESC
     `;
     const result = await db.query(query, [student_id]);
@@ -60,7 +62,11 @@ const deleteFeedback = async (id) => {
 };
 
 const getLecturerModules = async (lecturer_id) => {
-    const query = 'SELECT DISTINCT subject FROM lectures WHERE lecturer_id = $1';
+    const query = `
+        SELECT DISTINCT subject FROM lectures le
+        JOIN lecturers l ON le.lecturer_id = l.id
+        WHERE l.employee_id = $1
+    `;
     const result = await db.query(query, [lecturer_id]);
     return result.rows.map(row => row.subject);
 };

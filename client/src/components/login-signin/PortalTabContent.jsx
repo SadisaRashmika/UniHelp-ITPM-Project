@@ -4,6 +4,12 @@ import PortalHomeContent from './PortalHomeContent';
 import StudentTimetableContent from '../timetable/StudentTimetableContent';
 import LecturerTimetableContent from '../timetable/LecturerTimetableContent';
 
+// Vimo Components
+import StudentFeedbackDashboard from '../../components/user-feedback/StudentFeedbackDashboard';
+import StudentSupportDashboard from '../../components/user-feedback/StudentSupportDashboard';
+import LecturerFeedbackDashboard from '../../components/user-feedback/LecturerFeedbackDashboard';
+import LecturerSupportDashboard from '../../components/user-feedback/LecturerSupportDashboard';
+
 const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
   if (tab === 'home') {
     return <PortalHomeContent user={user} onLogin={onLogin} onNavigate={onNavigate} />;
@@ -19,7 +25,7 @@ const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
   }
 
   if (tab === 'resource') {
-    const userId = user.role === 'lecturer' ? user.idNumber : user.idNumber;
+    const userId = user.idNumber;
     return user.role === 'lecturer' ? (
       <LecDashboard userId={userId} profilePhoto={profilePhoto} />
     ) : (
@@ -45,6 +51,16 @@ const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
         studentBody="Student jobs panel will show internships, campus jobs, and role-specific applications."
       />
     );
+  }
+
+  if (tab === 'support') {
+    if (user.role === 'student') return <StudentSupportDashboard studentId={user.idNumber} />;
+    if (user.role === 'lecturer') return <LecturerSupportDashboard />;
+  }
+
+  if (tab === 'feedback') {
+    if (user.role === 'student') return <StudentFeedbackDashboard studentId={user.idNumber} />;
+    if (user.role === 'lecturer') return <LecturerFeedbackDashboard lecturerId={user.idNumber} />;
   }
 
   return (
