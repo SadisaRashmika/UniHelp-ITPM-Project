@@ -62,6 +62,18 @@ const getStudentTickets = async (req, res) => {
     }
 };
 
+const getLecturerTickets = async (req, res) => {
+    const { lecturer_id } = req.params;
+    const { limit = 50 } = req.query;
+    try {
+        const tickets = await ticketModel.getLecturerTickets(lecturer_id, parseInt(limit));
+        res.status(200).json(tickets);
+    } catch (error) {
+        console.error('Error fetching lecturer tickets:', error.message);
+        res.status(500).json({ error: 'Failed to fetch tickets' });
+    }
+};
+
 const getAllTickets = async (req, res) => {
     const { limit = 100 } = req.query;
     try {
@@ -137,6 +149,7 @@ const addChatMessage = async (req, res) => {
 module.exports = {
     submitTicket,
     getStudentTickets,
+    getLecturerTickets,
     getAllTickets,
     updateTicketStatus,
     getTicketChats,

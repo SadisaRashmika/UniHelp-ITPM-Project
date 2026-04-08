@@ -50,7 +50,7 @@ const LectureAdminTicketList = ({ lecturerId = 1 }) => {
 
     const fetchTickets = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/user-feedback/tickets');
+            const res = await axios.get(`http://localhost:5000/api/user-feedback/tickets/lecturer/${lecturerId}`);
             setTickets(res.data);
         } catch (err) {
             console.error(err);
@@ -222,6 +222,7 @@ const LectureAdminTicketList = ({ lecturerId = 1 }) => {
                         <thead>
                             <tr className="bg-gray-50/50 border-b border-gray-100">
                                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Inquiry Source</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Inquiry Cluster</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Subject Node</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Lifecycle Status</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Action Gate</th>
@@ -242,13 +243,12 @@ const LectureAdminTicketList = ({ lecturerId = 1 }) => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-5">
-                                        <div className="max-w-xl">
-                                            <div className="flex items-center gap-2 mb-1.5">
-                                                <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest leading-none">Category:</span>
-                                                <span className="text-[8px] font-black text-blue-500 uppercase tracking-widest leading-none bg-blue-50 px-1.5 py-0.5 rounded">
-                                                    {ticket.category}
-                                                </span>
-                                            </div>
+                                        <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest leading-none bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100/30 shadow-xs inline-block">
+                                            {ticket.category}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <div className="max-w-md">
                                             <p className="text-[11px] font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{ticket.subject}</p>
                                             <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1 italic font-medium opacity-80">"{ticket.description}"</p>
                                         </div>

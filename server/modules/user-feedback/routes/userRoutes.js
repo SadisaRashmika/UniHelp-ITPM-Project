@@ -57,6 +57,7 @@ router.post('/tickets', upload.single('screenshot'), ticketController.submitTick
 
 
 router.get('/tickets/student/:student_id', ticketController.getStudentTickets);
+router.get('/tickets/lecturer/:lecturer_id', ticketController.getLecturerTickets);
 
 
 router.get('/tickets', ticketController.getAllTickets);

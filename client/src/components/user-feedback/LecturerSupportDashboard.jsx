@@ -4,7 +4,7 @@ import LectureAdminSystemOverview from './LectureAdminSystemOverview';
 import LectureAdminUserList from './LectureAdminUserList';
 import LectureAdminTicketList from './LectureAdminTicketList';
 
-const LecturerSupportDashboard = () => {
+const LecturerSupportDashboard = ({ lecturerId }) => {
     const [activeSubView, setActiveSubView] = useState('sys-overview');
 
     const subTabs = [
@@ -36,7 +36,7 @@ const LecturerSupportDashboard = () => {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 min-h-[500px]">
                 {activeSubView === 'sys-overview' && <LectureAdminSystemOverview />}
                 {activeSubView === 'sys-users' && <LectureAdminUserList />}
-                {activeSubView === 'sys-inquiries' && <LectureAdminTicketList />}
+                {activeSubView === 'sys-inquiries' && <LectureAdminTicketList lecturerId={lecturerId} />}
             </div>
         </div>
     );
