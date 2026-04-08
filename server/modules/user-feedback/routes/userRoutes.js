@@ -43,6 +43,7 @@ router.get('/feedback/lecturer/:lecturer_id', feedbackController.getLecturerFeed
 
 
 router.get('/feedback/student/:student_id', feedbackController.getStudentFeedback);
+router.get('/feedback/lecturer/:lecturer_id', feedbackController.getLecturerFeedback);
 
 
 router.put('/feedback/:id', feedbackController.updateFeedback);
@@ -57,6 +58,7 @@ router.post('/tickets', upload.single('screenshot'), ticketController.submitTick
 
 
 router.get('/tickets/student/:student_id', ticketController.getStudentTickets);
+router.get('/tickets/lecturer/:lecturer_id', ticketController.getLecturerTickets);
 
 
 router.get('/tickets', ticketController.getAllTickets);

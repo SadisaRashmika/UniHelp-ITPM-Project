@@ -5,14 +5,14 @@ import { FileBarChart, History, Star, Users, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const LectureAdminFeedbackReport = () => {
+const LectureAdminFeedbackReport = ({ lecturerId = 1 }) => {
     const [feedbacks, setFeedbacks] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchFeedback = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/user-feedback/feedback');
+                const res = await axios.get(`http://localhost:5000/api/user-feedback/feedback/lecturer/${lecturerId}`);
                 setFeedbacks(res.data);
             } catch (err) {
                 console.error(err);
@@ -100,7 +100,7 @@ const LectureAdminFeedbackReport = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-lg font-bold text-gray-900 tracking-tight leading-none">Analytical Insights</h2>
-                    <p className="text-[9px] text-gray-400 font-bold mt-1 uppercase tracking-widest leading-none">Node: Global • Auth: Lecturer</p>
+                    <p className="text-[9px] text-gray-400 font-bold mt-1 uppercase tracking-widest leading-none">Node: Personal • Auth: Lecturer</p>
                 </div>
                 <div className="flex gap-2">
                     <button className="px-3 py-1.5 rounded-lg bg-white border border-gray-100 text-[9px] font-bold text-gray-400 uppercase tracking-widest hover:text-blue-600 transition-all shadow-xs active:scale-95">
@@ -182,7 +182,7 @@ const LectureAdminFeedbackReport = () => {
                         </ResponsiveContainer>
                         <div className="absolute flex flex-col items-center justify-center pointer-events-none">
                             <span className="text-lg font-bold text-gray-900 tracking-tighter leading-none">{avgRating}</span>
-                            <span className="text-[7px] font-bold text-gray-400 uppercase tracking-widest">Global</span>
+                            <span className="text-[7px] font-bold text-gray-400 uppercase tracking-widest">Personal</span>
                         </div>
                     </div>
                     <div className="mt-4 text-center bg-gray-50/50 p-4 rounded-xl border border-gray-100 shadow-inner">

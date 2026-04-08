@@ -13,10 +13,12 @@ import {
     Loader2,
     ChevronRight,
     Eye,
-    MessageSquare
+    MessageSquare,
+    ArrowLeft,
+    Zap
 } from 'lucide-react';
 
-const StudentTicketForm = ({ studentId = 1 }) => {
+const StudentTicketForm = ({ studentId = 1, onTicketSubmitted }) => {
     const [tickets, setTickets] = useState([]);
     const [view, setView] = useState('list'); 
     const [loading, setLoading] = useState(true);
@@ -26,11 +28,13 @@ const StudentTicketForm = ({ studentId = 1 }) => {
     const [chatMessage, setChatMessage] = useState('');
     const [sendingChat, setSendingChat] = useState(false);
     
+    const [lecturers, setLecturers] = useState([]);
     const [formData, setFormData] = useState({
         subject: '',
         description: '',
         category: 'Technical Support',
-        contact_number: ''
+        contact_number: '',
+        lecturer_id: ''
     });
     const [screenshot, setScreenshot] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -44,6 +48,15 @@ const StudentTicketForm = ({ studentId = 1 }) => {
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchLecturers = async () => {
+        try {
+            const res = await axios.get('http://localhost:5000/api/user-feedback/users');
+            setLecturers(res.data.filter(u => u.role === 'Lecturer'));
+        } catch (err) {
+            console.error('Error fetching lecturers:', err);
         }
     };
 
@@ -86,6 +99,7 @@ const StudentTicketForm = ({ studentId = 1 }) => {
 
     useEffect(() => {
         fetchTickets();
+        fetchLecturers();
     }, [studentId]);
 
     const handleFileChange = (e) => {
@@ -106,6 +120,9 @@ const StudentTicketForm = ({ studentId = 1 }) => {
         data.append('description', formData.description);
         data.append('category', formData.category);
         data.append('contact_number', formData.contact_number);
+        if (formData.lecturer_id) {
+            data.append('lecturer_id', formData.lecturer_id);
+        }
         if (screenshot) {
             data.append('screenshot', screenshot);
         }
@@ -115,11 +132,12 @@ const StudentTicketForm = ({ studentId = 1 }) => {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setStatus({ type: 'success', msg: 'Inquiry submitted successfully!' });
-            setFormData({ subject: '', description: '', category: 'Technical Support', contact_number: '' });
+            setFormData({ subject: '', description: '', category: 'Technical Support', contact_number: '', lecturer_id: '' });
             setScreenshot(null);
             setPreviewUrl(null);
             setView('list');
             fetchTickets();
+            if (onTicketSubmitted) onTicketSubmitted();
             setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
         } catch (err) {
             setStatus({ type: 'error', msg: 'Failed to submit inquiry.' });
@@ -141,120 +159,149 @@ const StudentTicketForm = ({ studentId = 1 }) => {
         switch (status) {
             case 'pending': return 'bg-amber-500';
             case 'in-review': return 'bg-blue-500';
-            case 'resolved': return 'bg-emerald-500';
+            case 'closed': return 'bg-emerald-500';
             default: return 'bg-gray-400';
         }
     };
 
     if (view === 'create') {
         return (
-            <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h3 className="text-xl font-bold text-gray-900 tracking-tight">Open New Inquiry</h3>
-                        <p className="text-xs text-gray-400 font-medium mt-1 uppercase tracking-widest leading-none opacity-60">Technical & Academic Support Hub</p>
+            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-xl shadow-gray-100/50 animate-in zoom-in-95 duration-500 max-w-4xl mx-auto">
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <Plus size={20} />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-black tracking-tight text-gray-900 leading-none">Initiate Support Protocol</h3>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Fill all required nodes to proceed</p>
+                        </div>
                     </div>
                     <button 
                         onClick={() => setView('list')}
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                        className="p-2 hover:bg-gray-50 rounded-xl text-gray-400 transition-colors"
                     >
-                        <X size={20} className="text-gray-400" />
+                        <ArrowLeft size={18} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2 relative">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Inquiry Category</label>
-                                <select 
-                                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all appearance-none cursor-pointer"
-                                    value={formData.category}
-                                    onChange={(e) => setFormData({...formData, category: e.target.value})}
-                                >
-                                    <option>Technical Support</option>
-                                    <option>Academic Assistance</option>
-                                    <option>Examination & Results</option>
-                                    <option>System Access (Login)</option>
-                                </select>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Inquiry Subject</label>
-                                <input 
-                                    type="text"
-                                    placeholder="Summarize your issue..."
-                                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all"
-                                    value={formData.subject}
-                                    onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                                    required
-                                />
-                            </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Subject / Header</label>
+                            <input 
+                                type="text"
+                                placeholder="Brief subject of inquiry"
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all"
+                                value={formData.subject}
+                                onChange={(e) => setFormData({...formData, subject: e.target.value})}
+                                required
+                            />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Contact Number (Mobile)</label>
-                                <input 
-                                    type="tel"
-                                    placeholder="e.g. 0716834567"
-                                    pattern="^07\d{8}$"
-                                    title="Contact number must be 10 digits and start with 07"
-                                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all font-mono"
-                                    value={formData.contact_number}
-                                    onChange={(e) => setFormData({...formData, contact_number: e.target.value.replace(/\D/g, '').slice(0, 10)})}
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Detailed Description</label>
-                            <div className="relative">
-                                <textarea 
-                                    placeholder="Explain the technical or academic roadblock in detail..."
-                                    className="w-full px-4 py-4 bg-gray-50 border border-transparent rounded-xl text-xs font-medium text-gray-900 h-48 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all resize-none"
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                                    required
-                                />
-                                <div className="absolute bottom-4 right-4 text-gray-300 pointer-events-none">
-                                    <FileText size={24} opacity={0.15} />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Visual Evidence (Screenshot)</label>
-                            <div className="flex gap-4">
-                                <label className="flex-1 cursor-pointer">
-                                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                                    <div className="w-full px-4 py-3 bg-gray-50 border border-dashed border-gray-200 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase text-gray-400 hover:bg-blue-50 hover:border-blue-200 transition-all">
-                                        <ImageIcon size={14} /> {screenshot ? screenshot.name : 'Select Screenshot'}
-                                    </div>
-                                </label>
-                                {previewUrl && (
-                                    <div className="relative w-12 h-12">
-                                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover rounded-xl border border-gray-100 shadow-sm" />
-                                        <button 
-                                            onClick={() => { setScreenshot(null); setPreviewUrl(null); }}
-                                            className="absolute -top-2 -right-2 p-1 bg-white border border-gray-100 rounded-full text-rose-500 shadow-sm"
-                                        >
-                                            <X size={10} />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Inquiry Category</label>
+                            <select 
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all appearance-none cursor-pointer"
+                                value={formData.category}
+                                onChange={(e) => setFormData({...formData, category: e.target.value})}
+                            >
+                                <option>Technical Support</option>
+                                <option>Academic Assistance</option>
+                                <option>Examination & Results</option>
+                                <option>System Access (Login)</option>
+                                <option>Other / General</option>
+                            </select>
                         </div>
                     </div>
 
-                    <button 
-                        type="submit" 
-                        disabled={submitting}
-                        className="w-full py-4 bg-linear-to-br from-blue-500 to-indigo-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-200 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                    >
-                        {submitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                        {submitting ? 'Executing Transmission...' : 'Deploy Inquiry Node'}
-                    </button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Contact Number</label>
+                            <input 
+                                type="tel"
+                                placeholder="07XXXXXXXX"
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all font-mono"
+                                value={formData.contact_number}
+                                onChange={(e) => setFormData({...formData, contact_number: e.target.value.replace(/\D/g, '').slice(0, 10)})}
+                                required
+                            />
+                        </div>
+                        <div className="space-y-1.5 relative">
+                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Direct to Lecturer</label>
+                            <select 
+                                className="w-full px-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all appearance-none cursor-pointer"
+                                value={formData.lecturer_id}
+                                onChange={(e) => setFormData({...formData, lecturer_id: e.target.value})}
+                                required
+                            >
+                                <option value="">Select Target Lecturer</option>
+                                {lecturers.map(l => (
+                                    <option key={l.id} value={l.id}>{l.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Detailed Description</label>
+                        <textarea 
+                            placeholder="Describe your technical or academic issue in detail..."
+                            rows="3"
+                            className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all resize-none"
+                            value={formData.description}
+                            onChange={(e) => setFormData({...formData, description: e.target.value})}
+                            required
+                        />
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-4 pt-1">
+                        <div className="relative group/file">
+                            <input 
+                                type="file" 
+                                id="ticket-screenshot" 
+                                className="hidden" 
+                                accept="image/*"
+                                onChange={handleFileChange}
+                            />
+                            <label 
+                                htmlFor="ticket-screenshot"
+                                className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-blue-50 text-[10px] font-black text-gray-500 hover:text-blue-600 rounded-xl cursor-pointer border border-dashed border-gray-200 hover:border-blue-200 transition-all"
+                            >
+                                <Zap size={14} />
+                                {screenshot ? screenshot.name : 'Attach Diagnostic Image'}
+                            </label>
+                        </div>
+                        {previewUrl && (
+                            <div className="relative group">
+                                <img src={previewUrl} alt="Preview" className="h-10 w-10 rounded-lg object-cover border border-gray-200 shadow-sm" />
+                                <button 
+                                    type="button"
+                                    onClick={() => {setScreenshot(null); setPreviewUrl(null);}}
+                                    className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <Plus size={10} className="rotate-45" />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="pt-2">
+                            <button 
+                            type="submit"
+                            disabled={submitting}
+                            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-100 flex items-center justify-center gap-3 transition-all active:scale-[0.98] disabled:opacity-50"
+                        >
+                            {submitting ? (
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <>
+                                    <Send size={16} />
+                                    Transmit Inquiry
+                                </>
+                            )}
+                        </button>
+                    </div>
                 </form>
             </div>
         );
@@ -428,12 +475,11 @@ const StudentTicketForm = ({ studentId = 1 }) => {
                                             </div>
                                         </div>
                                     )}
-
                                     <div className="pt-6 border-t border-gray-50 space-y-4">
                                         <h5 className="text-[9px] font-black text-gray-400 uppercase tracking-widest">System Processing Trajectory</h5>
                                         <div className="relative pt-1">
                                             <div className="flex mb-3 items-center justify-between px-3">
-                                                {['Log', 'Review', 'Resolved'].map((label, i) => (
+                                                {['Log', 'Review', 'Closed'].map((label, i) => (
                                                     <div key={label} className="text-center">
                                                         <span className={`text-[8px] font-black uppercase tracking-widest inline-block py-1.5 px-3 rounded-lg shadow-sm ${getStatusStep(selectedTicket.status) > i ? 'text-blue-600 bg-blue-50 border border-blue-100' : 'text-gray-300 bg-gray-50 border border-gray-100'}`}>
                                                             {label}
@@ -458,49 +504,52 @@ const StudentTicketForm = ({ studentId = 1 }) => {
                                         <h5 className="text-[10px] font-black text-gray-700 uppercase tracking-widest">Communication History</h5>
                                     </div>
                                     
-                                    <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
+                                    <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar bg-gray-50/30">
                                         {chats.map((chat) => (
                                             <div key={chat.id} className={`flex ${chat.sender_role === 'student' ? 'justify-end' : 'justify-start'}`}>
-                                                <div className={`max-w-[90%] rounded-2xl px-4 py-3 text-[10px] shadow-sm transform transition-all hover:scale-[1.02]
+                                                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-[10px] shadow-sm
                                                     ${chat.sender_role === 'student' 
                                                         ? 'bg-blue-600 text-white rounded-br-none border border-blue-700' 
                                                         : chat.sender_role === 'system'
-                                                            ? 'bg-gray-100 text-gray-400 italic text-center w-full mx-auto font-black uppercase tracking-tighter border border-gray-200'
-                                                            : 'bg-white text-gray-700 border border-gray-200 rounded-bl-none shadow-xs'
+                                                            ? 'bg-amber-50 text-amber-900 italic text-center w-full mx-auto font-black uppercase tracking-tighter border border-amber-100'
+                                                            : 'bg-white text-gray-700 border border-gray-100 rounded-bl-none'
                                                     }`}>
-                                                    <p className="leading-relaxed font-semibold">{chat.message}</p>
-                                                    <p className={`text-[7px] mt-1.5 font-bold opacity-60 ${chat.sender_role === 'student' ? 'text-right' : 'text-left'}`}>
+                                                    <p className="leading-relaxed font-bold">{chat.message}</p>
+                                                    <p className={`text-[7px] mt-1.5 font-black uppercase opacity-60 ${chat.sender_role === 'student' ? 'text-right' : 'text-left'}`}>
                                                         {new Date(chat.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </p>
                                                 </div>
                                             </div>
                                         ))}
-                                        {chats.length === 0 && (
-                                            <div className="h-full flex flex-col items-center justify-center opacity-30 gap-3">
-                                                <MessageSquare size={40} className="text-gray-300" />
-                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Zero active signals detected</p>
-                                            </div>
-                                        )}
                                     </div>
                                     
-                                    <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-100 shadow-2xl">
-                                        <div className="relative flex items-center gap-2">
-                                            <input 
-                                                type="text"
-                                                value={chatMessage}
-                                                onChange={(e) => setChatMessage(e.target.value)}
-                                                placeholder="Broadcast command..."
-                                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-300 transition-all placeholder:text-gray-300"
-                                            />
-                                            <button 
-                                                type="submit"
-                                                disabled={sendingChat || !chatMessage.trim()}
-                                                className="shrink-0 p-3 bg-blue-600 text-white rounded-2xl hover:bg-black transition-all disabled:opacity-50 shadow-lg shadow-blue-100 active:scale-95"
-                                            >
-                                                <Send size={16} />
-                                            </button>
+                                    {selectedTicket.status === 'resolved' ? (
+                                        <div className="p-6 bg-gray-50 border-t border-gray-100 text-center space-y-2">
+                                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[9px] font-black uppercase tracking-widest">
+                                                <CheckCircle2 size={12} /> Inquiry Closed
+                                            </div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">This communication channel is archived. <br/> Further assistance requires a new protocol.</p>
                                         </div>
-                                    </form>
+                                    ) : (
+                                        <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-100">
+                                            <div className="relative flex items-center gap-2">
+                                                <input 
+                                                    type="text"
+                                                    value={chatMessage}
+                                                    onChange={(e) => setChatMessage(e.target.value)}
+                                                    placeholder="Transmit response node..."
+                                                    className="w-full bg-gray-50 border border-transparent rounded-2xl px-4 py-3 text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all"
+                                                />
+                                                <button 
+                                                    type="submit"
+                                                    disabled={sendingChat || !chatMessage.trim()}
+                                                    className="shrink-0 p-3 bg-blue-600 text-white rounded-2xl hover:bg-black transition-all disabled:opacity-50 shadow-lg shadow-blue-100"
+                                                >
+                                                    <Send size={16} />
+                                                </button>
+                                            </div>
+                                        </form>
+                                    )}
                                 </div>
                             </div>
 
@@ -520,7 +569,7 @@ const StudentTicketForm = ({ studentId = 1 }) => {
                                             }}
                                             className="px-4 py-2.5 bg-white text-emerald-600 border border-emerald-100 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-50 transition-all shadow-sm flex items-center gap-2 active:scale-95"
                                         >
-                                            <CheckCircle2 size={12} /> Resolve Ticket
+                                            <CheckCircle2 size={12} /> Close Inquiry
                                         </button>
                                     )}
                                 </div>

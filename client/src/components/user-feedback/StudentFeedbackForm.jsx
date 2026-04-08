@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Send, Star, User, BookOpen, MessageSquare, ShieldCheck, Sparkles, Trash2, Edit3, Clock, Plus, ArrowLeft, History, Lock, Unlock, Calendar } from 'lucide-react';
 
-const StudentFeedbackForm = ({ studentId = 1 }) => {
+const StudentFeedbackForm = ({ studentId = 1, onFeedbackSubmitted }) => {
     const [lecturers, setLecturers] = useState([]);
     const [mySubmissions, setMySubmissions] = useState([]);
     const [view, setView] = useState('list'); 
@@ -26,6 +26,7 @@ const StudentFeedbackForm = ({ studentId = 1 }) => {
             ]);
             setLecturers(lecturersRes.data.filter(u => u.role === 'Lecturer'));
             setMySubmissions(myFeedbackRes.data);
+            if (onFeedbackSubmitted) onFeedbackSubmitted();
         } catch (err) {
             console.error(err);
         }

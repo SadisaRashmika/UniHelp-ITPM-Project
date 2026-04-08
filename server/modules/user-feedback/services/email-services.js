@@ -16,17 +16,19 @@ const transporter = nodemailer.createTransport({
 
 const { generateInquiryTemplate } = require('./inq-mail-templates');
 
-const sendInquiryEmail = async (ticketData, studentName) => {
+const sendInquiryEmail = async (ticketData, studentName, lecturerEmail, studentEmail) => {
     const mailOptions = {
         from: `"UniHelp Support Portals" <${process.env.EMAIL_USER}>`,
-        to: process.env.LECTURER_EMAIL || process.env.EMAIL_USER,
+        to: lecturerEmail || process.env.EMAIL_USER,
+        cc: studentEmail,
         subject: `[DIAGNOSTIC SIGNAL] ${ticketData.category}: ${ticketData.subject}`,
         html: generateInquiryTemplate(ticketData.category, ticketData, studentName)
     };
 
     try {
         console.log('--- Email Dispatch Initialization ---');
-        console.log(`Recipient: ${mailOptions.to}`);
+        console.log(`To: ${mailOptions.to}`);
+        console.log(`CC: ${mailOptions.cc}`);
         console.log(`Subject: ${mailOptions.subject}`);
 
         const info = await transporter.sendMail(mailOptions);

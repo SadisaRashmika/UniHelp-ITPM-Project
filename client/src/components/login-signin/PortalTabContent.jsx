@@ -55,7 +55,7 @@ const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
 
   if (tab === 'support') {
     if (user.role === 'student') return <StudentSupportDashboard studentId={user.idNumber} />;
-    if (user.role === 'lecturer') return <LecturerSupportDashboard />;
+    if (user.role === 'lecturer') return <LecturerSupportDashboard lecturerId={user.idNumber} />;
   }
 
   if (tab === 'feedback') {
