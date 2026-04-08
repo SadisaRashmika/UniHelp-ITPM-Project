@@ -30,6 +30,9 @@ const StudentSupportDashboard = ({ studentId }) => {
 
     useEffect(() => {
         fetchTicketStats();
+        // Add periodic polling to keep stats fresh (e.g., every 10 seconds)
+        const interval = setInterval(fetchTicketStats, 10000);
+        return () => clearInterval(interval);
     }, [studentId]);
 
     if (loading) return (

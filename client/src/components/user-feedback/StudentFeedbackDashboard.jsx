@@ -54,6 +54,9 @@ const StudentFeedbackDashboard = ({ studentId }) => {
 
     useEffect(() => {
         fetchStats();
+        // Add periodic polling to keep stats fresh (e.g., every 10 seconds)
+        const interval = setInterval(fetchStats, 10000);
+        return () => clearInterval(interval);
     }, [studentId]);
 
     const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
