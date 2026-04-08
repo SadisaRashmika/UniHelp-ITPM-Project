@@ -159,7 +159,7 @@ const StudentTicketForm = ({ studentId = 1, onTicketSubmitted }) => {
         switch (status) {
             case 'pending': return 'bg-amber-500';
             case 'in-review': return 'bg-blue-500';
-            case 'resolved': return 'bg-emerald-500';
+            case 'closed': return 'bg-emerald-500';
             default: return 'bg-gray-400';
         }
     };
@@ -475,12 +475,11 @@ const StudentTicketForm = ({ studentId = 1, onTicketSubmitted }) => {
                                             </div>
                                         </div>
                                     )}
-
                                     <div className="pt-6 border-t border-gray-50 space-y-4">
                                         <h5 className="text-[9px] font-black text-gray-400 uppercase tracking-widest">System Processing Trajectory</h5>
                                         <div className="relative pt-1">
                                             <div className="flex mb-3 items-center justify-between px-3">
-                                                {['Log', 'Review', 'Resolved'].map((label, i) => (
+                                                {['Log', 'Review', 'Closed'].map((label, i) => (
                                                     <div key={label} className="text-center">
                                                         <span className={`text-[8px] font-black uppercase tracking-widest inline-block py-1.5 px-3 rounded-lg shadow-sm ${getStatusStep(selectedTicket.status) > i ? 'text-blue-600 bg-blue-50 border border-blue-100' : 'text-gray-300 bg-gray-50 border border-gray-100'}`}>
                                                             {label}
@@ -505,49 +504,52 @@ const StudentTicketForm = ({ studentId = 1, onTicketSubmitted }) => {
                                         <h5 className="text-[10px] font-black text-gray-700 uppercase tracking-widest">Communication History</h5>
                                     </div>
                                     
-                                    <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
+                                    <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar bg-gray-50/30">
                                         {chats.map((chat) => (
                                             <div key={chat.id} className={`flex ${chat.sender_role === 'student' ? 'justify-end' : 'justify-start'}`}>
-                                                <div className={`max-w-[90%] rounded-2xl px-4 py-3 text-[10px] shadow-sm transform transition-all hover:scale-[1.02]
+                                                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-[10px] shadow-sm
                                                     ${chat.sender_role === 'student' 
                                                         ? 'bg-blue-600 text-white rounded-br-none border border-blue-700' 
                                                         : chat.sender_role === 'system'
-                                                            ? 'bg-gray-100 text-gray-400 italic text-center w-full mx-auto font-black uppercase tracking-tighter border border-gray-200'
-                                                            : 'bg-white text-gray-700 border border-gray-200 rounded-bl-none shadow-xs'
+                                                            ? 'bg-amber-50 text-amber-900 italic text-center w-full mx-auto font-black uppercase tracking-tighter border border-amber-100'
+                                                            : 'bg-white text-gray-700 border border-gray-100 rounded-bl-none'
                                                     }`}>
-                                                    <p className="leading-relaxed font-semibold">{chat.message}</p>
-                                                    <p className={`text-[7px] mt-1.5 font-bold opacity-60 ${chat.sender_role === 'student' ? 'text-right' : 'text-left'}`}>
+                                                    <p className="leading-relaxed font-bold">{chat.message}</p>
+                                                    <p className={`text-[7px] mt-1.5 font-black uppercase opacity-60 ${chat.sender_role === 'student' ? 'text-right' : 'text-left'}`}>
                                                         {new Date(chat.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </p>
                                                 </div>
                                             </div>
                                         ))}
-                                        {chats.length === 0 && (
-                                            <div className="h-full flex flex-col items-center justify-center opacity-30 gap-3">
-                                                <MessageSquare size={40} className="text-gray-300" />
-                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">Zero active signals detected</p>
-                                            </div>
-                                        )}
                                     </div>
                                     
-                                    <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-100 shadow-2xl">
-                                        <div className="relative flex items-center gap-2">
-                                            <input 
-                                                type="text"
-                                                value={chatMessage}
-                                                onChange={(e) => setChatMessage(e.target.value)}
-                                                placeholder="Broadcast command..."
-                                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:bg-white focus:border-blue-300 transition-all placeholder:text-gray-300"
-                                            />
-                                            <button 
-                                                type="submit"
-                                                disabled={sendingChat || !chatMessage.trim()}
-                                                className="shrink-0 p-3 bg-blue-600 text-white rounded-2xl hover:bg-black transition-all disabled:opacity-50 shadow-lg shadow-blue-100 active:scale-95"
-                                            >
-                                                <Send size={16} />
-                                            </button>
+                                    {selectedTicket.status === 'resolved' ? (
+                                        <div className="p-6 bg-gray-50 border-t border-gray-100 text-center space-y-2">
+                                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[9px] font-black uppercase tracking-widest">
+                                                <CheckCircle2 size={12} /> Inquiry Closed
+                                            </div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">This communication channel is archived. <br/> Further assistance requires a new protocol.</p>
                                         </div>
-                                    </form>
+                                    ) : (
+                                        <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-100">
+                                            <div className="relative flex items-center gap-2">
+                                                <input 
+                                                    type="text"
+                                                    value={chatMessage}
+                                                    onChange={(e) => setChatMessage(e.target.value)}
+                                                    placeholder="Transmit response node..."
+                                                    className="w-full bg-gray-50 border border-transparent rounded-2xl px-4 py-3 text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all"
+                                                />
+                                                <button 
+                                                    type="submit"
+                                                    disabled={sendingChat || !chatMessage.trim()}
+                                                    className="shrink-0 p-3 bg-blue-600 text-white rounded-2xl hover:bg-black transition-all disabled:opacity-50 shadow-lg shadow-blue-100"
+                                                >
+                                                    <Send size={16} />
+                                                </button>
+                                            </div>
+                                        </form>
+                                    )}
                                 </div>
                             </div>
 
@@ -567,7 +569,7 @@ const StudentTicketForm = ({ studentId = 1, onTicketSubmitted }) => {
                                             }}
                                             className="px-4 py-2.5 bg-white text-emerald-600 border border-emerald-100 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-50 transition-all shadow-sm flex items-center gap-2 active:scale-95"
                                         >
-                                            <CheckCircle2 size={12} /> Resolve Ticket
+                                            <CheckCircle2 size={12} /> Close Inquiry
                                         </button>
                                     )}
                                 </div>

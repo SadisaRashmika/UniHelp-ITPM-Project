@@ -257,7 +257,7 @@ const LectureAdminTicketList = ({ lecturerId = 1 }) => {
                                         <div className="flex justify-center">
                                             <span className={`px-2 py-1 rounded-md border text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 ${getStatusStyles(ticket.status)}`}>
                                                 <div className={`w-1 h-1 rounded-full animate-pulse ${ticket.status === 'pending' ? 'bg-amber-500' : ticket.status === 'in-review' ? 'bg-blue-500' : 'bg-emerald-500'}`} />
-                                                {ticket.status}
+                                                {ticket.status === 'resolved' ? 'Resolved & Closed' : ticket.status}
                                             </span>
                                         </div>
                                     </td>
@@ -474,24 +474,33 @@ const LectureAdminTicketList = ({ lecturerId = 1 }) => {
                                         )}
                                     </div>
                                     
-                                    <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-100 shadow-2xl">
-                                        <div className="relative flex items-center gap-2">
-                                            <input 
-                                                type="text"
-                                                value={chatMessage}
-                                                onChange={(e) => setChatMessage(e.target.value)}
-                                                placeholder="Broadcast command..."
-                                                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-300 transition-all placeholder:text-gray-300"
-                                            />
-                                            <button 
-                                                type="submit"
-                                                disabled={sendingChat || !chatMessage.trim()}
-                                                className="shrink-0 p-3 bg-blue-600 text-white rounded-2xl hover:bg-black transition-all disabled:opacity-50 shadow-lg shadow-blue-100 active:scale-95"
-                                            >
-                                                <Send size={16} />
-                                            </button>
+                                    {selectedTicket.status === 'resolved' ? (
+                                        <div className="p-6 bg-white border-t border-gray-100 text-center space-y-2">
+                                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[9px] font-black uppercase tracking-widest">
+                                                <CheckCircle2 size={12} /> Inquiry Resolved & Closed
+                                            </div>
+                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-relaxed">This diagnostic node is finalized and archived. <br/> Access to manual broadcast is restricted.</p>
                                         </div>
-                                    </form>
+                                    ) : (
+                                        <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-gray-100 shadow-2xl">
+                                            <div className="relative flex items-center gap-2">
+                                                <input 
+                                                    type="text"
+                                                    value={chatMessage}
+                                                    onChange={(e) => setChatMessage(e.target.value)}
+                                                    placeholder="Broadcast command..."
+                                                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white focus:border-indigo-300 transition-all placeholder:text-gray-300"
+                                                />
+                                                <button 
+                                                    type="submit"
+                                                    disabled={sendingChat || !chatMessage.trim()}
+                                                    className="shrink-0 p-3 bg-blue-600 text-white rounded-2xl hover:bg-black transition-all disabled:opacity-50 shadow-lg shadow-blue-100 active:scale-95"
+                                                >
+                                                    <Send size={16} />
+                                                </button>
+                                            </div>
+                                        </form>
+                                    )}
                                 </div>
                             </div>
 

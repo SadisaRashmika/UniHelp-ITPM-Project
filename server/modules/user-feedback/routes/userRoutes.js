@@ -43,6 +43,7 @@ router.get('/feedback/lecturer/:lecturer_id', feedbackController.getLecturerFeed
 
 
 router.get('/feedback/student/:student_id', feedbackController.getStudentFeedback);
+router.get('/feedback/lecturer/:lecturer_id', feedbackController.getLecturerFeedback);
 
 
 router.put('/feedback/:id', feedbackController.updateFeedback);

@@ -39,7 +39,7 @@ const LecturerFeedbackDashboard = ({ lecturerId }) => {
                 {activeSubView === 'overview' && <LectureOverview lecturerId={lecturerId} />}
                 {activeSubView === 'reviews' && <LectureFeedbackView lecturerId={lecturerId} />}
                 {activeSubView === 'performance' && <LecturePerformance lecturerId={lecturerId} />}
-                {activeSubView === 'reports' && <LectureAdminFeedbackReport />}
+                {activeSubView === 'reports' && <LectureAdminFeedbackReport lecturerId={lecturerId} />}
             </div>
         </div>
     );
