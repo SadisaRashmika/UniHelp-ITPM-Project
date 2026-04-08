@@ -53,3 +53,26 @@ SET
 	status = COALESCE(status, 'Pending'),
 	password_hash = NULL,
 	updated_at = NOW();
+
+
+
+INSERT INTO public.students (
+name,
+initials,
+student_id,
+email,
+password,
+year,
+semester,
+likes,
+rank,
+bonus_used,
+status,
+password_hash,
+profile_image_url
+)
+VALUES
+('Sahani Fernando', 'SF', 'STU003', 'emoji.officialff@gmail.com', 'password123', '2nd Year', '2nd Semester', 0, 3, false, 'Pending', NULL, NULL)
+
+ON CONFLICT (student_id) DO NOTHING;
+
