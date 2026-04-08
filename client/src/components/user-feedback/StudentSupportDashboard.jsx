@@ -11,23 +11,24 @@ const StudentSupportDashboard = ({ studentId }) => {
     });
     const [loading, setLoading] = useState(true);
 
+    const fetchTicketStats = async () => {
+        try {
+            const res = await axios.get(`http://localhost:5000/api/user-feedback/tickets/student/${studentId}`);
+            const tickets = res.data;
+            
+            setStats({
+                totalTickets: tickets.length,
+                pendingTickets: tickets.filter(t => t.status === 'pending').length,
+                resolvedTickets: tickets.filter(t => t.status === 'resolved').length
+            });
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchTicketStats = async () => {
-            try {
-                const res = await axios.get(`http://localhost:5000/api/user-feedback/tickets/student/${studentId}`);
-                const tickets = res.data;
-                
-                setStats({
-                    totalTickets: tickets.length,
-                    pendingTickets: tickets.filter(t => t.status === 'pending').length,
-                    resolvedTickets: tickets.filter(t => t.status === 'resolved').length
-                });
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchTicketStats();
     }, [studentId]);
 
@@ -85,7 +86,7 @@ const StudentSupportDashboard = ({ studentId }) => {
             {/* Form Area */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-12">
-                     <StudentTicketForm studentId={studentId} />
+                     <StudentTicketForm studentId={studentId} onTicketSubmitted={fetchTicketStats} />
                 </div>
             </div>
         </div>

@@ -16,7 +16,7 @@ import {
     MessageSquare
 } from 'lucide-react';
 
-const StudentTicketForm = ({ studentId = 1 }) => {
+const StudentTicketForm = ({ studentId = 1, onTicketSubmitted }) => {
     const [tickets, setTickets] = useState([]);
     const [view, setView] = useState('list'); 
     const [loading, setLoading] = useState(true);
@@ -26,11 +26,13 @@ const StudentTicketForm = ({ studentId = 1 }) => {
     const [chatMessage, setChatMessage] = useState('');
     const [sendingChat, setSendingChat] = useState(false);
     
+    const [lecturers, setLecturers] = useState([]);
     const [formData, setFormData] = useState({
         subject: '',
         description: '',
         category: 'Technical Support',
-        contact_number: ''
+        contact_number: '',
+        lecturer_id: ''
     });
     const [screenshot, setScreenshot] = useState(null);
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -44,6 +46,15 @@ const StudentTicketForm = ({ studentId = 1 }) => {
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchLecturers = async () => {
+        try {
+            const res = await axios.get('http://localhost:5000/api/user-feedback/users');
+            setLecturers(res.data.filter(u => u.role === 'Lecturer'));
+        } catch (err) {
+            console.error('Error fetching lecturers:', err);
         }
     };
 
@@ -86,6 +97,7 @@ const StudentTicketForm = ({ studentId = 1 }) => {
 
     useEffect(() => {
         fetchTickets();
+        fetchLecturers();
     }, [studentId]);
 
     const handleFileChange = (e) => {
@@ -106,6 +118,9 @@ const StudentTicketForm = ({ studentId = 1 }) => {
         data.append('description', formData.description);
         data.append('category', formData.category);
         data.append('contact_number', formData.contact_number);
+        if (formData.lecturer_id) {
+            data.append('lecturer_id', formData.lecturer_id);
+        }
         if (screenshot) {
             data.append('screenshot', screenshot);
         }
@@ -115,11 +130,12 @@ const StudentTicketForm = ({ studentId = 1 }) => {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setStatus({ type: 'success', msg: 'Inquiry submitted successfully!' });
-            setFormData({ subject: '', description: '', category: 'Technical Support', contact_number: '' });
+            setFormData({ subject: '', description: '', category: 'Technical Support', contact_number: '', lecturer_id: '' });
             setScreenshot(null);
             setPreviewUrl(null);
             setView('list');
             fetchTickets();
+            if (onTicketSubmitted) onTicketSubmitted();
             setTimeout(() => setStatus({ type: '', msg: '' }), 3000);
         } catch (err) {
             setStatus({ type: 'error', msg: 'Failed to submit inquiry.' });
@@ -204,6 +220,20 @@ const StudentTicketForm = ({ studentId = 1 }) => {
                                     onChange={(e) => setFormData({...formData, contact_number: e.target.value.replace(/\D/g, '').slice(0, 10)})}
                                     required
                                 />
+                            </div>
+                            <div className="space-y-2 relative">
+                                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Direct to Lecturer</label>
+                                <select 
+                                    className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl text-xs font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all appearance-none cursor-pointer"
+                                    value={formData.lecturer_id}
+                                    onChange={(e) => setFormData({...formData, lecturer_id: e.target.value})}
+                                    required
+                                >
+                                    <option value="">Select Target Lecturer</option>
+                                    {lecturers.map(l => (
+                                        <option key={l.id} value={l.id}>{l.name}</option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 

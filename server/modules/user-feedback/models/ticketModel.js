@@ -1,8 +1,8 @@
 const db = require('../../../config/db');
 
-const submitTicket = async (student_id, subject, description, screenshot_url, category, contact_number) => {
-    const query = 'INSERT INTO tickets (student_id, subject, description, screenshot_url, category, contact_number, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *';
-    const result = await db.query(query, [student_id, subject, description, screenshot_url, category, contact_number, 'pending']);
+const submitTicket = async (student_id, subject, description, screenshot_url, category, contact_number, lecturer_id = null) => {
+    const query = 'INSERT INTO tickets (student_id, subject, description, screenshot_url, category, contact_number, status, lecturer_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *';
+    const result = await db.query(query, [student_id, subject, description, screenshot_url, category, contact_number, 'pending', lecturer_id]);
     return result.rows[0];
 };
 
