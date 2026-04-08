@@ -1,6 +1,4 @@
 import React from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-
 import LecDashboard from './pages/lecture-resource/LecDashboard'
 import StuDashboard from './pages/lecture-resource/StuDashboard'
 import VimoHome from './pages/user-feedback/VimoHome'
