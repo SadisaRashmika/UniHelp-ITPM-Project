@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, BookOpen, Clock, Users, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Calendar, BookOpen, Clock, Users, CheckCircle, XCircle, AlertCircle, User } from 'lucide-react';
 import TimetableGrid from './TimetableGrid';
 import BookingModal from './BookingModal';
 import NotificationBell from './NotificationBell';
 
 const API_URL = 'http://localhost:5000/api';
 
-const StudentTimetableContent = ({ studentId }) => {
+const StudentTimetableContent = ({ studentId, user }) => {
   const [timeslots, setTimeslots] = useState([]);
   const [myBookings, setMyBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -105,20 +105,49 @@ const StudentTimetableContent = ({ studentId }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-gray-800">Weekly Timetable</h2>
-          <p className="text-gray-600 text-sm">Click on a lecture to book your seat</p>
-        </div>
-        <div className="flex items-center gap-4">
-          <NotificationBell userId={studentId} />
-          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
-            <Calendar size={18} className="text-blue-600" />
-            <span className="text-sm font-medium">{myBookings.length} Bookings</span>
+      {/* User Identity Card */}
+      {user && (
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-4 text-white shadow-md">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <User size={20} className="text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">{user.fullName || user.full_name || 'Student'}</h3>
+                <div className="flex items-center gap-3 text-blue-100 text-sm">
+                  <span className="bg-white/20 px-2 py-0.5 rounded">{user.idNumber || studentId}</span>
+                  <span>Student</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <NotificationBell userId={studentId} />
+              <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-lg">
+                <Calendar size={18} />
+                <span className="text-sm font-medium">{myBookings.length} Bookings</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Header */}
+      {!user && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">Weekly Timetable</h2>
+            <p className="text-gray-600 text-sm">Click on a lecture to book your seat</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <NotificationBell userId={studentId} />
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
+              <Calendar size={18} className="text-blue-600" />
+              <span className="text-sm font-medium">{myBookings.length} Bookings</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">

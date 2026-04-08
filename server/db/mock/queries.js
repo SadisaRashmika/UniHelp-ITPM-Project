@@ -17,6 +17,12 @@ function parseQuery(sql) {
 function executeSelect(sql, params) {
     const parsed = parseQuery(sql);
     
+    // Check for aggregate functions (COUNT, SUM, AVG, MIN, MAX)
+    const aggregateMatch = sql.match(/SELECT\s+(COUNT|SUM|AVG|MIN|MAX)\s*\(\s*(?:\w+\.)?(\*|\w+)\s*\)\s*(?:as\s+(\w+))?\s+FROM/i);
+    if (aggregateMatch) {
+        return executeAggregate(sql, params, aggregateMatch);
+    }
+    
     // Check for JOIN
     const hasJoin = /JOIN/i.test(sql);
     
@@ -68,6 +74,93 @@ function executeSelect(sql, params) {
     }
     
     return { rows, rowCount: rows.length };
+}
+
+// Execute aggregate queries (COUNT, SUM, AVG, MIN, MAX)
+// Supports both simple aggregates and aggregates with JOINs
+function executeAggregate(sql, params, aggregateMatch) {
+    const funcName = aggregateMatch[1].toUpperCase();
+    const columnName = aggregateMatch[2];
+    const alias = aggregateMatch[3] || funcName.toLowerCase();
+    
+    const fromMatch = sql.match(/FROM\s+(\w+)\s+(\w+)?/i);
+    if (!fromMatch) {
+        throw new Error('Invalid aggregate SELECT: no table specified');
+    }
+    const tableName = fromMatch[1].toLowerCase();
+    const mainAlias = fromMatch[2] ? fromMatch[2].toLowerCase() : tableName;
+    
+    if (!data[tableName]) {
+        throw new Error(`Table "${tableName}" does not exist`);
+    }
+    
+    // Start with main table rows
+    let rows = data[tableName].map(row => ({ ...row }));
+    
+    // Handle JOINs if present
+    const hasJoin = /JOIN/i.test(sql);
+    if (hasJoin) {
+        const joinRegex = /JOIN\s+(\w+)\s+(\w+)\s+ON\s+(\w+)\.(\w+)\s*=\s*(\w+)\.(\w+)/gi;
+        let joinMatch;
+        
+        while ((joinMatch = joinRegex.exec(sql)) !== null) {
+            const joinTable = joinMatch[1].toLowerCase();
+            const joinAlias = joinMatch[2].toLowerCase();
+            const leftTable = joinMatch[3].toLowerCase();
+            const leftCol = joinMatch[4];
+            const rightTable = joinMatch[5].toLowerCase();
+            const rightCol = joinMatch[6];
+            
+            if (!data[joinTable]) {
+                throw new Error(`Table "${joinTable}" does not exist`);
+            }
+            
+            rows = rows.map(row => {
+                const leftValue = row[leftCol];
+                const matchingRow = data[joinTable].find(jRow => {
+                    const rightValue = jRow[rightCol];
+                    return leftValue === rightValue;
+                });
+                
+                if (matchingRow) {
+                    Object.keys(matchingRow).forEach(key => {
+                        row[`${joinAlias}_${key}`] = matchingRow[key];
+                    });
+                }
+                
+                return row;
+            });
+        }
+    }
+    
+    // Handle WHERE clause
+    const whereMatch = sql.match(/WHERE\s+(.+?)(?:\s+GROUP|\s+ORDER|\s+LIMIT|\s*$)/i);
+    if (whereMatch) {
+        rows = applyWhereClause(rows, whereMatch[1], params, tableName);
+    }
+    
+    let resultValue;
+    switch (funcName) {
+        case 'COUNT':
+            resultValue = rows.length;
+            break;
+        case 'SUM':
+            resultValue = rows.reduce((sum, row) => sum + (parseFloat(row[columnName]) || 0), 0);
+            break;
+        case 'AVG':
+            resultValue = rows.length > 0 ? rows.reduce((sum, row) => sum + (parseFloat(row[columnName]) || 0), 0) / rows.length : 0;
+            break;
+        case 'MIN':
+            resultValue = rows.length > 0 ? Math.min(...rows.map(row => row[columnName])) : null;
+            break;
+        case 'MAX':
+            resultValue = rows.length > 0 ? Math.max(...rows.map(row => row[columnName])) : null;
+            break;
+        default:
+            resultValue = rows.length;
+    }
+    
+    return { rows: [{ [alias]: resultValue }], rowCount: 1 };
 }
 
 // Execute SELECT with JOIN
@@ -261,7 +354,29 @@ function applyWhereClause(rows, whereClause, params, tableName) {
     const conditions = whereClause.split(/\s+AND\s+/i);
     
     conditions.forEach(condition => {
-        // Handle column = $N
+        // Handle alias.column = $N (e.g., t.lecturer_id = $1)
+        const aliasEqMatch = condition.match(/(\w+)\.(\w+)\s*=\s*\$(\d+)/i);
+        if (aliasEqMatch) {
+            const tableAlias = aliasEqMatch[1].toLowerCase();
+            const column = aliasEqMatch[2];
+            const paramIndex = parseInt(aliasEqMatch[3]) - 1;
+            const value = params[paramIndex];
+            const prefixedColumn = `${tableAlias}_${column}`;
+            filteredRows = filteredRows.filter(row => {
+                // Try both prefixed and non-prefixed column names
+                const rowValue = row[prefixedColumn] !== undefined ? row[prefixedColumn] : row[column];
+                // Handle type coercion for comparisons
+                if (typeof rowValue === 'number' && typeof value === 'string') {
+                    return rowValue === parseInt(value);
+                }
+                if (typeof rowValue === 'string' && typeof value === 'number') {
+                    return rowValue === String(value);
+                }
+                return rowValue === value;
+            });
+        }
+        // Handle column = $N (simple column, no alias)
+        else if (!aliasEqMatch) {
         const eqMatch = condition.match(/(\w+)\s*=\s*\$(\d+)/i);
         if (eqMatch) {
             const column = eqMatch[1];
@@ -278,6 +393,7 @@ function applyWhereClause(rows, whereClause, params, tableName) {
                 }
                 return rowValue === value;
             });
+        }
         }
         
         // Handle column = literal (true/false/null/number)
