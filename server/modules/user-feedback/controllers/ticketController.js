@@ -9,11 +9,18 @@ const submitTicket = async (req, res) => {
     const screenshot_url = req.file ? `/uploads/tickets/${req.file.filename}` : null;
 
     try {
-        const ticket = await ticketModel.submitTicket(student_id, subject, description, screenshot_url, category, contact_number);
-        
-        // Fetch student name for email
-        const student = await db.query('SELECT name FROM students WHERE id = $1', [student_id]);
-        const studentName = student.rows[0]?.name || 'N/A';
+        // Fetch internal student id and name
+        const studentRes = await db.query('SELECT id, name FROM students WHERE student_id = $1', [student_id]);
+        const student = studentRes.rows[0];
+
+        if (!student) {
+            return res.status(404).json({ error: 'Student not found' });
+        }
+
+        const internalId = student.id;
+        const studentName = student.name;
+
+        const ticket = await ticketModel.submitTicket(internalId, subject, description, screenshot_url, category, contact_number);
         
         // Trigger automated email notification
         await sendInquiryEmail(ticket, studentName);

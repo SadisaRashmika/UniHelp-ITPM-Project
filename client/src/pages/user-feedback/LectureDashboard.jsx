@@ -98,7 +98,7 @@ const LectureDashboard = () => {
                 
                 <div className="p-3 border-t border-gray-100 space-y-1">
                     <button 
-                        onClick={() => navigate('/VimoHome')}
+                        onClick={() => navigate('/')}
                         className="flex items-center justify-between w-full px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-50 transition-all font-semibold text-[11px]"
                     >
                         <span className="flex items-center gap-2">
