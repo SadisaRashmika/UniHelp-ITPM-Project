@@ -11,6 +11,14 @@ const formatDate = (iso) => {
   return new Date(iso).toISOString().split('T')[0];
 };
 
+const getYoutubeThumbnail = (url) => {
+  if (!url) return null;
+  const idMatch = String(url).match(/(?:v=|be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);
+  const videoId = idMatch?.[1];
+  if (!videoId) return null;
+  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+};
+
 const normalizeLecture = (raw, lecturerName) => ({
   id: raw.id,
   title: raw.title,
@@ -252,6 +260,17 @@ const LecUpload = ({ lecturer, onPublish }) => {
     }
   };
 
+  const previewLecture = {
+    title: title.trim() || 'Lecture Title Preview',
+    lecturer: lecturer?.name || 'Lecturer Name',
+    lecturerEmail: lecturer?.email || 'lecturer@university.edu',
+    tags: [subject || 'Subject', topic || 'Topic', year || 'Year', semester || 'Semester'],
+    files: files.map((f) => f.name),
+    quizTitle: addQuiz ? (quizTitle.trim() || 'Quiz Preview') : 'No quiz yet',
+    hasQuiz: addQuiz && questions.length > 0,
+    youtubeThumb: getYoutubeThumbnail(ytLink),
+  };
+
   return (
     <div className="space-y-6 w-full">
       {/* Header */}
@@ -260,14 +279,15 @@ const LecUpload = ({ lecturer, onPublish }) => {
         <p className="text-gray-400 text-sm mt-1">Create comprehensive learning materials for students</p>
       </div>
 
-      {/* Form card */}
-      <div className="bg-white rounded-2xl border border-gray-200">
-        <div className="px-7 py-5 border-b border-gray-100">
-          <h2 className="text-base font-semibold text-gray-800">Basic Information</h2>
-        </div>
-        <div className="p-7 space-y-5">
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-6 items-start">
+        {/* Form card */}
+        <div className="bg-white rounded-2xl border border-gray-200">
+          <div className="px-7 py-5 border-b border-gray-100">
+            <h2 className="text-base font-semibold text-gray-800">Basic Information</h2>
+          </div>
+          <div className="p-7 space-y-5">
           {/* Row 1 */}
-          <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <Field label="Lecture Title">
               <input value={title} onChange={e => setTitle(e.target.value)}
                 placeholder="e.g., Introduction to Machine Learning"
@@ -280,10 +300,10 @@ const LecUpload = ({ lecturer, onPublish }) => {
                 <p className="text-xs text-gray-400 mt-1">{lecturer?.email || 'No lecturer email available'}</p>
               </div>
             </Field>
-          </div>
+            </div>
 
           {/* Row 2 */}
-          <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <Field label="Subject">
               <SelectField value={subject} onChange={setSubject} placeholder="Select subject">
                 {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -295,10 +315,10 @@ const LecUpload = ({ lecturer, onPublish }) => {
                 placeholder="e.g., ML Basics"
                 className={inputCls} />
             </Field>
-          </div>
+            </div>
 
           {/* Row 3 */}
-          <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <Field label="Year">
               <SelectField value={year} onChange={setYear} placeholder="Select year">
                 {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
@@ -311,72 +331,72 @@ const LecUpload = ({ lecturer, onPublish }) => {
               </SelectField>
               {errors.semester && <p className="text-xs text-red-500 font-medium mt-1">{errors.semester}</p>}
             </Field>
-          </div>
+            </div>
 
           {/* YouTube Link */}
-          <Field label="YouTube Link (Optional)">
-            <input value={ytLink} onChange={e => setYtLink(e.target.value)}
-              placeholder="Enter YouTube link"
-              className={inputCls} />
-            {errors.youtubeUrl && <p className="text-xs text-red-500 font-medium mt-1">{errors.youtubeUrl}</p>}
-          </Field>
+            <Field label="YouTube Link (Optional)">
+              <input value={ytLink} onChange={e => setYtLink(e.target.value)}
+                placeholder="Enter YouTube link"
+                className={inputCls} />
+              {errors.youtubeUrl && <p className="text-xs text-red-500 font-medium mt-1">{errors.youtubeUrl}</p>}
+            </Field>
 
-        </div>
+          </div>
 
         {/* Upload documents section */}
-        <div className="px-7 pb-2 pt-0">
-          <div className="border-t border-gray-100 pt-5 pb-3">
-            <h2 className="text-base font-semibold text-gray-800 mb-4">Upload Documents</h2>
-          </div>
+          <div className="px-7 pb-2 pt-0">
+            <div className="border-t border-gray-100 pt-5 pb-3">
+              <h2 className="text-base font-semibold text-gray-800 mb-4">Upload Documents</h2>
+            </div>
 
-          <Field label="Lecture Files (PDF, ZIP, etc.)">
-            <label className="flex items-center gap-3 w-full p-4 border border-gray-200 rounded-xl bg-gray-50 hover:bg-gray-100/60 hover:border-gray-300 cursor-pointer transition-all">
-              <Upload size={16} className="text-gray-400" />
-              <span className="text-sm text-gray-500">Choose Files</span>
-              <span className="text-sm text-gray-400">No file chosen</span>
-              <input type="file" multiple className="hidden" onChange={handleFilePick} accept=".pdf,.pptx,.docx,.zip" />
-            </label>
-            <p className="text-xs text-gray-400 mt-1.5">You can upload multiple files</p>
-            {errors.files && <p className="text-xs text-red-500 font-medium mt-1.5">{errors.files}</p>}
-            {files.length > 0 && (
-              <div className="mt-3 space-y-1.5">
-                {files.map((f, i) => (
-                  <div key={i} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <FileText size={13} className="text-gray-400" />
-                      <span className="text-sm text-gray-700 font-medium">{f.name}</span>
-                      <span className="text-xs text-gray-400">{f.size}</span>
+            <Field label="Lecture Files (PDF, ZIP, etc.)">
+              <label className="flex items-center gap-3 w-full p-4 border border-gray-200 rounded-xl bg-gray-50 hover:bg-gray-100/60 hover:border-gray-300 cursor-pointer transition-all">
+                <Upload size={16} className="text-gray-400" />
+                <span className="text-sm text-gray-500">Choose Files</span>
+                <span className="text-sm text-gray-400">No file chosen</span>
+                <input type="file" multiple className="hidden" onChange={handleFilePick} accept=".pdf,.pptx,.docx,.zip" />
+              </label>
+              <p className="text-xs text-gray-400 mt-1.5">You can upload multiple files</p>
+              {errors.files && <p className="text-xs text-red-500 font-medium mt-1.5">{errors.files}</p>}
+              {files.length > 0 && (
+                <div className="mt-3 space-y-1.5">
+                  {files.map((f, i) => (
+                    <div key={i} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <FileText size={13} className="text-gray-400" />
+                        <span className="text-sm text-gray-700 font-medium">{f.name}</span>
+                        <span className="text-xs text-gray-400">{f.size}</span>
+                      </div>
+                      <button onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))}
+                        className="text-gray-300 hover:text-red-400">
+                        <X size={14} />
+                      </button>
                     </div>
-                    <button onClick={() => setFiles(prev => prev.filter((_, j) => j !== i))}
-                      className="text-gray-300 hover:text-red-400">
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Field>
-        </div>
+                  ))}
+                </div>
+              )}
+            </Field>
+          </div>
 
         {/* Create Quiz section */}
-        <div className="px-7 pt-4 pb-7">
-          <div className="border-t border-gray-100 pt-5 mb-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-gray-800">Create Quiz</h2>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <span className="text-sm text-gray-500">Add quiz</span>
-                <div
-                  onClick={() => setAddQuiz(v => !v)}
-                  className={`w-10 h-5 rounded-full transition-colors ${addQuiz ? 'bg-blue-500' : 'bg-gray-200'} relative cursor-pointer`}
-                >
-                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${addQuiz ? 'left-5' : 'left-0.5'}`} />
-                </div>
-              </label>
+          <div className="px-7 pt-4 pb-7">
+            <div className="border-t border-gray-100 pt-5 mb-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-semibold text-gray-800">Create Quiz</h2>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-sm text-gray-500">Add quiz</span>
+                  <div
+                    onClick={() => setAddQuiz(v => !v)}
+                    className={`w-10 h-5 rounded-full transition-colors ${addQuiz ? 'bg-blue-500' : 'bg-gray-200'} relative cursor-pointer`}
+                  >
+                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${addQuiz ? 'left-5' : 'left-0.5'}`} />
+                  </div>
+                </label>
+              </div>
             </div>
-          </div>
 
-          {addQuiz && (
-            <div className="space-y-5">
+            {addQuiz && (
+              <div className="space-y-5">
               <Field label="Quiz Title">
                 <input value={quizTitle} onChange={e => setQuizTitle(e.target.value)}
                   placeholder="e.g., ML Basics Quiz"
@@ -400,20 +420,88 @@ const LecUpload = ({ lecturer, onPublish }) => {
                 className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm font-medium text-gray-400 hover:border-blue-300 hover:text-blue-500 transition-all flex items-center justify-center gap-2">
                 <Plus size={15} /> Add Another Question
               </button>
-            </div>
-          )}
+              </div>
+            )}
 
           {/* Action buttons */}
-          <div className="flex justify-end gap-3 mt-7 pt-5 border-t border-gray-100">
-            <button onClick={resetForm}
-              className="px-6 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all">
-              Cancel
-            </button>
-            <button onClick={handlePublish}
-              disabled={isPublishing}
-              className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-black transition-all flex items-center gap-2">
-              <Upload size={15} /> {isPublishing ? (isEditMode ? 'Updating...' : 'Publishing...') : (isEditMode ? 'Update Lecture & Quiz' : 'Publish Resource & Quiz')}
-            </button>
+            <div className="flex justify-end gap-3 mt-7 pt-5 border-t border-gray-100">
+              <button onClick={resetForm}
+                className="px-6 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50 transition-all">
+                Cancel
+              </button>
+              <button onClick={handlePublish}
+                disabled={isPublishing}
+                className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-black transition-all flex items-center gap-2">
+                <Upload size={15} /> {isPublishing ? (isEditMode ? 'Updating...' : 'Publishing...') : (isEditMode ? 'Update Lecture & Quiz' : 'Publish Resource & Quiz')}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Live preview */}
+        <div className="xl:sticky xl:top-24 bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100">
+            <p className="text-[11px] font-semibold text-blue-600 uppercase tracking-wider">Live Preview</p>
+            <p className="text-xs text-gray-400 mt-0.5">Preview only. This card is not interactive.</p>
+          </div>
+          <div className="p-4">
+            <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+              <div className="h-36 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden">
+                {previewLecture.youtubeThumb ? (
+                  <img src={previewLecture.youtubeThumb} alt={previewLecture.title} className="w-full h-full object-cover" />
+                ) : (
+                  <BookOpen size={34} className="text-white/30" />
+                )}
+              </div>
+              <div className="p-4 space-y-3">
+                <h3 className="font-semibold text-gray-900 line-clamp-2">{previewLecture.title}</h3>
+
+                <div className="flex flex-wrap gap-1.5">
+                  {previewLecture.tags.map((tag) => (
+                    <span key={tag} className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-lg text-[10px] font-semibold uppercase tracking-wide">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+                  <p className="text-sm font-medium text-gray-700 truncate">{previewLecture.lecturer}</p>
+                  <p className="text-xs text-blue-400 truncate mt-0.5">{previewLecture.lecturerEmail}</p>
+                </div>
+
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Lecture Files:</p>
+                  {previewLecture.files.length > 0 ? (
+                    <div className="space-y-1">
+                      {previewLecture.files.slice(0, 2).map((name) => (
+                        <div key={name} className="flex items-center gap-2 text-sm text-blue-600">
+                          <FileText size={13} className="shrink-0" />
+                          <span className="truncate">{name}</span>
+                        </div>
+                      ))}
+                      {previewLecture.files.length > 2 && (
+                        <p className="text-xs text-gray-400">+{previewLecture.files.length - 2} more file(s)</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400">No files selected yet.</p>
+                  )}
+                </div>
+
+                <button
+                  disabled
+                  className="w-full py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-400 bg-gray-50"
+                >
+                  Upload Note for this Lecture
+                </button>
+                <button
+                  disabled
+                  className="w-full py-2.5 bg-gray-300 text-white rounded-xl text-sm font-semibold"
+                >
+                  {previewLecture.hasQuiz ? `Take Quiz - ${previewLecture.quizTitle}` : 'Take Quiz - No quiz yet'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
