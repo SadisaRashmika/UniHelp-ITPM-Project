@@ -11,3 +11,68 @@ VALUES
 	('Nimal Silva', 'NS', 'STU001', 'nimal@uni.edu', 'password123', '3rd Year', '2nd Semester', 5, 1, false),
 	('Kamal Perera', 'KP', 'STU002', 'kamal@uni.edu', 'password123', '2nd Year', '1st Semester', 2, 2, false)
 ON CONFLICT (student_id) DO NOTHING;
+
+-- Seed auth users for activation flow
+INSERT INTO users (id_number, full_name, email, role, status, password_hash)
+VALUES
+	('LEC001', 'Dr. Chamara Perera', 'chamara@uni.edu', 'lecturer', 'Pending', NULL),
+	('LEC002', 'Dr. Saman Jayasekara', 'saman@uni.edu', 'lecturer', 'Pending', NULL),
+	('STU001', 'Nimal Silva', 'nimal@uni.edu', 'student', 'Pending', NULL),
+	('STU002', 'Kamal Perera', 'kamal@uni.edu', 'student', 'Pending', NULL)
+ON CONFLICT (id_number) DO UPDATE
+SET
+	full_name = EXCLUDED.full_name,
+	email = EXCLUDED.email,
+	role = EXCLUDED.role,
+	status = 'Pending',
+	password_hash = NULL,
+	updated_at = NOW();
+
+-- Link existing student/lecturer rows with users table based on ID numbers.
+UPDATE lecturers l
+SET user_id = u.id
+FROM users u
+WHERE u.id_number = l.employee_id
+	AND l.user_id IS DISTINCT FROM u.id;
+
+UPDATE students s
+SET user_id = u.id
+FROM users u
+WHERE u.id_number = s.student_id
+	AND s.user_id IS DISTINCT FROM u.id;
+
+-- Initialize lecturer/student auth columns (activation flow uses these directly).
+UPDATE lecturers
+SET
+	status = COALESCE(status, 'Pending'),
+	password_hash = NULL,
+	updated_at = NOW();
+
+UPDATE students
+SET
+	status = COALESCE(status, 'Pending'),
+	password_hash = NULL,
+	updated_at = NOW();
+
+
+
+INSERT INTO public.students (
+name,
+initials,
+student_id,
+email,
+password,
+year,
+semester,
+likes,
+rank,
+bonus_used,
+status,
+password_hash,
+profile_image_url
+)
+VALUES
+('Sahani Fernando', 'SF', 'STU003', 'emoji.officialff@gmail.com', 'password123', '2nd Year', '2nd Semester', 0, 3, false, 'Pending', NULL, NULL)
+
+ON CONFLICT (student_id) DO NOTHING;
+

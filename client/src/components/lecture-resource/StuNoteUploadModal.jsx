@@ -8,17 +8,36 @@ const StuNoteUploadModal = ({ isOpen, onClose, lecture, student, onUploaded }) =
   const [file, setFile] = useState(null);
   const [topic, setTopic] = useState('');
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const handleClose = () => {
     setFile(null);
     setTopic('');
+    setError('');
     onClose();
   };
 
+  const validate = () => {
+    if (!lecture || !student) return 'Lecture or student information is missing.';
+    if (!topic.trim()) return 'Short note topic is required.';
+    if (topic.trim().length < 3) return 'Short note topic must be at least 3 characters.';
+    if (!file) return 'Please choose a PDF file.';
+    const isPdf = file.type === 'application/pdf' || String(file.name || '').toLowerCase().endsWith('.pdf');
+    if (!isPdf) return 'Only PDF files are allowed.';
+    if (file.size > 10 * 1024 * 1024) return 'File size must be 10MB or less.';
+    return '';
+  };
+
   const handleSubmit = async () => {
-    if (!topic.trim() || !file || !lecture || !student) return;
+    const validationError = validate();
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     try {
       setSaving(true);
+      setError('');
       const formData = new FormData();
       formData.append('studentId', student.student_id || 'STU001');
       formData.append('lectureId', String(lecture.id));
@@ -31,6 +50,7 @@ const StuNoteUploadModal = ({ isOpen, onClose, lecture, student, onUploaded }) =
       handleClose();
     } catch (error) {
       console.error('Error uploading student note:', error);
+      setError(error?.response?.data?.message || 'Failed to upload note. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -93,7 +113,10 @@ const StuNoteUploadModal = ({ isOpen, onClose, lecture, student, onUploaded }) =
               <input
                 type="text"
                 value={topic}
-                onChange={(e) => setTopic(e.target.value)}
+                onChange={(e) => {
+                  setTopic(e.target.value);
+                  if (error) setError('');
+                }}
                 placeholder="e.g., Graph traversal summary"
                 className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all placeholder:text-gray-400"
               />
@@ -105,10 +128,20 @@ const StuNoteUploadModal = ({ isOpen, onClose, lecture, student, onUploaded }) =
                 <Upload size={16} className="text-gray-400 shrink-0" />
                 <span className="text-sm text-gray-500">{file ? file.name : 'Choose File'}</span>
                 {!file && <span className="text-sm text-gray-400">No file chosen</span>}
-                <input type="file" accept=".pdf" className="hidden" onChange={e => setFile(e.target.files[0])} />
+                <input
+                  type="file"
+                  accept=".pdf"
+                  className="hidden"
+                  onChange={e => {
+                    setFile(e.target.files[0]);
+                    if (error) setError('');
+                  }}
+                />
               </label>
               <p className="text-xs text-gray-400 mt-1.5">PDF supported</p>
             </div>
+
+            {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
 
             <div className="flex gap-3 pt-2">
               <button onClick={handleClose}

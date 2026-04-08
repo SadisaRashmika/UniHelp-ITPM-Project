@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Download, Clock, Upload, Trophy, ArrowRight } from 'lucide-react';
+import { DollarSign, Clock, Upload, Trophy, ArrowRight } from 'lucide-react';
 
 const LEVEL_MAP = [
   { min: 0, label: 'Bronze', color: 'bg-orange-100 text-orange-700 border-orange-200' },
@@ -17,7 +17,7 @@ const getInitials = (lecturer) => {
   return parts.slice(0, 2).map((p) => p[0]).join('').toUpperCase() || 'L';
 };
 
-const LecProfile = ({ lecturerId, pendingCount, onNavigate }) => {
+const LecProfile = ({ lecturerId, pendingCount, onNavigate, profilePhoto }) => {
   const [lecturer, setLecturer] = useState(null);
   const [stats, setStats] = useState({
     downloads: 0,
@@ -50,6 +50,11 @@ const LecProfile = ({ lecturerId, pendingCount, onNavigate }) => {
   if (loading) return <div>Loading...</div>; // Show loading state
 
   const level = getLevel(myPoints);
+  const bonusSalaryLkr = (Number(myPoints) || 0) * 5;
+  const bonusSalaryText = `LKR ${bonusSalaryLkr.toLocaleString('en-LK', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 
   return (
     <div className="space-y-6 w-full">
@@ -62,9 +67,17 @@ const LecProfile = ({ lecturerId, pendingCount, onNavigate }) => {
       {/* Profile card */}
       <div className="bg-white rounded-2xl border border-gray-200 p-6">
         <div className="flex items-center gap-5">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-2xl font-bold shrink-0">
-            {getInitials(lecturer)}
-          </div>
+          {profilePhoto ? (
+            <img
+              src={profilePhoto}
+              alt="Profile"
+              className="w-20 h-20 rounded-full border border-indigo-200 object-cover shrink-0"
+            />
+          ) : (
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-2xl font-bold shrink-0">
+              {getInitials(lecturer)}
+            </div>
+          )}
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-900">{lecturer.name}</h2>
             <p className="text-gray-500 text-sm mt-0.5">{lecturer.department}</p>
@@ -89,10 +102,10 @@ const LecProfile = ({ lecturerId, pendingCount, onNavigate }) => {
       {/* Stats row */}
       <div className="grid grid-cols-4 gap-4">
         <StatCard
-          icon={<Download size={22} className="text-blue-400" />}
+          icon={<DollarSign size={22} className="text-blue-500" />}
           iconBg="bg-blue-50"
-          label="Downloads"
-          value={stats.downloads}
+          label="Bonus Salary"
+          value={bonusSalaryText}
         />
         <StatCard
           icon={<Clock size={22} className="text-yellow-500" />}
@@ -119,8 +132,13 @@ const LecProfile = ({ lecturerId, pendingCount, onNavigate }) => {
         <h3 className="text-base font-semibold text-gray-800 mb-4">Performance Level</h3>
         <div className="flex items-center justify-between bg-gray-50 rounded-xl px-5 py-4">
           <div>
-            <p className="text-xs text-gray-400 mb-1">Your current level based on review points</p>
-            <p className="text-sm font-medium text-gray-700">Checking student resources earns you points for bonus salary</p>
+            <p className="text-xs text-gray-400 mb-2">Your current level based on review points</p>
+            <div className="space-y-2 text-sm font-medium text-gray-700">
+              <p>• <span className="text-green-600">Accept</span> student note = <span className="font-semibold">+10 pts</span></p>
+              <p>• <span className="text-orange-600">Reject</span> student note = <span className="font-semibold">+5 pts</span></p>
+              <p>• <span className="font-semibold">1 point = 5 LKR</span> (bonus salary)</p>
+              <p className="text-xs text-gray-500 mt-2 italic">Points refresh at end of period; bonus salary added to your account</p>
+            </div>
           </div>
           <div className={`px-5 py-2.5 rounded-xl border font-bold text-base ${level.color}`}>
             {level.label}

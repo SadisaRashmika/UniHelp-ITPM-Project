@@ -1,4 +1,43 @@
 const lecturerModel = require('../models/lecturerModel'); // Import the lecturer model
+const nodemailer = require('nodemailer');
+
+const emailTransporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+const sendBonusReviewMail = async ({ status, studentEmail, studentName, subject, uniqueCode }) => {
+  if (!studentEmail || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    return;
+  }
+
+  const approved = status === 'approved';
+  const title = approved ? 'Bonus Marks Request Approved' : 'Bonus Marks Request Rejected';
+  const html = approved
+    ? `
+      <p>Dear ${studentName || 'Student'},</p>
+      <p>Your bonus marks request for <b>${subject || 'the selected subject'}</b> has been <b>approved</b>.</p>
+      <p>Bonus Code: <b>${uniqueCode || 'N/A'}</b></p>
+      <p>Points have been deducted according to the system rules.</p>
+      <p>Regards,<br/>Uni-Help Lecturer Panel</p>
+    `
+    : `
+      <p>Dear ${studentName || 'Student'},</p>
+      <p>Your bonus marks request for <b>${subject || 'the selected subject'}</b> has been <b>rejected</b>.</p>
+      <p>Please contact your lecturer for more details if needed.</p>
+      <p>Regards,<br/>Uni-Help Lecturer Panel</p>
+    `;
+
+  await emailTransporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: studentEmail,
+    subject: title,
+    html,
+  });
+};
 
 // Controller to fetch lecturer profile data
 const getLecturerProfile = async (req, res) => {
@@ -109,6 +148,57 @@ const deleteLecturerResource = async (req, res) => {
   }
 };
 
+const updateLecturerResource = async (req, res) => {
+  try {
+    const { lectureId } = req.params;
+    const {
+      lecturerId,
+      title,
+      subject,
+      topic,
+      year,
+      semester,
+      youtubeUrl,
+      addQuiz,
+      quizTitle,
+      questions,
+    } = req.body;
+
+    let parsedQuestions = [];
+    if (typeof questions === 'string' && questions.trim()) {
+      parsedQuestions = JSON.parse(questions);
+    } else if (Array.isArray(questions)) {
+      parsedQuestions = questions;
+    }
+
+    const updated = await lecturerModel.updateLecturerResource(
+      lecturerId,
+      Number(lectureId),
+      {
+        title,
+        subject,
+        topic,
+        year,
+        semester,
+        youtubeUrl,
+        files: req.files || [],
+        addQuiz: addQuiz === true || String(addQuiz).toLowerCase() === 'true',
+        quizTitle,
+        questions: parsedQuestions,
+      }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Lecture not found or not owned by lecturer' });
+    }
+
+    res.status(200).json({ message: 'Resource updated successfully' });
+  } catch (error) {
+    console.error('Error updating resource:', error);
+    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+  }
+};
+
 const getStudentSubmissions = async (req, res) => {
   try {
     const { lecturerId } = req.query;
@@ -171,6 +261,12 @@ const reviewBonusMarkRequest = async (req, res) => {
       return res.status(400).json({ message: result.error });
     }
 
+    try {
+      await sendBonusReviewMail(result);
+    } catch (mailError) {
+      console.error('Error sending bonus review email:', mailError);
+    }
+
     res.status(200).json(result);
   } catch (error) {
     console.error('Error reviewing bonus request:', error);
@@ -201,6 +297,7 @@ module.exports = {
   uploadResource,
   createQuiz,
   deleteLecturerResource,
+  updateLecturerResource,
   getStudentSubmissions,
   reviewStudentSubmission,
   getBonusMarkRequests,

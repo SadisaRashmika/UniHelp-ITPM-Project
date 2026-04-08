@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Trash2, Upload, ChevronDown, Eye, BookOpen, X, FileText, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, Upload, ChevronDown, Eye, BookOpen, X, FileText, CheckCircle2, Pencil } from 'lucide-react';
 import axios from 'axios';
 import { SUBJECTS, YEARS, SEMESTERS } from './SharedData';
 
@@ -19,6 +19,7 @@ const normalizeLecture = (raw, lecturerName) => ({
   topic: raw.topic,
   year: raw.year,
   semester: raw.semester,
+  youtubeUrl: raw.youtubeUrl || raw.youtube_url || '',
   publishedAt: raw.publishedAt || formatDate(raw.published_at),
   files: (raw.files || []).map((f) => (typeof f === 'string' ? f : f.filename)).filter(Boolean),
   quiz: raw.quiz || null,
@@ -41,9 +42,12 @@ const LecUpload = ({ lecturer, onPublish }) => {
   const [quizTitle, setQuizTitle] = useState('');
   const [questions, setQs]        = useState([EMPTY_Q()]);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [editingLectureId, setEditingLectureId] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const lecturerEmployeeId = lecturer?.employee_id || 'LEC001';
   const lecturerDbId = lecturer?.id;
+  const isEditMode = editingLectureId !== null;
 
   const loadLectures = async () => {
     try {
@@ -64,6 +68,13 @@ const LecUpload = ({ lecturer, onPublish }) => {
   const showToast = (msg, type = 'ok') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
+  };
+// Simple validation for YouTube URLs (accepts youtube.com and youtu.be links)
+  const isValidYoutubeUrl = (url) => {
+    if (!url) return true;
+    const value = url.trim();
+    if (!value) return true;
+    return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(value);
   };
 
   const handleFilePick = (e) => {
@@ -86,35 +97,115 @@ const LecUpload = ({ lecturer, onPublish }) => {
 
   const resetForm = () => {
     setTitle(''); setSubject(''); setTopic(''); setYear(''); setSemester('');
-    setFiles([]); setAddQuiz(false); setQuizTitle(''); setQs([EMPTY_Q()]);
+    setFiles([]); setYtLink(''); setAddQuiz(false); setQuizTitle(''); setQs([EMPTY_Q()]);
+    setEditingLectureId(null);
+    setErrors({});
+  };
+
+  const startEditLecture = (lecture) => {
+    setEditingLectureId(lecture.id);
+    setTitle(lecture.title || '');
+    setSubject(lecture.subject || '');
+    setTopic(lecture.topic || '');
+    setYear(lecture.year || '');
+    setSemester(lecture.semester || '');
+    setYtLink(lecture.youtubeUrl || '');
+    setFiles([]);
+
+    if (lecture.quiz) {
+      setAddQuiz(true);
+      setQuizTitle(lecture.quiz.title || '');
+      const mapped = (lecture.quiz.questions || []).map((q) => ({
+        id: Date.now() + Math.random(),
+        question: q.question || '',
+        options: Array.isArray(q.options) ? q.options : ['', '', '', ''],
+        answer: Number.isInteger(q.answer) ? q.answer : 0,
+      }));
+      setQs(mapped.length > 0 ? mapped : [EMPTY_Q()]);
+    } else {
+      setAddQuiz(false);
+      setQuizTitle('');
+      setQs([EMPTY_Q()]);
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast('Editing lecture. Update details and save changes.');
   };
 
   const handlePublish = async () => {
-    if (!lecturerDbId) { showToast('Lecturer profile is not loaded yet.', 'err'); return; }
-    if (!title.trim())  { showToast('Please enter a lecture title.', 'err');  return; }
-    if (!subject)       { showToast('Please select a subject.', 'err');       return; }
-    if (!year)          { showToast('Please select a year.', 'err');          return; }
-    if (!semester)      { showToast('Please select a semester.', 'err');      return; }
+    const nextErrors = {};
+
+    if (!lecturerDbId) {
+      showToast('Lecturer profile is not loaded yet.', 'err');
+      return;
+    }
+    if (!title.trim()) nextErrors.title = 'Lecture title is required.';
+    else if (title.trim().length < 3) nextErrors.title = 'Lecture title must be at least 3 characters.';
+
+    if (!subject) nextErrors.subject = 'Please select a subject.';
+    if (!year) nextErrors.year = 'Please select a year.';
+    if (!semester) nextErrors.semester = 'Please select a semester.';
+
+    if (!isValidYoutubeUrl(ytLink)) {
+      nextErrors.youtubeUrl = 'Enter a valid YouTube URL (youtube.com or youtu.be).';
+    }
+
+    if (!isEditMode && files.length === 0 && !ytLink.trim()) {
+      nextErrors.files = 'Add at least one file or a YouTube link.';
+    }
+
     if (addQuiz) {
-      if (!quizTitle.trim()) { showToast('Please enter a quiz title.', 'err'); return; }
-      const bad = questions.find(q => !q.question.trim() || q.options.some(o => !o.trim()));
-      if (bad) { showToast('Fill in all quiz questions and options.', 'err'); return; }
+      if (!quizTitle.trim()) nextErrors.quizTitle = 'Quiz title is required.';
+      const badIdx = questions.findIndex((q) => !q.question.trim() || q.options.some((o) => !o.trim()));
+      if (badIdx !== -1) {
+        nextErrors.quiz = `Question ${badIdx + 1} has empty fields.`;
+      }
+    }
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      showToast('Please fix form errors before submitting.', 'err');
+      return;
     }
 
     try {
       setIsPublishing(true);
 
       const formData = new FormData();
-      formData.append('lecturerId', String(lecturerDbId));
+      formData.append('lecturerId', isEditMode ? String(lecturerEmployeeId) : String(lecturerDbId));
       formData.append('title', title.trim());
       formData.append('subject', subject);
       formData.append('topic', topic.trim());
       formData.append('year', year);
       formData.append('semester', semester);
       formData.append('youtubeUrl', ytLink.trim());
+      formData.append('addQuiz', String(addQuiz));
       files.forEach((f) => {
         if (f.file) formData.append('files', f.file);
       });
+
+      if (addQuiz) {
+        formData.append('quizTitle', quizTitle.trim());
+        formData.append('questions', JSON.stringify(
+          questions.map((q, idx) => ({
+            questionText: q.question,
+            options: q.options,
+            answerIndex: q.answer,
+            orderNum: idx + 1,
+          }))
+        ));
+      }
+
+      if (isEditMode) {
+        await axios.patch(`${API_BASE}/api/lecturer/resources/${editingLectureId}`, formData);
+        await loadLectures();
+        if (viewLec?.id === editingLectureId) {
+          setViewLec(null);
+        }
+        resetForm();
+        showToast('Lecture updated successfully!');
+        return;
+      }
 
       const resourceRes = await axios.post(`${API_BASE}/api/lecturer/upload-resource`, formData);
       const lectureId = resourceRes.data?.lectureId;
@@ -181,6 +272,7 @@ const LecUpload = ({ lecturer, onPublish }) => {
               <input value={title} onChange={e => setTitle(e.target.value)}
                 placeholder="e.g., Introduction to Machine Learning"
                 className={inputCls} />
+              {errors.title && <p className="text-xs text-red-500 font-medium mt-1">{errors.title}</p>}
             </Field>
             <Field label="Lecturer Name">
               <div>
@@ -196,6 +288,7 @@ const LecUpload = ({ lecturer, onPublish }) => {
               <SelectField value={subject} onChange={setSubject} placeholder="Select subject">
                 {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
               </SelectField>
+              {errors.subject && <p className="text-xs text-red-500 font-medium mt-1">{errors.subject}</p>}
             </Field>
             <Field label="Topic">
               <input value={topic} onChange={e => setTopic(e.target.value)}
@@ -210,11 +303,13 @@ const LecUpload = ({ lecturer, onPublish }) => {
               <SelectField value={year} onChange={setYear} placeholder="Select year">
                 {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
               </SelectField>
+              {errors.year && <p className="text-xs text-red-500 font-medium mt-1">{errors.year}</p>}
             </Field>
             <Field label="Semester">
               <SelectField value={semester} onChange={setSemester} placeholder="Select semester">
                 {SEMESTERS.map(s => <option key={s} value={s}>{s}</option>)}
               </SelectField>
+              {errors.semester && <p className="text-xs text-red-500 font-medium mt-1">{errors.semester}</p>}
             </Field>
           </div>
 
@@ -223,6 +318,7 @@ const LecUpload = ({ lecturer, onPublish }) => {
             <input value={ytLink} onChange={e => setYtLink(e.target.value)}
               placeholder="Enter YouTube link"
               className={inputCls} />
+            {errors.youtubeUrl && <p className="text-xs text-red-500 font-medium mt-1">{errors.youtubeUrl}</p>}
           </Field>
 
         </div>
@@ -241,6 +337,7 @@ const LecUpload = ({ lecturer, onPublish }) => {
               <input type="file" multiple className="hidden" onChange={handleFilePick} accept=".pdf,.pptx,.docx,.zip" />
             </label>
             <p className="text-xs text-gray-400 mt-1.5">You can upload multiple files</p>
+            {errors.files && <p className="text-xs text-red-500 font-medium mt-1.5">{errors.files}</p>}
             {files.length > 0 && (
               <div className="mt-3 space-y-1.5">
                 {files.map((f, i) => (
@@ -284,7 +381,10 @@ const LecUpload = ({ lecturer, onPublish }) => {
                 <input value={quizTitle} onChange={e => setQuizTitle(e.target.value)}
                   placeholder="e.g., ML Basics Quiz"
                   className={inputCls} />
+                {errors.quizTitle && <p className="text-xs text-red-500 font-medium mt-1">{errors.quizTitle}</p>}
               </Field>
+
+              {errors.quiz && <p className="text-xs text-red-500 font-medium">{errors.quiz}</p>}
 
               {questions.map((q, qi) => (
                 <QuestionBlock
@@ -312,7 +412,7 @@ const LecUpload = ({ lecturer, onPublish }) => {
             <button onClick={handlePublish}
               disabled={isPublishing}
               className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-black transition-all flex items-center gap-2">
-              <Upload size={15} /> {isPublishing ? 'Publishing...' : 'Publish Resource & Quiz'}
+              <Upload size={15} /> {isPublishing ? (isEditMode ? 'Updating...' : 'Publishing...') : (isEditMode ? 'Update Lecture & Quiz' : 'Publish Resource & Quiz')}
             </button>
           </div>
         </div>
@@ -340,6 +440,13 @@ const LecUpload = ({ lecturer, onPublish }) => {
                   <button onClick={() => setViewLec(l)}
                     className="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-50">
                     <Eye size={12} /> Preview
+                  </button>
+                  <button
+                    onClick={() => startEditLecture(l)}
+                    className="flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg"
+                    title="Edit lecture"
+                  >
+                    <Pencil size={12} /> Edit
                   </button>
                   <button
                     onClick={() => handleDeleteLecture(l.id)}

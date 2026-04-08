@@ -71,7 +71,8 @@ const getMyUploads = async (req, res) => {
 
 const getAcceptedStudentNotes = async (req, res) => {
   try {
-    const notes = await studentModel.getAcceptedStudentNotes();
+    const { studentId } = req.query;
+    const notes = await studentModel.getAcceptedStudentNotes(studentId || null);
     res.status(200).json(notes);
   } catch (err) {
     console.error('Error fetching accepted student notes:', err);

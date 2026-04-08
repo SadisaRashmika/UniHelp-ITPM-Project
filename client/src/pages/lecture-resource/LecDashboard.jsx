@@ -5,8 +5,9 @@ import LecProfile from '../../components/lecture-resource/LecProfile';
 import LecStudentUploads from '../../components/lecture-resource/LecStudentUploads';
 import LecUpload from '../../components/lecture-resource/LecUpload';
 import LecExtraMarks from '../../components/lecture-resource/LecExtraMarks';
+import LecturerTimetableContent from '../../components/timetable/LecturerTimetableContent';
 
-const LecDashboard = () => {
+const LecDashboard = ({ userId = 'LEC001', profilePhoto = '' }) => {
   const [activeTab, setActiveTab] = useState('profile');
   const [lecturer, setLecturer] = useState(null);
   const [pendingCount, setPendingCount] = useState(0);
@@ -18,7 +19,7 @@ const LecDashboard = () => {
     const fetchLecturerData = async () => {
       try {
         // Use the correct API endpoint to get the lecturer profile
-        const response = await axios.get('http://localhost:5000/api/lecturer/profile?lecturerId=LEC001');
+        const response = await axios.get(`http://localhost:5000/api/lecturer/profile?lecturerId=${userId}`);
         console.log('Lecturer Profile:', response.data); // Log data for debugging
         setLecturer(response.data); // Set the lecturer data in state
         setMyPoints(response.data.points); // Set the points for the lecturer
@@ -29,7 +30,7 @@ const LecDashboard = () => {
 
     const fetchPendingCounts = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/lecturer/pending-counts?lecturerId=LEC001');
+        const response = await axios.get(`http://localhost:5000/api/lecturer/pending-counts?lecturerId=${userId}`);
         console.log('Pending Counts:', response.data); // Log pending counts for debugging
         setPendingCount(response.data.submissions);
         setExtraMarksPending(response.data.bonusMarks);
@@ -40,31 +41,33 @@ const LecDashboard = () => {
 
     fetchLecturerData();
     fetchPendingCounts();
-  }, []);
+  }, [userId]);
 
-  if (!lecturer) return <div>Loading...</div>; // Loading state
+  if (!lecturer) return <div className="p-6 text-slate-700">Loading...</div>; // Loading state
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-transparent flex">
       <LecSidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
         pendingCount={pendingCount}
         extraMarksPending={extraMarksPending}
         lecturer={lecturer}
+        profilePhoto={profilePhoto}
       />
-      <main className="flex-1 ml-72 p-10 min-w-0 w-full">
+      <main className="flex-1 ml-72 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 min-w-0 w-full">
         {activeTab === 'profile' && (
           <LecProfile
-            lecturerId="LEC001"
+            lecturerId={userId}
             myPoints={myPoints}
             pendingCount={pendingCount}
             onNavigate={setActiveTab}
+            profilePhoto={profilePhoto}
           />
         )}
         {activeTab === 'review' && (
           <LecStudentUploads
-            lecturerId={lecturer?.employee_id || 'LEC001'}
+            lecturerId={lecturer?.employee_id || userId}
             onPointsEarned={(pts) => setMyPoints((prev) => prev + pts)}
             onPendingChange={(delta) => {
               setPendingCount((prev) => Math.max(0, prev + delta));
@@ -81,11 +84,14 @@ const LecDashboard = () => {
         )}
         {activeTab === 'extramarks' && (
           <LecExtraMarks
-            lecturerId={lecturer?.employee_id || 'LEC001'}
+            lecturerId={lecturer?.employee_id || userId}
             onPendingChange={(delta) => {
               setExtraMarksPending((prev) => Math.max(0, prev + delta));
             }}
           />
+        )}
+        {activeTab === 'timetable' && (
+          <LecturerTimetableContent lecturerId={userId} />
         )}
       </main>
     </div>
