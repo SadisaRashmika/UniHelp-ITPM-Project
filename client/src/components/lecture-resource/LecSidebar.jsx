@@ -12,7 +12,6 @@ const NAV = [
   { key: 'review',     label: 'Check Student Uploads',  icon: FileCheck },
   { key: 'upload',     label: 'Resources and Quiz',     icon: BookOpen  },
   { key: 'extramarks', label: 'Extra Marks Approve',    icon: Award     },
-  { key: 'timetable',  label: 'My Timetable',           icon: Calendar  },
 ];
 
 const LecSidebar = ({ activeTab, onTabChange, pendingCount, extraMarksPending, lecturer, profilePhoto }) => (
