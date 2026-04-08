@@ -105,6 +105,27 @@ const findUserByRoleAndIdNumber = async ({ role, idNumber }) => {
     return result.rows[0] || null;
   }
 
+  if (normalizedRole === 'admin') {
+    const result = await pool.query(
+      `
+      SELECT
+        id,
+        id_number,
+        full_name,
+        email,
+        'admin' AS role,
+        status,
+        password_hash,
+        NULL AS profile_image_url
+      FROM users
+      WHERE id_number = $1 AND role = 'admin'
+      LIMIT 1
+      `,
+      [idNumber]
+    );
+    return result.rows[0] || null;
+  }
+
   return null;
 };
 

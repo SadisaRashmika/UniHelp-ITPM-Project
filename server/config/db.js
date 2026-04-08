@@ -19,8 +19,7 @@ pool.query('SELECT NOW()')
   .then(() => console.log('✅ PostgreSQL connected successfully'))
   .catch((err) => {
     console.warn('⚠️  PostgreSQL connection failed:', err.message);
-    console.warn('⚠️  Auth and lecture-resource routes will not work without PostgreSQL.');
-    console.warn('⚠️  Timetable routes (using mock DB) will still function.');
+    console.warn('⚠️  All routes requiring the database will not work without PostgreSQL.');
   });
 
 module.exports = pool;

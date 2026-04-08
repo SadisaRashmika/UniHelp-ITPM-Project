@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, BookOpen, Clock, Users, Edit2, CheckSquare, X, Save, Download, BarChart3 } from 'lucide-react';
+import { Calendar, BookOpen, Clock, Users, Edit2, CheckSquare, X, Save, Download, BarChart3, User } from 'lucide-react';
 import TimetableGrid from './TimetableGrid';
 
 const API_URL = 'http://localhost:5000/api';
 
-const LecturerTimetableContent = ({ lecturerId }) => {
+const LecturerTimetableContent = ({ lecturerId, user }) => {
   const [timeslots, setTimeslots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -29,7 +29,8 @@ const LecturerTimetableContent = ({ lecturerId }) => {
       const data = await response.json();
       if (data.success) {
         // Filter to only show this lecturer's timeslots
-        const mySlots = data.timeslots.filter(slot => String(slot.lecturer_id) === String(lecturerId));
+        // lecturer_id_number is the user's id_number (e.g., "LEC001"), matching lecturerId from auth
+        const mySlots = data.timeslots.filter(slot => slot.lecturer_id_number === lecturerId);
         setTimeslots(mySlots);
       }
     } catch (error) {
@@ -154,17 +155,43 @@ const LecturerTimetableContent = ({ lecturerId }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-gray-800">My Teaching Schedule</h2>
-          <p className="text-gray-600 text-sm">Click on a lecture to manage topics, notices, and attendance</p>
+      {/* User Identity Card */}
+      {user && (
+        <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl p-4 text-white shadow-md">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <User size={20} className="text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">{user.fullName || user.full_name || 'Lecturer'}</h3>
+                <div className="flex items-center gap-3 text-emerald-100 text-sm">
+                  <span className="bg-white/20 px-2 py-0.5 rounded">{user.idNumber || lecturerId}</span>
+                  <span>Lecturer</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-lg">
+              <Calendar size={18} />
+              <span className="text-sm font-medium">{stats.totalLectures} Sessions</span>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
-          <Calendar size={18} className="text-blue-600" />
-          <span className="text-sm font-medium">{stats.totalLectures} Sessions</span>
+      )}
+
+      {/* Header (fallback when no user) */}
+      {!user && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">My Teaching Schedule</h2>
+            <p className="text-gray-600 text-sm">Click on a lecture to manage topics, notices, and attendance</p>
+          </div>
+          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
+            <Calendar size={18} className="text-blue-600" />
+            <span className="text-sm font-medium">{stats.totalLectures} Sessions</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Stats Dashboard */}
       <div className="grid grid-cols-3 gap-4">
