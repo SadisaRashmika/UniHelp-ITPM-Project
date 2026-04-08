@@ -1,11 +1,28 @@
 // Timetable routes
 // Combines admin, timetable, booking, notification, and lecturer stats endpoints
-// Adapted to use the new auth middleware (requireAuth/requireRole) and mock timetable DB
+// Uses the auth middleware (requireAuth/requireRole) and real PostgreSQL timetable DB
+// JWT provides idNumber (e.g., "STU001"); timetable tables use numeric users.id as FK
+// so we resolve the numeric ID via resolveNumericUserId() helper
 
 const express = require('express');
 const router = express.Router();
 const db = require('../../../db/timetableDb');
 const { requireAuth, requireRole } = require('../../../middleware/auth');
+
+/**
+ * Resolve the numeric users.id from req.auth.idNumber.
+ * Timetable tables store users.id (numeric) as FK, but JWT provides idNumber (e.g., "STU001").
+ */
+async function resolveNumericUserId(idNumber) {
+  const result = await db.query(
+    'SELECT id FROM users WHERE id_number = $1',
+    [idNumber]
+  );
+  if (result.rows.length === 0) {
+    throw new Error(`User not found with id_number: ${idNumber}`);
+  }
+  return result.rows[0].id;
+}
 
 // ─── Timetable routes (authenticated users) ────────────────────────────────
 
@@ -39,7 +56,8 @@ router.get('/timeslots', requireAuth, async (req, res) => {
       SELECT t.*,
              s.subject_name, s.subject_code,
              l.room_name, l.seat_count,
-             u.full_name as lecturer_name
+             u.full_name as lecturer_name,
+             u.id_number as lecturer_id_number
       FROM timeslots t
       JOIN subjects s ON t.subject_id = s.id
       JOIN locations l ON t.location_id = l.id
@@ -70,7 +88,8 @@ router.get('/timeslots/:id', requireAuth, async (req, res) => {
       SELECT t.*,
              s.subject_name, s.subject_code,
              l.room_name, l.seat_count,
-             u.full_name as lecturer_name
+             u.full_name as lecturer_name,
+             u.id_number as lecturer_id_number
       FROM timeslots t
       JOIN subjects s ON t.subject_id = s.id
       JOIN locations l ON t.location_id = l.id
@@ -95,7 +114,7 @@ router.put('/timeslots/:id/details', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
     const { lecture_topic, notice } = req.body;
-    const lecturerId = req.auth.userId;
+    const lecturerId = await resolveNumericUserId(req.auth.idNumber);
 
     // Verify this timeslot belongs to the lecturer
     const checkResult = await db.query(
@@ -113,11 +132,13 @@ router.put('/timeslots/:id/details', requireAuth, async (req, res) => {
     );
 
     // Send real-time notification to students who booked this timeslot
-    // Get all students who booked this timeslot
-    const bookedStudents = await db.query(
-      'SELECT student_id FROM bookings WHERE timeslot_id = $1',
-      [id]
-    );
+    // Get all students who booked this timeslot, including their id_number for Socket.IO room targeting
+    const bookedStudents = await db.query(`
+      SELECT b.student_id, u.id_number
+      FROM bookings b
+      JOIN users u ON b.student_id = u.id
+      WHERE b.timeslot_id = $1
+    `, [id]);
 
     // Get the timeslot details for the notification message
     const timeslotDetails = await db.query(`
@@ -141,15 +162,16 @@ router.put('/timeslots/:id/details', requireAuth, async (req, res) => {
       const io = req.app.get('io');
 
       for (const booking of bookedStudents.rows) {
-        // Save notification to database
+        // Save notification to database (uses numeric student_id)
         await db.query(
           'INSERT INTO notifications (user_id, timeslot_id, message, is_read) VALUES ($1, $2, $3, $4)',
           [booking.student_id, id, notificationMessage, false]
         );
 
-        // Emit real-time notification via Socket.IO
+        // Emit real-time notification via Socket.IO using id_number for room name
+        // Frontend joins room with user.idNumber (e.g., "STU001"), so room = "user_STU001"
         if (io) {
-          io.to(`user_${booking.student_id}`).emit('notification', {
+          io.to(`user_${booking.id_number}`).emit('notification', {
             message: notificationMessage,
             timeslotId: id,
             subjectCode: ts.subject_code,
@@ -175,7 +197,7 @@ router.get('/bookings/my', requireAuth, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Only students can view their bookings.' });
     }
 
-    const studentId = req.auth.userId;
+    const studentId = await resolveNumericUserId(req.auth.idNumber);
 
     const result = await db.query(`
       SELECT b.*,
@@ -204,7 +226,7 @@ router.post('/bookings', requireAuth, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Only students can create bookings.' });
     }
 
-    const studentId = req.auth.userId;
+    const studentId = await resolveNumericUserId(req.auth.idNumber);
     const { timeslot_id, seat_number } = req.body;
 
     if (!timeslot_id || !seat_number) {
@@ -263,7 +285,7 @@ router.delete('/bookings/:id', requireAuth, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Only students can cancel bookings.' });
     }
 
-    const studentId = req.auth.userId;
+    const studentId = await resolveNumericUserId(req.auth.idNumber);
     const bookingId = req.params.id;
 
     const bookingResult = await db.query(
@@ -313,7 +335,7 @@ router.put('/bookings/:id/attendance', requireAuth, async (req, res) => {
 
     const bookingId = req.params.id;
     const { status } = req.body;
-    const lecturerId = req.auth.userId;
+    const lecturerId = await resolveNumericUserId(req.auth.idNumber);
 
     if (!['attended', 'absent', 'pending'].includes(status)) {
       return res.status(400).json({ success: false, message: 'Status must be attended, absent, or pending.' });
@@ -351,10 +373,10 @@ router.put('/bookings/:id/attendance', requireAuth, async (req, res) => {
 // ─── Notification routes ──────────────────────────────────────────────────
 
 // GET /api/timetable/notifications
-// Get all notifications for the logged-in student
+// Get all notifications for the logged-in user
 router.get('/notifications', requireAuth, async (req, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = await resolveNumericUserId(req.auth.idNumber);
 
     const result = await db.query(`
       SELECT n.*, t.day_of_week, t.start_time, t.end_time,
@@ -374,10 +396,10 @@ router.get('/notifications', requireAuth, async (req, res) => {
 });
 
 // GET /api/timetable/notifications/unread-count
-// Get count of unread notifications for the logged-in student
+// Get count of unread notifications for the logged-in user
 router.get('/notifications/unread-count', requireAuth, async (req, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = await resolveNumericUserId(req.auth.idNumber);
 
     const result = await db.query(
       'SELECT COUNT(*) as count FROM notifications WHERE user_id = $1 AND is_read = false',
@@ -396,7 +418,7 @@ router.get('/notifications/unread-count', requireAuth, async (req, res) => {
 router.put('/notifications/:id/read', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.auth.userId;
+    const userId = await resolveNumericUserId(req.auth.idNumber);
 
     // Check the notification belongs to this user
     const checkResult = await db.query(
@@ -424,7 +446,7 @@ router.put('/notifications/:id/read', requireAuth, async (req, res) => {
 // Mark all notifications as read for the logged-in user
 router.put('/notifications/read-all', requireAuth, async (req, res) => {
   try {
-    const userId = req.auth.userId;
+    const userId = await resolveNumericUserId(req.auth.idNumber);
 
     await db.query(
       'UPDATE notifications SET is_read = true WHERE user_id = $1 AND is_read = false',
@@ -448,7 +470,7 @@ router.get('/lecturer/stats', requireAuth, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Only lecturers can view stats.' });
     }
 
-    const lecturerId = req.auth.userId;
+    const lecturerId = await resolveNumericUserId(req.auth.idNumber);
 
     // Get total lectures assigned
     const lecturesResult = await db.query(
@@ -502,7 +524,7 @@ router.get('/lecturer/attendance-csv/:timeslotId', requireAuth, async (req, res)
     }
 
     const { timeslotId } = req.params;
-    const lecturerId = req.auth.userId;
+    const lecturerId = await resolveNumericUserId(req.auth.idNumber);
 
     // Verify this timeslot belongs to the lecturer
     const timeslotCheck = await db.query(
@@ -567,7 +589,7 @@ router.get('/lecturer/attendance-csv/:timeslotId', requireAuth, async (req, res)
 router.get('/admin/users', requireAuth, requireRole('admin'), async (req, res) => {
   try {
     const result = await db.query(
-      'SELECT id, full_name, email, role FROM users ORDER BY role, full_name'
+      'SELECT id, id_number, full_name, email, role FROM users ORDER BY role, full_name'
     );
     res.json({ success: true, users: result.rows });
   } catch (error) {
@@ -580,7 +602,7 @@ router.get('/admin/users', requireAuth, requireRole('admin'), async (req, res) =
 router.get('/admin/lecturers', requireAuth, requireRole('admin'), async (req, res) => {
   try {
     const result = await db.query(
-      'SELECT id, full_name, email FROM users WHERE role = $1 ORDER BY full_name',
+      'SELECT id, id_number, full_name, email FROM users WHERE role = $1 ORDER BY full_name',
       ['lecturer']
     );
     res.json({ success: true, lecturers: result.rows });
@@ -623,7 +645,8 @@ router.post('/admin/timeslots', requireAuth, requireRole('admin'), async (req, r
       SELECT t.*,
              s.subject_name, s.subject_code,
              l.room_name, l.seat_count,
-             u.full_name as lecturer_name
+             u.full_name as lecturer_name,
+             u.id_number as lecturer_id_number
       FROM timeslots t
       JOIN subjects s ON t.subject_id = s.id
       JOIN locations l ON t.location_id = l.id
@@ -660,7 +683,8 @@ router.put('/admin/timeslots/:id', requireAuth, requireRole('admin'), async (req
       SELECT t.*,
              s.subject_name, s.subject_code,
              l.room_name, l.seat_count,
-             u.full_name as lecturer_name
+             u.full_name as lecturer_name,
+             u.id_number as lecturer_id_number
       FROM timeslots t
       JOIN subjects s ON t.subject_id = s.id
       JOIN locations l ON t.location_id = l.id
@@ -680,6 +704,10 @@ router.delete('/admin/timeslots/:id', requireAuth, requireRole('admin'), async (
   try {
     const { id } = req.params;
 
+    // Delete related notifications first (FK constraint: notifications_timeslot_id_fkey)
+    await db.query('DELETE FROM notifications WHERE timeslot_id = $1', [id]);
+
+    // Delete related bookings (FK constraint: bookings_timeslot_id_fkey)
     const bookingsCheck = await db.query('SELECT * FROM bookings WHERE timeslot_id = $1', [id]);
     if (bookingsCheck.rows.length > 0) {
       await db.query('DELETE FROM bookings WHERE timeslot_id = $1', [id]);

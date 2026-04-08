@@ -36,9 +36,9 @@ const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
   if (tab === 'timetable') {
     const userId = user.idNumber;
     return user.role === 'lecturer' ? (
-      <LecturerTimetableContent lecturerId={userId} />
+      <LecturerTimetableContent lecturerId={userId} user={user} />
     ) : (
-      <StudentTimetableContent studentId={userId} />
+      <StudentTimetableContent studentId={userId} user={user} />
     );
   }
 

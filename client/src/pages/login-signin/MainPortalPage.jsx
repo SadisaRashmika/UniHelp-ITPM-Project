@@ -26,6 +26,7 @@ const tabFromPath = (pathname) => {
 
 const buildPathForTab = ({ tabKey, user }) => {
   if (!user) return '/';
+  if (user.role === 'admin') return '/admin';
   const roleBase = user.role === 'lecturer' ? '/lecturer' : '/student';
   if (tabKey === 'home') return `${roleBase}/home`;
   return `${roleBase}/${tabKey}`;
@@ -59,6 +60,9 @@ const MainPortalPage = () => {
       try {
         const result = await getMe(token);
         setUser(result.user);
+        if (result.user?.role === 'admin') {
+          navigate('/admin', { replace: true });
+        }
       } catch (_error) {
         localStorage.removeItem('unihelp_token');
         setToken('');
@@ -127,6 +131,9 @@ const MainPortalPage = () => {
 
     const isStudentPath = location.pathname.startsWith('/student/');
     const isLecturerPath = location.pathname.startsWith('/lecturer/');
+    if (user.role === 'admin') {
+      navigate('/admin', { replace: true });
+    }
     if (user.role === 'student' && isLecturerPath) {
       navigate(buildPathForTab({ tabKey: activeTab, user }), { replace: true });
     }
