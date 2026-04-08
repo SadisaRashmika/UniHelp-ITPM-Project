@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, FileCheck, BookOpen, Award } from 'lucide-react';
+import { User, FileCheck, BookOpen, Award, Calendar } from 'lucide-react';
 
 const getInitials = (lecturer) => {
   if (lecturer?.initials) return lecturer.initials;
@@ -12,6 +12,7 @@ const NAV = [
   { key: 'review',     label: 'Check Student Uploads',  icon: FileCheck },
   { key: 'upload',     label: 'Resources and Quiz',     icon: BookOpen  },
   { key: 'extramarks', label: 'Extra Marks Approve',    icon: Award     },
+  { key: 'timetable',  label: 'My Timetable',           icon: Calendar  },
 ];
 
 const LecSidebar = ({ activeTab, onTabChange, pendingCount, extraMarksPending, lecturer, profilePhoto }) => (

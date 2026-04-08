@@ -1,4 +1,5 @@
 import MainPortalPage from './pages/login-signin/MainPortalPage';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 const App = () => {
@@ -16,6 +17,7 @@ const App = () => {
         <Route path="/lecturer/timetable" element={<MainPortalPage />} />
         <Route path="/lecturer/jobs" element={<MainPortalPage />} />
         <Route path="/lecturer/ticket" element={<MainPortalPage />} />
+        <Route path="/admin" element={<AdminDashboard />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

@@ -1,6 +1,8 @@
 import LecDashboard from '../../pages/lecture-resource/LecDashboard';
 import StuDashboard from '../../pages/lecture-resource/StuDashboard';
 import PortalHomeContent from './PortalHomeContent';
+import StudentTimetableContent from '../timetable/StudentTimetableContent';
+import LecturerTimetableContent from '../timetable/LecturerTimetableContent';
 
 const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
   if (tab === 'home') {
@@ -26,13 +28,11 @@ const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
   }
 
   if (tab === 'timetable') {
-    return (
-      <RolePanel
-        title="Timetable"
-        user={user}
-        lecturerBody="Lecturer timetable tools will show your teaching schedule and session planning controls."
-        studentBody="Student timetable tools will show your class schedule and upcoming sessions."
-      />
+    const userId = user.idNumber;
+    return user.role === 'lecturer' ? (
+      <LecturerTimetableContent lecturerId={userId} />
+    ) : (
+      <StudentTimetableContent studentId={userId} />
     );
   }
 

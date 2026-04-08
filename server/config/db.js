@@ -9,4 +9,18 @@ const pool = new Pool({
   database: process.env.DB_NAME     // e.g., "unihelp_itpm"
 });
 
-module.exports = pool; // ✅ correct export
+// Handle pool-level connection errors gracefully (e.g., PostgreSQL not running)
+pool.on('error', (err) => {
+  console.warn('⚠️  PostgreSQL pool error (DB may not be available):', err.message);
+});
+
+// Test connection on startup (non-blocking)
+pool.query('SELECT NOW()')
+  .then(() => console.log('✅ PostgreSQL connected successfully'))
+  .catch((err) => {
+    console.warn('⚠️  PostgreSQL connection failed:', err.message);
+    console.warn('⚠️  Auth and lecture-resource routes will not work without PostgreSQL.');
+    console.warn('⚠️  Timetable routes (using mock DB) will still function.');
+  });
+
+module.exports = pool;
