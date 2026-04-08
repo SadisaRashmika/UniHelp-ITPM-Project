@@ -15,8 +15,11 @@ import {
     FileText,
     X,
     Send,
+    Download,
     Image as ImageIcon
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const LectureAdminTicketList = ({ lecturerId = 1 }) => {
     const [tickets, setTickets] = useState([]);
@@ -107,6 +110,68 @@ const LectureAdminTicketList = ({ lecturerId = 1 }) => {
         } finally {
             setSendingChat(false);
         }
+    };
+
+    const exportToPDF = () => {
+        const doc = new jsPDF();
+        
+        doc.setFontSize(22);
+        doc.setTextColor(37, 99, 235);
+        doc.text('Uni-Help Inquiry Report', 14, 22);
+        
+        doc.setFontSize(10);
+        doc.setTextColor(156, 163, 175);
+        const date = new Date().toLocaleString();
+        doc.text(`Generated on: ${date}`, 14, 30);
+        doc.text(`Lecturer ID: ${lecturerId} | Total Records: ${filteredTickets.length}`, 14, 35);
+        
+        doc.line(14, 40, 196, 40);
+
+        const tableColumn = ["ID", "Student", "Category", "Subject", "Status", "Created At"];
+        const tableRows = filteredTickets.map(t => [
+            t.id,
+            t.student_name,
+            t.category,
+            t.subject,
+            t.status.toUpperCase(),
+            new Date(t.created_at).toLocaleDateString()
+        ]);
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 45,
+            theme: 'striped',
+            headStyles: { fillColor: [37, 99, 235], fontSize: 10, fontStyle: 'bold' },
+            bodyStyles: { fontSize: 9 },
+            alternateRowStyles: { fillColor: [248, 250, 252] }
+        });
+
+        doc.save(`Inquiry_Report_${new Date().getTime()}.pdf`);
+    };
+
+    const exportToCSV = () => {
+        const headers = ["ID", "Student Name", "Student Reg ID", "Category", "Subject", "Description", "Status", "Created At"];
+        const csvRows = filteredTickets.map(t => [
+            t.id,
+            `"${t.student_name}"`,
+            `"${t.student_reg_id}"`,
+            `"${t.category}"`,
+            `"${t.subject}"`,
+            `"${t.description.replace(/"/g, '""')}"`,
+            t.status,
+            new Date(t.created_at).toLocaleString()
+        ]);
+
+        const csvContent = [headers, ...csvRows].map(e => e.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Inquiry_Data_${new Date().getTime()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const handleStatusUpdate = async (id, newStatus) => {
@@ -207,10 +272,23 @@ const LectureAdminTicketList = ({ lecturerId = 1 }) => {
                     ))}
                     <button 
                         onClick={fetchTickets}
-                        className="p-2.5 bg-gray-50 text-gray-400 rounded-lg hover:bg-gray-100 transition-all border border-gray-100 ml-2"
+                        className="p-2.5 bg-gray-50 text-gray-400 rounded-lg hover:bg-gray-100 transition-all border border-gray-100 mx-1"
                         title="Force Refresh"
                     >
                         <RefreshCcw size={14} />
+                    </button>
+                    <div className="h-6 w-px bg-gray-100 mx-1" />
+                    <button 
+                        onClick={exportToCSV}
+                        className="px-3 py-2 bg-white text-emerald-600 border border-emerald-100 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-50 transition-all flex items-center gap-2 active:scale-95 shadow-sm"
+                    >
+                        <Download size={12} /> CSV
+                    </button>
+                    <button 
+                        onClick={exportToPDF}
+                        className="px-3 py-2 bg-blue-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2 active:scale-95 shadow-lg shadow-blue-100"
+                    >
+                        <Download size={12} /> PDF
                     </button>
                 </div>
             </div>

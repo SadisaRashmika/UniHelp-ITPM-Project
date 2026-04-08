@@ -21,33 +21,41 @@ const LectureOverview = ({ lecturerId = 1 }) => {
         rewardPoints: 0,
         recentFeedback: []
     });
+    const [chartData, setChartData] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    const chartData = [
-        { name: 'Mon', rating: 4.2 },
-        { name: 'Tue', rating: 4.5 },
-        { name: 'Wed', rating: 4.3 },
-        { name: 'Thu', rating: 4.8 },
-        { name: 'Fri', rating: 4.7 },
-        { name: 'Sat', rating: 4.9 },
-        { name: 'Sun', rating: 4.8 },
-    ];
 
     useEffect(() => {
         const fetchLecturerData = async () => {
             try {
-                const res = await axios.get(`http://localhost:5000/api/user-feedback/feedback`);
-                const myFeedback = res.data.filter(f => f.lecturer_id === lecturerId);
+                const res = await axios.get(`http://localhost:5000/api/user-feedback/feedback/lecturer/${lecturerId}`);
+                const myFeedback = res.data;
                 
                 const avg = myFeedback.length > 0
                     ? (myFeedback.reduce((acc, f) => acc + f.rating, 0) / myFeedback.length).toFixed(1)
                     : 0;
 
+                // Process chart data from actual feedback over time
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const dayMap = myFeedback.reduce((acc, f) => {
+                    const day = days[new Date(f.created_at).getDay()];
+                    if (!acc[day]) acc[day] = { count: 0, sum: 0 };
+                    acc[day].count++;
+                    acc[day].sum += f.rating;
+                    return acc;
+                }, {});
+
+                const processedChartData = days.map(day => ({
+                    name: day,
+                    rating: dayMap[day] ? parseFloat((dayMap[day].sum / dayMap[day].count).toFixed(1)) : 0
+                }));
+
+                setChartData(processedChartData);
+
                 setSummary({
                     totalStudents: [...new Set(myFeedback.map(f => f.student_id))].length,
                     avgRating: avg,
-                    activeModules: [...new Set(myFeedback.map(f => f.subject))].length,
-                    rewardPoints: 1250,
+                    activeModules: [...new Set(myFeedback.map(f => f.module_id))].length,
+                    rewardPoints: myFeedback.length * 10, // Dynamic calculation
                     recentFeedback: myFeedback.slice(0, 3)
                 });
             } catch (err) {
@@ -64,11 +72,10 @@ const LectureOverview = ({ lecturerId = 1 }) => {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700">
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard icon={<Users />} label="Total Students" val={summary.totalStudents} color="blue" />
                 <StatCard icon={<Star />} label="Average Merit" val={summary.avgRating} color="emerald" />
                 <StatCard icon={<BookOpen />} label="Active Modules" val={summary.activeModules} color="purple" />
-                <StatCard icon={<Zap />} label="Engagement" val={summary.rewardPoints} color="orange" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -122,35 +129,23 @@ const LectureOverview = ({ lecturerId = 1 }) => {
 
                 
                 <div className="lg:col-span-4 space-y-4">
-                    <div className="bg-linear-to-br from-blue-600 to-indigo-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden group">
+                    <div className="bg-linear-to-br from-blue-600 to-indigo-800 rounded-2xl p-8 text-white shadow-lg relative h-full flex flex-col justify-center overflow-hidden group">
                         <div className="relative z-10">
-                            <h4 className="text-[9px] font-bold text-blue-200 uppercase tracking-widest mb-4">Sentiment Index</h4>
-                            <div className="flex items-end gap-2 mb-1">
-                                <span className="text-3xl font-black tracking-tight text-white">{summary.avgRating}</span>
-                                <span className="text-xs font-bold text-blue-200 mb-1 opacity-60">/ 5.0</span>
-                                <div className="mb-1.5 flex items-center gap-1 text-[9px] font-bold text-emerald-400 uppercase tracking-tighter bg-emerald-400/20 px-2 py-0.5 rounded-full border border-emerald-400/30">
+                            <h4 className="text-[9px] font-bold text-blue-200 uppercase tracking-widest mb-4 italic">Sentiment Index</h4>
+                            <div className="flex items-end gap-2 mb-2">
+                                <span className="text-4xl font-black tracking-tight text-white">{summary.avgRating}</span>
+                                <span className="text-xs font-bold text-blue-200 mb-1.5 opacity-60">/ 5.0</span>
+                                <div className="mb-2.5 flex items-center gap-1 text-[9px] font-bold text-emerald-400 uppercase tracking-tighter bg-emerald-400/20 px-2 py-0.5 rounded-full border border-emerald-400/30">
                                     <TrendingUp size={10} /> +0.2
                                 </div>
                             </div>
-                            <p className="text-[10px] font-medium text-blue-100 opacity-90 leading-tight">Performance trend is identified as "Optimal".</p>
+                            <p className="text-[10px] font-medium text-blue-100 opacity-90 leading-tight">Your current academic trajectory is rated as "Optimal" based on recent transmissions.</p>
                             
-                            <button className="mt-6 px-4 py-2 bg-white text-blue-600 rounded-lg text-[9px] font-bold uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-sm">
-                                Export Node Data
+                            <button className="mt-8 px-6 py-3 bg-white text-blue-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl">
+                                Export Analytics
                             </button>
                         </div>
-                        <Activity size={120} className="absolute -bottom-6 -right-6 opacity-10 rotate-12 group-hover:rotate-0 transition-transform duration-700 text-white" />
-                    </div>
-
-                    <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm relative overflow-hidden">
-                        <div className="flex items-center justify-between mb-5">
-                             <h4 className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Key Vectors</h4>
-                             <MessageSquare size={12} className="text-blue-500" />
-                        </div>
-                        <div className="space-y-4">
-                            <IndicatorRow label="Instructional Clarity" val="92%" />
-                            <IndicatorRow label="Dynamic Engagement" val="88%" />
-                            <IndicatorRow label="Resource Accessibility" val="95%" />
-                        </div>
+                        <Activity size={160} className="absolute -bottom-10 -right-10 opacity-10 rotate-12 group-hover:rotate-0 transition-transform duration-1000 text-white" />
                     </div>
                 </div>
             </div>
