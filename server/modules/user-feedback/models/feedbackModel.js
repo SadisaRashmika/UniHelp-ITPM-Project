@@ -8,7 +8,7 @@ const submitFeedback = async (student_id, lecturer_id, subject, rating, comment)
 
 const getAllFeedback = async () => {
     const query = `
-        SELECT f.*, s.name as student_name, l.name as lecturer_name 
+        SELECT f.*, s.name as student_name, s.student_id as student_reg_id, l.name as lecturer_name 
         FROM feedbacks f
         LEFT JOIN students s ON f.student_id = s.id
         LEFT JOIN lecturers l ON f.lecturer_id = l.id
@@ -62,12 +62,23 @@ const deleteFeedback = async (id) => {
 };
 
 const getLecturerModules = async (lecturer_id) => {
-    const query = `
+    let query = `
         SELECT DISTINCT subject FROM lectures le
         JOIN lecturers l ON le.lecturer_id = l.id
         WHERE l.employee_id = $1
     `;
-    const result = await db.query(query, [lecturer_id]);
+    let params = [lecturer_id];
+
+    if (!isNaN(lecturer_id)) {
+        query = `
+            SELECT DISTINCT subject FROM lectures le
+            JOIN lecturers l ON le.lecturer_id = l.id
+            WHERE l.employee_id = $1 OR l.id = $2::integer
+        `;
+        params = [lecturer_id, lecturer_id];
+    }
+    
+    const result = await db.query(query, params);
     return result.rows.map(row => row.subject);
 };
 

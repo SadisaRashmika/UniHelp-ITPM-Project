@@ -5,37 +5,44 @@ import {
     ShieldCheck, Sparkles, Clock, User, BookOpen, 
     ArrowRight, BarChart3, Activity, PieChart 
 } from 'lucide-react';
+import { 
+    BarChart, Bar, XAxis, YAxis, CartesianGrid, 
+    Tooltip, ResponsiveContainer, Cell 
+} from 'recharts';
 import StudentFeedbackForm from './StudentFeedbackForm';
 
 const StudentFeedbackDashboard = ({ studentId }) => {
     const [stats, setStats] = useState({
         feedbackCount: 0,
         avgRating: 0,
-        points: 0,
-        rank: 'Novice Contributor',
-        recentFeedback: []
+        chartData: []
     });
     const [loading, setLoading] = useState(true);
 
     const fetchStats = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/user-feedback/feedback');
-            const studentReviews = res.data.filter(f => f.student_id === studentId || f.student_reg_id === studentId);
+            const res = await axios.get(`http://localhost:5000/api/user-feedback/feedback/student/${studentId}`);
+            const studentReviews = res.data;
             
             const totalRating = studentReviews.reduce((sum, f) => sum + f.rating, 0);
             const avg = studentReviews.length > 0 ? (totalRating / studentReviews.length).toFixed(1) : 0;
             
-            // Determine rank based on count
-            let rank = 'Bronze Reviewer';
-            if (studentReviews.length > 5) rank = 'Silver Scholar';
-            if (studentReviews.length > 15) rank = 'Gold Academic';
-            if (studentReviews.length > 30) rank = 'Feedback Maestro';
+            // Generate chart data: Count per Lecturer
+            const lecturerCounts = {};
+            studentReviews.forEach(f => {
+                const name = f.lecturer_name || `Lec ID: ${f.lecturer_id}`;
+                lecturerCounts[name] = (lecturerCounts[name] || 0) + 1;
+            });
+
+            const chartData = Object.keys(lecturerCounts).map(name => ({
+                name,
+                count: lecturerCounts[name]
+            })).sort((a, b) => b.count - a.count).slice(0, 5); // Top 5
 
             setStats({
                 feedbackCount: studentReviews.length,
                 avgRating: avg,
-                points: studentReviews.length * 25, // 25 XP per feedback
-                rank: rank,
+                chartData: chartData,
                 recentFeedback: studentReviews.slice(0, 4)
             });
         } catch (err) {
@@ -49,11 +56,13 @@ const StudentFeedbackDashboard = ({ studentId }) => {
         fetchStats();
     }, [studentId]);
 
+    const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
     if (loading) return (
         <div className="flex items-center justify-center p-20 grow">
             <div className="flex flex-col items-center gap-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
-                <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.2em] animate-pulse">Syncing feedback nodes...</p>
+                <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-[0.2em] animate-pulse">Analyzing feedback nodes...</p>
             </div>
         </div>
     );
@@ -61,64 +70,55 @@ const StudentFeedbackDashboard = ({ studentId }) => {
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-1000">
             
-            {/* Upper Hero Section - Profile & XP */}
+            {/* Top Analysis Section */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-8 bg-linear-to-br from-indigo-700 via-indigo-600 to-blue-600 rounded-4xl p-8 text-white relative overflow-hidden shadow-2xl shadow-indigo-200 group">
-                    {/* Decorative Elements */}
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -mr-48 -mt-48 group-hover:scale-125 transition-transform duration-1000" />
-                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-400/20 rounded-full blur-2xl -ml-32 -mb-32" />
-                    
-                    <div className="relative z-10">
-                        <div className="flex flex-wrap items-center justify-between gap-6">
-                            <div className="flex items-center gap-6">
-                                <div className="w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-inner group-hover:rotate-6 transition-transform">
-                                    <Sparkles size={40} className="text-yellow-300 drop-shadow-glow" />
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="px-2 py-0.5 rounded-full bg-yellow-400/20 text-yellow-300 text-[8px] font-black uppercase tracking-widest border border-yellow-400/30">
-                                            Level {(Math.floor(stats.points / 100)) + 1}
-                                        </span>
-                                        <ShieldCheck size={14} className="text-blue-300" />
-                                    </div>
-                                    <h2 className="text-3xl font-black tracking-tighter mb-1">{stats.rank}</h2>
-                                    <p className="text-indigo-100 text-[10px] font-bold uppercase tracking-[0.2em] opacity-70">Academic Contribution Matrix</p>
-                                </div>
-                            </div>
-                            
-                            <div className="flex flex-col items-end">
-                                <div className="text-right mb-2">
-                                    <span className="text-5xl font-black tracking-tighter">{stats.points}</span>
-                                    <span className="text-indigo-200 font-bold ml-2">XP</span>
-                                </div>
-                                <div className="w-48 h-2 bg-white/10 rounded-full overflow-hidden border border-white/10">
-                                    <div 
-                                        className="h-full bg-linear-to-r from-yellow-400 to-orange-400 rounded-full shadow-[0_0_10px_rgba(250,204,21,0.5)]" 
-                                        style={{ width: `${(stats.points % 100)}%` }}
-                                    />
-                                </div>
-                                <p className="text-[9px] font-bold text-indigo-200 mt-2 uppercase tracking-widest leading-none">
-                                    {100 - (stats.points % 100)} xp to next tier
-                                </p>
-                            </div>
+                
+                {/* Lecturer Distribution Chart Card */}
+                <div className="lg:col-span-8 bg-white rounded-4xl p-8 border border-gray-100 shadow-xl shadow-gray-100/50 group">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h2 className="text-2xl font-black tracking-tighter text-gray-900">Lecturer Feedback Matrix</h2>
+                            <p className="text-gray-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-1">Distribution across academic staff</p>
                         </div>
+                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                            <BarChart3 size={24} />
+                        </div>
+                    </div>
 
-                        <div className="mt-8 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            {[
-                                { label: 'Reviews', val: stats.feedbackCount, icon: <MessageSquare size={14} />, color: 'bg-white/10' },
-                                { label: 'Avg Rating', val: stats.avgRating, icon: <Star size={14} />, color: 'bg-white/10' },
-                                { label: 'Impact', val: 'High', icon: <TrendingUp size={14} />, color: 'bg-white/10' },
-                                { label: 'Status', val: 'Active', icon: <Activity size={14} />, color: 'bg-emerald-400/20 text-emerald-300' }
-                            ].map((item, i) => (
-                                <div key={i} className={`${item.color} backdrop-blur-md rounded-2xl p-4 border border-white/10 hover:bg-white/20 transition-all cursor-default group/item`}>
-                                    <div className="flex items-center gap-2 mb-2 opacity-70 group-hover/item:opacity-100 transition-opacity">
-                                        {item.icon}
-                                        <span className="text-[8px] font-black uppercase tracking-widest">{item.label}</span>
-                                    </div>
-                                    <div className="text-xl font-black tracking-tight">{item.val}</div>
-                                </div>
-                            ))}
-                        </div>
+                    <div className="h-64 w-full">
+                        {stats.chartData.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={stats.chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+                                    <XAxis 
+                                        dataKey="name" 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{ fontSize: 9, fontWeight: 800, fill: '#9ca3af' }}
+                                        dy={10}
+                                    />
+                                    <YAxis 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{ fontSize: 9, fontWeight: 800, fill: '#9ca3af' }}
+                                    />
+                                    <Tooltip 
+                                        cursor={{ fill: '#f8fafc', radius: 12 }}
+                                        contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontSize: '10px', fontWeight: 'bold' }}
+                                    />
+                                    <Bar dataKey="count" radius={[10, 10, 10, 10]} barSize={40}>
+                                        {stats.chartData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
+                                <Activity className="text-gray-200 mb-2" size={32} />
+                                <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Awaiting contribution data</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 

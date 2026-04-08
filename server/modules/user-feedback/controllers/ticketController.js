@@ -105,7 +105,28 @@ const addChatMessage = async (req, res) => {
     const { id: ticket_id } = req.params;
     const { sender_id, sender_role, message } = req.body;
     try {
-        const chat = await chatModel.addChatMessage(ticket_id, sender_id, sender_role, message);
+        let internalSenderId = sender_id;
+
+        // Resolve internal ID if it's a student or lecturer registration ID
+        if (sender_role === 'student') {
+            const studentRes = await db.query('SELECT id FROM students WHERE student_id = $1', [sender_id]);
+            if (studentRes.rows.length > 0) {
+                internalSenderId = studentRes.rows[0].id;
+            }
+        } else if (sender_role === 'lecturer') {
+            let lecturerSearchQuery = 'SELECT id FROM lecturers WHERE employee_id = $1';
+            let lecturerParams = [sender_id];
+            if (!isNaN(sender_id)) {
+                lecturerSearchQuery = 'SELECT id FROM lecturers WHERE employee_id = $1 OR id = $2::integer';
+                lecturerParams = [sender_id, sender_id];
+            }
+            const lecturerRes = await db.query(lecturerSearchQuery, lecturerParams);
+            if (lecturerRes.rows.length > 0) {
+                internalSenderId = lecturerRes.rows[0].id;
+            }
+        }
+
+        const chat = await chatModel.addChatMessage(ticket_id, internalSenderId, sender_role, message);
         res.status(201).json(chat);
     } catch (error) {
         console.error('Error adding chat message:', error.message);
