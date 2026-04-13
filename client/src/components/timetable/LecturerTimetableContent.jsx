@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, BookOpen, Clock, Users, Edit2, CheckSquare, X, Save, Download, BarChart3, User } from 'lucide-react';
+import { Calendar, BookOpen, Clock, Users, Edit2, CheckSquare, X, Save, Download, BarChart3 } from 'lucide-react';
 import TimetableGrid from './TimetableGrid';
 
 const API_URL = 'http://localhost:5000/api';
 
-const LecturerTimetableContent = ({ lecturerId, user }) => {
+const getInitials = (name) => {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'L';
+};
+
+const LecturerTimetableContent = ({ lecturerId, user, profilePhoto = '' }) => {
   const [timeslots, setTimeslots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -157,15 +162,23 @@ const LecturerTimetableContent = ({ lecturerId, user }) => {
     <div className="space-y-6">
       {/* User Identity Card */}
       {user && (
-        <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl p-4 text-white shadow-md">
+        <div className="bg-gradient-to-r from-blue-600 to-sky-700 rounded-xl p-4 text-white shadow-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <User size={20} className="text-white" />
-              </div>
+              {profilePhoto ? (
+                <img
+                  src={profilePhoto}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full border border-white/30 object-cover shrink-0"
+                />
+              ) : (
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-semibold text-sm">
+                  {getInitials(user.fullName || user.full_name || 'Lecturer')}
+                </div>
+              )}
               <div>
                 <h3 className="font-semibold text-lg">{user.fullName || user.full_name || 'Lecturer'}</h3>
-                <div className="flex items-center gap-3 text-emerald-100 text-sm">
+                <div className="flex items-center gap-3 text-sky-100 text-sm">
                   <span className="bg-white/20 px-2 py-0.5 rounded">{user.idNumber || lecturerId}</span>
                   <span>Lecturer</span>
                 </div>

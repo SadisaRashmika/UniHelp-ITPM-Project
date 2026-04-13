@@ -18,14 +18,12 @@ const App = () => {
         <Route path="/student/resource" element={<MainPortalPage />} />
         <Route path="/student/timetable" element={<MainPortalPage />} />
         <Route path="/student/jobs" element={<MainPortalPage />} />
-        <Route path="/student/ticket" element={<MainPortalPage />} />
         <Route path="/student/support" element={<MainPortalPage />} />
         <Route path="/student/feedback" element={<MainPortalPage />} />
         <Route path="/lecturer/home" element={<MainPortalPage />} />
         <Route path="/lecturer/resource" element={<MainPortalPage />} />
         <Route path="/lecturer/timetable" element={<MainPortalPage />} />
         <Route path="/lecturer/jobs" element={<MainPortalPage />} />
-        <Route path="/lecturer/ticket" element={<MainPortalPage />} />
         <Route path="/lecturer/support" element={<MainPortalPage />} />
         <Route path="/lecturer/feedback" element={<MainPortalPage />} />
         <Route path="/admin" element={<AdminDashboard />} />

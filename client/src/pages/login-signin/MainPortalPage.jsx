@@ -18,7 +18,6 @@ const tabFromPath = (pathname) => {
   if (pathname.endsWith('/resource')) return 'resource';
   if (pathname.endsWith('/timetable')) return 'timetable';
   if (pathname.endsWith('/jobs')) return 'jobs';
-  if (pathname.endsWith('/ticket')) return 'ticket';
   if (pathname.endsWith('/support')) return 'support';
   if (pathname.endsWith('/feedback')) return 'feedback';
   return 'home';
@@ -157,7 +156,7 @@ const MainPortalPage = () => {
   };
 
   const resourceOpen = activeTab === 'resource';
-  const blueThemeOpen = activeTab === 'home' || activeTab === 'resource';
+  const blueThemeOpen = activeTab === 'home' || activeTab === 'resource' || activeTab === 'timetable';
 
   return (
     <div
