@@ -203,7 +203,7 @@ const LectureAdminTicketList = ({ lecturerId = 1 }) => {
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700">
+        <div className="space-y-6">
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between group hover:border-amber-200 transition-all">
@@ -380,7 +380,7 @@ const LectureAdminTicketList = ({ lecturerId = 1 }) => {
                                                 </button>
                                                 
                                                 {menuOpenId === ticket.id && (
-                                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-2xl shadow-2xl p-1.5 z-40 animate-in fade-in zoom-in-95 duration-200">
+                                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-2xl shadow-xl p-1.5 z-40">
                                                         <div className="px-3 py-1.5 mb-1.5 border-b border-gray-50">
                                                             <p className="text-[8px] font-black text-gray-400 uppercase tracking-[0.2em]">Deployment Ops</p>
                                                         </div>
@@ -423,8 +423,8 @@ const LectureAdminTicketList = ({ lecturerId = 1 }) => {
                 </div>
 
                 {selectedTicket && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300 text-left">
-                        <div className="bg-white w-full max-w-6xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/55 backdrop-blur-sm text-left">
+                        <div className="bg-white w-full max-w-6xl rounded-2xl shadow-xl overflow-hidden border border-gray-100">
                             {/* Header */}
                             <div className="px-6 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                                 <div className="flex items-center gap-3">

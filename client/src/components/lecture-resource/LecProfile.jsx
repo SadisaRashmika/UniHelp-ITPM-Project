@@ -60,8 +60,8 @@ const LecProfile = ({ lecturerId, pendingCount, onNavigate, profilePhoto }) => {
     <div className="space-y-6 w-full">
       {/* Page title */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Lecturer Profile</h1>
-        <p className="text-gray-400 text-sm mt-1">Manage your profile and view your statistics</p>
+        <h1 className="text-3xl font-bold text-gray-900">Resource Managing Page</h1>
+        <p className="text-gray-400 text-sm mt-1">Manage your resources and view your statistics</p>
       </div>
 
       {/* Profile card */}
@@ -167,8 +167,8 @@ const LecProfile = ({ lecturerId, pendingCount, onNavigate, profilePhoto }) => {
           ctaColor="text-blue-600"
         />
         <QuickNav
-          title="Upload Resources & Quiz"
-          desc="Add new lecture materials"
+          title="Resource managing page"
+          desc="Add and manage lecture materials"
           cta="Go to Upload"
           onClick={() => onNavigate('upload')}
           accent="border-green-100 hover:border-green-200"

@@ -14,7 +14,7 @@ const LecturerSupportDashboard = ({ lecturerId }) => {
     ];
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-6">
             {/* Sub Navigation for Support/Admin Section */}
             <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-gray-100 shadow-sm w-fit">
                 {subTabs.map(tab => (

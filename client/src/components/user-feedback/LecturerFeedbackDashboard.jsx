@@ -16,7 +16,7 @@ const LecturerFeedbackDashboard = ({ lecturerId }) => {
     ];
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-6">
             {/* Sub Navigation for Feedback Section */}
             <div className="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-gray-100 shadow-sm w-fit">
                 {subTabs.map(tab => (
@@ -25,8 +25,8 @@ const LecturerFeedbackDashboard = ({ lecturerId }) => {
                         onClick={() => setActiveSubView(tab.key)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all
                             ${activeSubView === tab.key 
-                                ? 'bg-blue-600 text-white shadow-md' 
-                                : 'text-gray-500 hover:bg-gray-50'}`}
+                                ? 'bg-blue-600 text-white shadow-sm' 
+                                : 'text-gray-500 hover:bg-blue-50 hover:text-blue-700'}`}
                     >
                         {tab.icon}
                         {tab.label}

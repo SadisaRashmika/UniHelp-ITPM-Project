@@ -70,7 +70,7 @@ const LectureOverview = ({ lecturerId = 1 }) => {
     if (loading) return <div className="p-20 text-center animate-pulse text-blue-500 font-bold uppercase tracking-widest text-[10px]">Synchronizing Academic Analytics...</div>;
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700">
+        <div className="space-y-6">
             
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatCard icon={<Users />} label="Total Students" val={summary.totalStudents} color="blue" />

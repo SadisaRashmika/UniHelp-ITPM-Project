@@ -117,34 +117,33 @@ const StudentFeedbackForm = ({ studentId = 1, onFeedbackSubmitted }) => {
 
     if (view === 'form') {
         return (
-            <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="max-w-4xl mx-auto">
                 <button 
                     onClick={() => { setView('list'); setEditingId(null); setFormData({lecturer_id:'', subject:'', rating:0, comment:''}); }}
-                    className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 hover:text-blue-500 transition-colors"
+                    className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 hover:text-blue-600 transition-colors"
                 >
                     <ArrowLeft size={12} /> Return to Index
                 </button>
 
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden border-t-4 border-t-blue-500">
-                    <div className="bg-linear-to-br from-blue-500 to-indigo-700 p-5 text-white relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-1000" />
-                        <div className="relative z-10 flex items-center justify-between">
+                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="bg-blue-50/70 border-b border-blue-100 p-5 text-slate-900">
+                        <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-lg font-bold tracking-tight">{editingId ? 'Modify Strategy' : 'New Feedback Node'}</h3>
-                                <p className="text-blue-100 text-[9px] font-bold uppercase tracking-[0.2em] mt-1 opacity-80">Operational Submission Portal</p>
+                                <h3 className="text-lg font-bold tracking-tight">{editingId ? 'Edit Feedback' : 'New Feedback'}</h3>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.2em] mt-1 text-blue-700/70">Feedback Management Hub</p>
                             </div>
-                            <Sparkles size={24} className="text-blue-200 opacity-30 animate-pulse" />
+                            <Sparkles size={22} className="text-blue-500/30" />
                         </div>
                     </div>
 
                     <form onSubmit={handleSubmit} className="p-6 space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
-                                <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Staff Identity</label>
+                                <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Lecturer</label>
                                 <div className="relative group">
-                                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={14} />
+                                    <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" size={14} />
                                     <select 
-                                        className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-lg text-[11px] font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all appearance-none cursor-pointer disabled:opacity-50"
+                                        className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-[12px] font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white focus:border-blue-300 transition-all appearance-none cursor-pointer disabled:opacity-50"
                                         value={formData.lecturer_id}
                                         onChange={(e) => setFormData({...formData, lecturer_id: e.target.value})}
                                         required
@@ -159,12 +158,12 @@ const StudentFeedbackForm = ({ studentId = 1, onFeedbackSubmitted }) => {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Knowledge Module</label>
+                                <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Subject</label>
                                 <div className="relative group">
-                                    <BookOpen className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={14} />
+                                    <BookOpen className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" size={14} />
                                     {availableModules.length > 0 ? (
                                         <select 
-                                            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-lg text-[11px] font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all appearance-none cursor-pointer"
+                                            className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-[12px] font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white focus:border-blue-300 transition-all appearance-none cursor-pointer"
                                             value={formData.subject}
                                             onChange={(e) => setFormData({...formData, subject: e.target.value})}
                                             required
@@ -177,7 +176,7 @@ const StudentFeedbackForm = ({ studentId = 1, onFeedbackSubmitted }) => {
                                         <input 
                                             type="text"
                                             placeholder="e.g. System Control"
-                                            className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-100 rounded-lg text-[11px] font-bold text-gray-900 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all shadow-xs"
+                                            className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-[12px] font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white focus:border-blue-300 transition-all shadow-xs"
                                             value={formData.subject}
                                             onChange={(e) => setFormData({...formData, subject: e.target.value})}
                                             required
@@ -188,7 +187,7 @@ const StudentFeedbackForm = ({ studentId = 1, onFeedbackSubmitted }) => {
                         </div>
 
                         <div className="space-y-3 pt-1">
-                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block text-center">Merit Quantification</label>
+                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block text-center">Rating</label>
                             <div className="flex justify-center gap-2">
                                 {[1, 2, 3, 4, 5].map((star) => (
                                     <button
@@ -206,12 +205,12 @@ const StudentFeedbackForm = ({ studentId = 1, onFeedbackSubmitted }) => {
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Analytical Remarks</label>
+                                <label className="text-[9px] font-bold text-gray-400 uppercase tracking-widest ml-1">Comment</label>
                             <div className="relative group">
-                                <MessageSquare className="absolute left-3.5 top-3 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={14} />
+                                <MessageSquare className="absolute left-3.5 top-3 text-gray-400 group-focus-within:text-blue-600 transition-colors" size={14} />
                                 <textarea 
-                                    className="w-full pl-9 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-lg text-[11px] font-medium text-gray-900 h-24 focus:outline-none focus:ring-4 focus:ring-blue-50/50 focus:bg-white focus:border-blue-200 transition-all resize-none shadow-xs"
-                                    placeholder="Execute deep-dive analysis..."
+                                    className="w-full pl-9 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-[12px] font-semibold text-gray-900 h-24 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:bg-white focus:border-blue-300 transition-all resize-none shadow-xs"
+                                    placeholder="Write a clear, constructive comment..."
                                     value={formData.comment}
                                     onChange={(e) => setFormData({...formData, comment: e.target.value})}
                                     required
@@ -223,13 +222,13 @@ const StudentFeedbackForm = ({ studentId = 1, onFeedbackSubmitted }) => {
                             <button 
                                 type="button"
                                 onClick={() => { setView('list'); setEditingId(null); setFormData({lecturer_id:'', subject:'', rating:0, comment:''}); }}
-                                className="px-5 py-2.5 bg-gray-100 rounded-lg text-gray-500 text-[10px] font-bold uppercase tracking-widest hover:bg-gray-200 transition-all"
+                                className="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-600 text-[10px] font-bold uppercase tracking-widest hover:bg-gray-50 transition-all"
                             >
                                 Decouple
                             </button>
                             <button 
                                 type="submit"
-                                className="flex-1 py-2.5 bg-linear-to-br from-blue-500 to-indigo-700 rounded-lg text-white text-[10px] font-bold uppercase tracking-[0.2em] shadow-lg shadow-blue-50 hover:shadow-xl transition-all disabled:opacity-50"
+                                className="flex-1 py-2.5 bg-blue-600 rounded-xl text-white text-[10px] font-bold uppercase tracking-[0.2em] shadow-sm hover:bg-blue-700 transition-all disabled:opacity-50"
                                 disabled={submitting || !formData.rating}
                             >
                                 {submitting ? <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div> : <>{editingId ? 'Modify Node' : 'Initialize Transmission'}</>}
@@ -242,12 +241,11 @@ const StudentFeedbackForm = ({ studentId = 1, onFeedbackSubmitted }) => {
     }
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-700">
+        <div className="space-y-6">
             
-            <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full blur-2xl -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-1000 pointer-events-none" />
+            <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 
-                <div className="relative z-10">
+                <div>
                     <h3 className="text-base font-bold text-gray-900 tracking-tight flex items-center gap-2">
                         <History size={18} className="text-blue-500" /> Perspective Archive
                     </h3>
@@ -256,14 +254,14 @@ const StudentFeedbackForm = ({ studentId = 1, onFeedbackSubmitted }) => {
 
                 <button 
                     onClick={() => setView('form')}
-                    className="relative z-10 px-5 py-2.5 bg-linear-to-br from-blue-500 to-indigo-700 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-xl shadow-blue-50 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    className="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
                     <Plus size={14} /> Add Review
                 </button>
             </div>
 
             {status.msg && (
-                <div className={`p-2.5 rounded-lg text-[10px] font-bold text-center border-2 animate-pulse flex items-center justify-center gap-2 uppercase tracking-tighter ${status.type === 'success' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
+                <div className={`p-2.5 rounded-lg text-[10px] font-bold text-center border flex items-center justify-center gap-2 uppercase tracking-tighter ${status.type === 'success' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
                     <ShieldCheck size={14} /> {status.msg}
                 </div>
             )}
@@ -275,29 +273,28 @@ const StudentFeedbackForm = ({ studentId = 1, onFeedbackSubmitted }) => {
                     const isLocked = timeRemaining <= 0;
 
                     return (
-                        <div key={fb.id} className="bg-white rounded-xl border border-gray-100 p-5 shadow-xs hover:shadow-md transition-all duration-300 group relative flex flex-col justify-between border-t-4 hover:-translate-y-1 
-                            ${isLocked ? 'border-t-gray-50' : 'border-t-blue-500' }">
+                            <div key={fb.id} className={`bg-white rounded-xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-all duration-200 group relative flex flex-col justify-between border-t-4 hover:-translate-y-0.5 ${isLocked ? 'border-t-gray-200' : 'border-t-blue-500'}`}>
                             
                             <div>
                                 <div className="flex items-center justify-between mb-4">
-                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${isLocked ? 'bg-gray-50 text-gray-200' : 'bg-blue-50 text-blue-500'}`}>
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${isLocked ? 'bg-gray-50 text-gray-300' : 'bg-blue-50 text-blue-500'}`}>
                                         <BookOpen size={18} />
                                     </div>
                                     
                                     {!isLocked ? (
-                                        <div className="bg-blue-50/50 px-2 py-1 rounded-md border border-blue-50 flex items-center gap-1.5 animate-pulse">
+                                        <div className="bg-blue-50/50 px-2 py-1 rounded-md border border-blue-100 flex items-center gap-1.5">
                                             <Unlock size={10} className="text-blue-500" />
                                             <span className="text-[8px] font-black text-blue-500 uppercase tracking-tighter">{timeRemaining}m Left</span>
                                         </div>
                                     ) : (
-                                        <div className="bg-gray-50 px-2 py-1 rounded-md border border-gray-100 opacity-60">
+                                        <div className="bg-gray-50 px-2 py-1 rounded-md border border-gray-100 opacity-70">
                                             <Lock size={10} className="text-gray-300" />
                                         </div>
                                     )}
                                 </div>
 
                                 <div className="space-y-0.5">
-                                    <h4 className="text-[11px] font-bold text-gray-900 leading-none truncate tracking-tight">{fb.subject}</h4>
+                                        <h4 className="text-[11px] font-bold text-gray-900 leading-none truncate tracking-tight">{fb.subject}</h4>
                                     <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest truncate italic">@{fb.lecturer_name}</p>
                                 </div>
 
@@ -354,12 +351,12 @@ const StudentFeedbackForm = ({ studentId = 1, onFeedbackSubmitted }) => {
             </div>
 
             {mySubmissions.length === 0 && (
-                <div className="flex flex-col items-center justify-center p-20 bg-white rounded-3xl border border-dashed border-gray-200">
+                    <div className="flex flex-col items-center justify-center p-20 bg-white rounded-3xl border border-dashed border-gray-200">
                     <History size={40} className="text-gray-100 mb-4" />
                     <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest text-center">Knowledge Archive Offline</p>
                     <button 
                         onClick={() => setView('form')}
-                        className="mt-6 px-8 py-2.5 bg-blue-500 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg shadow-blue-50"
+                        className="mt-6 px-8 py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-all shadow-sm"
                     >
                         Initialize Entry
                     </button>

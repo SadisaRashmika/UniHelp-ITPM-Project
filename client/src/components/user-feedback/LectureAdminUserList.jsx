@@ -50,7 +50,7 @@ const LectureAdminUserList = () => {
     );
 
     return (
-        <div className="space-y-4 grow animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-4 grow">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex gap-1 bg-gray-100/50 p-0.5 rounded-lg w-fit border border-gray-100 shadow-inner">
                     <TabBtn 
@@ -148,26 +148,26 @@ const LectureAdminUserList = () => {
 
             
             {editingUser && (
-                <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-md flex items-center justify-center z-50 p-6 animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[32px] w-full max-w-md shadow-2xl overflow-hidden border border-white/20 transform animate-in slide-in-from-bottom-8 duration-500">
-                        <div className="bg-linear-to-br from-blue-600 to-indigo-800 p-10 text-white relative">
+                <div className="fixed inset-0 bg-gray-900/55 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+                    <div className="bg-white rounded-3xl w-full max-w-md shadow-xl overflow-hidden border border-gray-100">
+                        <div className="bg-blue-50/80 border-b border-blue-100 p-8 text-slate-900 relative">
                             
                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-16 -mt-16" />
                             
                             <div className="relative z-10">
-                                <p className="text-[10px] font-bold text-blue-200 uppercase tracking-widest mb-2 italic flex items-center gap-2">
+                                <p className="text-[10px] font-bold text-blue-700 uppercase tracking-widest mb-2 flex items-center gap-2">
                                     <ShieldCheck size={12} /> Secure Identity Hub
                                 </p>
-                                <h3 className="text-2xl font-bold tracking-tight italic">Modify {editingUser.role} Entity</h3>
+                                <h3 className="text-2xl font-bold tracking-tight text-gray-900">Modify {editingUser.role} Entity</h3>
                             </div>
                             <button 
                                 onClick={() => setEditingUser(null)} 
-                                className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all text-xl font-light active:scale-95"
+                                className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-white hover:bg-gray-50 flex items-center justify-center transition-colors text-xl font-light active:scale-95 text-gray-500"
                             >
                                 ×
                             </button>
                         </div>
-                        <form onSubmit={handleUpdate} className="p-10 space-y-8 bg-gray-50/30">
+                        <form onSubmit={handleUpdate} className="p-8 space-y-8 bg-white">
                             <InputField 
                                 label="Entity Recognition Name"
                                 value={editingUser.name}
