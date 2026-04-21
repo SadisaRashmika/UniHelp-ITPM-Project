@@ -49,56 +49,9 @@ if (process.env.NODE_ENV !== 'production') {
     status: u.status,
     profileImageUrl: u.profile_image_url || null,
   });
-
-  app.post('/api/auth/dev-login', async (req, res) => {
-    try {
-      const { role } = req.body;
-      let user = null;
-
-      if (role === 'lecturer') {
-        const { rows } = await pool.query(
-          `
-            SELECT id, employee_id AS id_number, name AS full_name, email, 'lecturer' AS role, status, profile_image_url
-            FROM lecturers
-            WHERE status = 'Active'
-            ORDER BY id
-            LIMIT 1
-          `
-        );
-        user = rows[0] || null;
-      } else {
-        const { rows } = await pool.query(
-          `
-            SELECT id, student_id AS id_number, name AS full_name, email, 'student' AS role, status, profile_image_url
-            FROM students
-            WHERE status = 'Active'
-            ORDER BY id
-            LIMIT 1
-          `
-        );
-        user = rows[0] || null;
-      }
-
-      if (!user) {
-        return res.status(404).json({ error: `No ${role || 'student'} user found in database` });
-      }
-
-      const token = jwt.sign(
-        { userId: `${user.role}:${user.id_number}`, role: user.role, idNumber: user.id_number },
-        process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN || '2h' }
-      );
-      res.json({ token, user: sanitizeUser(user) });
-    } catch (err) {
-      console.error('Dev login error:', err.message);
-      res.status(500).json({ error: 'Dev login failed' });
-    }
-  });
-
-  console.log('⚠️  Dev login endpoint active: POST /api/auth/dev-login { "role": "student"|"lecturer" }');
 }
 
-// Use routes (auth routes come AFTER dev-login to avoid routing conflict)
+// Use routes (auth routes)
 app.use('/api/lecturer', lecturerRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/user-feedback', userFeedbackRoutes);
