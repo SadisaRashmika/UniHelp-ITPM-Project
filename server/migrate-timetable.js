@@ -33,7 +33,7 @@ async function migrate() {
       CREATE TABLE IF NOT EXISTS timeslots (
         id SERIAL PRIMARY KEY,
         subject_id INTEGER REFERENCES subjects(id),
-        lecturer_id INTEGER REFERENCES users(id),
+        lecturer_id INTEGER REFERENCES lecturers(id),
         location_id INTEGER REFERENCES locations(id),
         day_of_week INTEGER NOT NULL,
         start_time TIME NOT NULL,
@@ -46,7 +46,7 @@ async function migrate() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS bookings (
         id SERIAL PRIMARY KEY,
-        student_id INTEGER REFERENCES users(id),
+        student_id INTEGER REFERENCES students(id),
         timeslot_id INTEGER REFERENCES timeslots(id),
         seat_number INTEGER NOT NULL,
         attendance_status VARCHAR(20) DEFAULT 'booked' CHECK (attendance_status IN ('booked', 'attended', 'absent')),
@@ -59,7 +59,8 @@ async function migrate() {
     await client.query(`
       CREATE TABLE IF NOT EXISTS notifications (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
+        recipient_role VARCHAR(20) NOT NULL CHECK (recipient_role IN ('student', 'lecturer')),
+        recipient_id INTEGER NOT NULL,
         timeslot_id INTEGER REFERENCES timeslots(id),
         message TEXT NOT NULL,
         is_read BOOLEAN DEFAULT FALSE,
@@ -68,21 +69,6 @@ async function migrate() {
     `);
 
     console.log('✅ Timetable tables created');
-
-    // ─── Alter users table to allow 'admin' role ──────────────────────────
-
-    console.log('Altering users table to allow admin role...');
-
-    await client.query(`
-      ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check
-    `);
-
-    await client.query(`
-      ALTER TABLE users ADD CONSTRAINT users_role_check
-        CHECK (role IN ('student', 'lecturer', 'admin'))
-    `);
-
-    console.log('✅ Admin role added to users table');
 
     // ─── Seed lecturers table ──────────────────────────────────────────────
 
@@ -99,15 +85,6 @@ async function migrate() {
         email = EXCLUDED.email,
         status = 'Active',
         password_hash = EXCLUDED.password_hash
-    `);
-
-    // Link lecturers to users table
-    await client.query(`
-      UPDATE lecturers l
-      SET user_id = u.id
-      FROM users u
-      WHERE u.id_number = l.employee_id
-        AND l.user_id IS DISTINCT FROM u.id
     `);
 
     const lecResult = await client.query('SELECT id, employee_id, name, status FROM lecturers ORDER BY id');
@@ -133,46 +110,9 @@ async function migrate() {
         password_hash = EXCLUDED.password_hash
     `);
 
-    // Link students to users table
-    await client.query(`
-      UPDATE students s
-      SET user_id = u.id
-      FROM users u
-      WHERE u.id_number = s.student_id
-        AND s.user_id IS DISTINCT FROM u.id
-    `);
-
     const stuResult = await client.query('SELECT id, student_id, name, status FROM students ORDER BY id');
     console.log('✅ Students seeded:');
     stuResult.rows.forEach(s => console.log(`   id=${s.id} ${s.student_id} ${s.name} (${s.status})`));
-
-    // ─── Seed users table ────────────────────────────────────────────────
-
-    console.log('Seeding users...');
-
-    await client.query(`
-      INSERT INTO users (id_number, full_name, email, role, status, password_hash) VALUES
-        ('ADM001', 'Bandula Jayawardena', 'admin@unihelp.com', 'admin', 'Active', '$2b$10$dummyHashForTestingPurposesOnly'),
-        ('LEC001', 'Dr. Sarath Gunasekara', 'sarath.gunasekara@unihelp.com', 'lecturer', 'Active', '$2b$10$dummyHashForTestingPurposesOnly'),
-        ('LEC002', 'Dr. Chamara Perera', 'chamara.perera@unihelp.com', 'lecturer', 'Active', '$2b$10$dummyHashForTestingPurposesOnly'),
-        ('LEC003', 'Prof. Nimal Silva', 'nimal.silva@unihelp.com', 'lecturer', 'Active', '$2b$10$dummyHashForTestingPurposesOnly'),
-        ('STU001', 'Kavindu Perera', 'kavindu.perera@student.unihelp.com', 'student', 'Active', '$2b$10$dummyHashForTestingPurposesOnly'),
-        ('STU002', 'Nimali Fernando', 'nimali.fernando@student.unihelp.com', 'student', 'Active', '$2b$10$dummyHashForTestingPurposesOnly'),
-        ('STU003', 'Amal Jayasinghe', 'amal.jayasinghe@student.unihelp.com', 'student', 'Active', '$2b$10$dummyHashForTestingPurposesOnly'),
-        ('STU004', 'Dilini Wickramasinghe', 'dilini.wickramasinghe@student.unihelp.com', 'student', 'Active', '$2b$10$dummyHashForTestingPurposesOnly'),
-        ('STU005', 'Ruwan Bandara', 'ruwan.bandara@student.unihelp.com', 'student', 'Active', '$2b$10$dummyHashForTestingPurposesOnly')
-      ON CONFLICT (id_number) DO UPDATE SET
-        full_name = EXCLUDED.full_name,
-        email = EXCLUDED.email,
-        role = EXCLUDED.role,
-        status = 'Active',
-        password_hash = EXCLUDED.password_hash
-    `);
-
-    // Show user IDs
-    const usersResult = await client.query('SELECT id, id_number, full_name, role FROM users ORDER BY id');
-    console.log('✅ Users seeded:');
-    usersResult.rows.forEach(u => console.log(`   id=${u.id} ${u.id_number} ${u.full_name} (${u.role})`));
 
     // ─── Seed subjects ────────────────────────────────────────────────────
 
@@ -214,10 +154,10 @@ async function migrate() {
 
     console.log('Seeding timeslots...');
 
-    // Get user IDs by id_number
-    const lec1 = await client.query("SELECT id FROM users WHERE id_number = 'LEC001'");
-    const lec2 = await client.query("SELECT id FROM users WHERE id_number = 'LEC002'");
-    const lec3 = await client.query("SELECT id FROM users WHERE id_number = 'LEC003'");
+    // Get lecturer IDs by employee_id
+    const lec1 = await client.query("SELECT id FROM lecturers WHERE employee_id = 'LEC001'");
+    const lec2 = await client.query("SELECT id FROM lecturers WHERE employee_id = 'LEC002'");
+    const lec3 = await client.query("SELECT id FROM lecturers WHERE employee_id = 'LEC003'");
 
     const lec1Id = lec1.rows[0].id;
     const lec2Id = lec2.rows[0].id;
@@ -274,12 +214,12 @@ async function migrate() {
 
     console.log('Seeding bookings...');
 
-    // Get student user IDs
-    const stu1 = await client.query("SELECT id FROM users WHERE id_number = 'STU001'");
-    const stu2 = await client.query("SELECT id FROM users WHERE id_number = 'STU002'");
-    const stu3 = await client.query("SELECT id FROM users WHERE id_number = 'STU003'");
-    const stu4 = await client.query("SELECT id FROM users WHERE id_number = 'STU004'");
-    const stu5 = await client.query("SELECT id FROM users WHERE id_number = 'STU005'");
+    // Get student IDs by student_id
+    const stu1 = await client.query("SELECT id FROM students WHERE student_id = 'STU001'");
+    const stu2 = await client.query("SELECT id FROM students WHERE student_id = 'STU002'");
+    const stu3 = await client.query("SELECT id FROM students WHERE student_id = 'STU003'");
+    const stu4 = await client.query("SELECT id FROM students WHERE student_id = 'STU004'");
+    const stu5 = await client.query("SELECT id FROM students WHERE student_id = 'STU005'");
 
     // Get timeslot IDs (ordered by id)
     const tsResult = await client.query('SELECT id FROM timeslots ORDER BY id');
@@ -310,9 +250,9 @@ async function migrate() {
     console.log('Seeding notifications...');
 
     await client.query(`
-      INSERT INTO notifications (user_id, timeslot_id, message, is_read) VALUES
-        ($1, $2, 'Lecture topic updated: Introduction to Variables and Data Types', false),
-        ($3, $4, 'Room changed to Lecture Hall B', false)
+      INSERT INTO notifications (recipient_role, recipient_id, timeslot_id, message, is_read) VALUES
+        ('student', $1, $2, 'Lecture topic updated: Introduction to Variables and Data Types', false),
+        ('student', $3, $4, 'Room changed to Lecture Hall B', false)
     `, [
       stu1.rows[0].id, tsIds[0],   // Notification for STU001 about timeslot 1
       stu2.rows[0].id, tsIds[0],   // Notification for STU002 about timeslot 1

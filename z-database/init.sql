@@ -150,48 +150,6 @@ CREATE INDEX IF NOT EXISTS idx_ticket_chats_ticket_id ON ticket_chats(ticket_id)
 ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS profile_image_url TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS profile_image_url TEXT;
 
--- =====================================================================================
--- Login/Signin (No-Admin) Authentication Tables
--- =====================================================================================
-
-CREATE TABLE IF NOT EXISTS users (
-	id BIGSERIAL PRIMARY KEY,
-	id_number VARCHAR(50) UNIQUE NOT NULL,
-	full_name VARCHAR(150) NOT NULL,
-	email VARCHAR(150) UNIQUE NOT NULL,
-	role VARCHAR(20) NOT NULL CHECK (role IN ('student', 'lecturer')),
-	status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Active', 'Blocked')),
-	password_hash VARCHAR(255),
-	created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-	updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_users_email_lower ON users (LOWER(email));
-CREATE INDEX IF NOT EXISTS idx_users_id_number ON users (id_number);
-
-CREATE TABLE IF NOT EXISTS otp_codes (
-	id BIGSERIAL PRIMARY KEY,
-	user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-	purpose VARCHAR(20) NOT NULL CHECK (purpose IN ('ACTIVATE', 'RESET')),
-	otp_hash VARCHAR(128) NOT NULL,
-	attempt_count INTEGER NOT NULL DEFAULT 0,
-	max_attempts INTEGER NOT NULL DEFAULT 5,
-	expires_at TIMESTAMP NOT NULL,
-	used_at TIMESTAMP,
-	created_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_otp_user_purpose_created ON otp_codes (user_id, purpose, created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_otp_expires_at ON otp_codes (expires_at);
-
--- Optional mapping so lecture-resource rows can be linked with the unified auth user.
-ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS user_id BIGINT UNIQUE REFERENCES users(id) ON DELETE SET NULL;
-ALTER TABLE students ADD COLUMN IF NOT EXISTS user_id BIGINT UNIQUE REFERENCES users(id) ON DELETE SET NULL;
-
--- =====================================================================================
--- Additive migration: use lecturers/students directly for authentication.
--- =====================================================================================
-
 ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Active', 'Blocked'));
 ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
 ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW();

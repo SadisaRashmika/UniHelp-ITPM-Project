@@ -53,17 +53,36 @@ if (process.env.NODE_ENV !== 'production') {
   app.post('/api/auth/dev-login', async (req, res) => {
     try {
       const { role } = req.body;
-      // Query the real PostgreSQL database for a user with the requested role
-      const { rows } = await pool.query(
-        'SELECT * FROM users WHERE role = $1 AND status = $2 LIMIT 1',
-        [role || 'student', 'Active']
-      );
+      let user = null;
 
-      if (rows.length === 0) {
-        return res.status(404).json({ error: `No ${role} user found in database` });
+      if (role === 'lecturer') {
+        const { rows } = await pool.query(
+          `
+            SELECT id, employee_id AS id_number, name AS full_name, email, 'lecturer' AS role, status, profile_image_url
+            FROM lecturers
+            WHERE status = 'Active'
+            ORDER BY id
+            LIMIT 1
+          `
+        );
+        user = rows[0] || null;
+      } else {
+        const { rows } = await pool.query(
+          `
+            SELECT id, student_id AS id_number, name AS full_name, email, 'student' AS role, status, profile_image_url
+            FROM students
+            WHERE status = 'Active'
+            ORDER BY id
+            LIMIT 1
+          `
+        );
+        user = rows[0] || null;
       }
 
-      const user = rows[0];
+      if (!user) {
+        return res.status(404).json({ error: `No ${role || 'student'} user found in database` });
+      }
+
       const token = jwt.sign(
         { userId: `${user.role}:${user.id_number}`, role: user.role, idNumber: user.id_number },
         process.env.JWT_SECRET,
@@ -76,7 +95,7 @@ if (process.env.NODE_ENV !== 'production') {
     }
   });
 
-  console.log('⚠️  Dev login endpoint active: POST /api/auth/dev-login { "role": "student"|"lecturer"|"admin" }');
+  console.log('⚠️  Dev login endpoint active: POST /api/auth/dev-login { "role": "student"|"lecturer" }');
 }
 
 // Use routes (auth routes come AFTER dev-login to avoid routing conflict)

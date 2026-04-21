@@ -14,7 +14,6 @@ DROP TABLE IF EXISTS lectures CASCADE;
 DROP TABLE IF EXISTS students CASCADE;
 DROP TABLE IF EXISTS lecturers CASCADE;
 DROP TABLE IF EXISTS otp_codes CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS feedbacks CASCADE;
 DROP TABLE IF EXISTS tickets CASCADE;
 DROP TABLE IF EXISTS ticket_chats CASCADE;
@@ -173,39 +172,6 @@ CREATE TABLE ticket_chats (
 CREATE INDEX idx_ticket_chats_ticket_id ON ticket_chats(ticket_id);
 
 -- Authentication Tables
-CREATE TABLE users (
-	id BIGSERIAL PRIMARY KEY,
-	id_number VARCHAR(50) UNIQUE NOT NULL,
-	full_name VARCHAR(150) NOT NULL,
-	email VARCHAR(150) UNIQUE NOT NULL,
-	role VARCHAR(20) NOT NULL CHECK (role IN ('student', 'lecturer')),
-	status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Active', 'Blocked')),
-	password_hash VARCHAR(255),
-	created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-	updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_users_email_lower ON users (LOWER(email));
-CREATE INDEX idx_users_id_number ON users (id_number);
-
-CREATE TABLE otp_codes (
-	id BIGSERIAL PRIMARY KEY,
-	user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-	purpose VARCHAR(20) NOT NULL CHECK (purpose IN ('ACTIVATE', 'RESET')),
-	otp_hash VARCHAR(128) NOT NULL,
-	attempt_count INTEGER NOT NULL DEFAULT 0,
-	max_attempts INTEGER NOT NULL DEFAULT 5,
-	expires_at TIMESTAMP NOT NULL,
-	used_at TIMESTAMP,
-	created_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_otp_user_purpose_created ON otp_codes (user_id, purpose, created_at DESC);
-CREATE INDEX idx_otp_expires_at ON otp_codes (expires_at);
-
-ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS user_id BIGINT UNIQUE REFERENCES users(id) ON DELETE SET NULL;
-ALTER TABLE students ADD COLUMN IF NOT EXISTS user_id BIGINT UNIQUE REFERENCES users(id) ON DELETE SET NULL;
-
 ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Active', 'Blocked'));
 ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
 ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW();
@@ -322,47 +288,17 @@ INSERT INTO tickets (student_id, subject, description, screenshot_url, category,
 (8, 'Exam Timetable Issue', 'My elective exam and core exam are scheduled at the same time.', NULL, 'Examination & Results', '0719876543', 'in-review')
 ON CONFLICT DO NOTHING;
 
--- Seed auth users for activation flow
-INSERT INTO users (id_number, full_name, email, role, status, password_hash)
-VALUES
-	('LEC001', 'Dr. Chamara Perera', 'chamara@uni.edu', 'lecturer', 'Pending', NULL),
-	('LEC002', 'Dr. Saman Jayasekara', 'saman@uni.edu', 'lecturer', 'Pending', NULL),
-	('STU001', 'Nimal Silva', 'nimal@uni.edu', 'student', 'Pending', NULL),
-	('STU002', 'Kamal Perera', 'kamal@uni.edu', 'student', 'Pending', NULL),
-	('STU003', 'Sahani Fernando', 'emoji.officialff@gmail.com', 'student', 'Pending', NULL)
-ON CONFLICT (id_number) DO UPDATE
-SET
-	full_name = EXCLUDED.full_name,
-	email = EXCLUDED.email,
-	role = EXCLUDED.role,
-	status = 'Pending',
-	password_hash = NULL,
-	updated_at = NOW();
-
--- Link existing student/lecturer rows with users table
-UPDATE lecturers l
-SET user_id = u.id
-FROM users u
-WHERE u.id_number = l.employee_id
-	AND l.user_id IS DISTINCT FROM u.id;
-
-UPDATE students s
-SET user_id = u.id
-FROM users u
-WHERE u.id_number = s.student_id
-	AND s.user_id IS DISTINCT FROM u.id;
-
 -- Initialize lecturer/student auth columns
 UPDATE lecturers
 SET
-	status = COALESCE(status, 'Pending'),
-	password_hash = NULL,
+	status = 'Active',
+	password_hash = '$2b$10$dummyHashForTestingPurposesOnly',
 	updated_at = NOW();
 
 UPDATE students
 SET
-	status = COALESCE(status, 'Pending'),
-	password_hash = NULL,
+	status = 'Active',
+	password_hash = '$2b$10$dummyHashForTestingPurposesOnly',
 	updated_at = NOW();
 
 COMMIT;
