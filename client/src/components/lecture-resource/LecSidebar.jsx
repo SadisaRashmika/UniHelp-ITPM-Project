@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, FileCheck, BookOpen, Award } from 'lucide-react';
+import { User, FileCheck, BookOpen, Award, Calendar } from 'lucide-react';
 
 const getInitials = (lecturer) => {
   if (lecturer?.initials) return lecturer.initials;

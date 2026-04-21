@@ -5,6 +5,7 @@ import LecProfile from '../../components/lecture-resource/LecProfile';
 import LecStudentUploads from '../../components/lecture-resource/LecStudentUploads';
 import LecUpload from '../../components/lecture-resource/LecUpload';
 import LecExtraMarks from '../../components/lecture-resource/LecExtraMarks';
+import AdminTimetableContent from '../../components/timetable/AdminTimetableContent';
 
 const LecDashboard = ({ userId = 'LEC001', profilePhoto = '' }) => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -88,6 +89,9 @@ const LecDashboard = ({ userId = 'LEC001', profilePhoto = '' }) => {
               setExtraMarksPending((prev) => Math.max(0, prev + delta));
             }}
           />
+        )}
+        {activeTab === 'timetable' && (
+          <AdminTimetableContent />
         )}
       </main>
     </div>

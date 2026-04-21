@@ -61,6 +61,7 @@ const normalizeLecture = (row) => {
     title: row.title,
     lecturer: row.lecturer_name || 'Lecturer',
     lecturerEmail: row.lecturer_email || row.lecturerEmail || row.email || '',
+    lecturerImageUrl: normalizeFileUrl({ url: row.lecturer_profile_image_url }),
     subject: row.subject,
     topic: row.topic,
     year: row.year,
@@ -212,7 +213,7 @@ const StuHome = ({ student, onUploadClick, onTakeQuiz, onBonusMarks, onLikeEarne
   }));
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-5 w-full">
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
@@ -248,16 +249,17 @@ const StuHome = ({ student, onUploadClick, onTakeQuiz, onBonusMarks, onLikeEarne
         />
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-3">
-        <SelectFilter value={yearFilter} onChange={setYear} options={YEAR_OPTIONS} />
-        <SelectFilter value={semFilter}  onChange={setSem}  options={SEM_OPTIONS}  />
-      </div>
+      {/* Tabs + Filters */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+          <TabBtn active={view === 'lecturer'} label={`Lecture Resources (${filteredLectures.length})`} onClick={() => setView('lecturer')} icon={<BookOpen size={15}/>} />
+          <TabBtn active={view === 'student'}  label={`Student Notes (${filteredNotes.length})`}        onClick={() => setView('student')}  icon={<Users size={15}/>} />
+        </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
-        <TabBtn active={view === 'lecturer'} label={`Lecture Resources (${filteredLectures.length})`} onClick={() => setView('lecturer')} icon={<BookOpen size={15}/>} />
-        <TabBtn active={view === 'student'}  label={`Student Notes (${filteredNotes.length})`}        onClick={() => setView('student')}  icon={<Users size={15}/>} />
+        <div className="flex gap-3 ml-auto">
+          <SelectFilter value={yearFilter} onChange={setYear} options={YEAR_OPTIONS} />
+          <SelectFilter value={semFilter}  onChange={setSem}  options={SEM_OPTIONS}  />
+        </div>
       </div>
 
       {/* Cards */}

@@ -60,6 +60,7 @@ const getLectureResources = async () => {
       l.published_at,
       lec.name AS lecturer_name,
       lec.email AS lecturer_email,
+      lec.profile_image_url AS lecturer_profile_image_url,
       COALESCE(
         json_agg(
           json_build_object(
@@ -101,7 +102,7 @@ const getLectureResources = async () => {
     FROM lectures l
     LEFT JOIN lecturers lec ON lec.id = l.lecturer_id
     LEFT JOIN lecture_files lf ON lf.lecture_id = l.id
-    GROUP BY l.id, lec.name, lec.email
+    GROUP BY l.id, lec.name, lec.email, lec.profile_image_url
     ORDER BY l.published_at DESC, l.id DESC
   `;
 

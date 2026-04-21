@@ -5,6 +5,7 @@ import ProfileModal from '../../components/login-signin/ProfileModal';
 import PortalTabContent from '../../components/login-signin/PortalTabContent';
 import TopNavHeader from '../../components/login-signin/TopNavHeader';
 import { getMe, removeProfileImage, uploadProfileImage } from '../../services/authService';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
@@ -13,15 +14,39 @@ const toAbsoluteProfileUrl = (value) => {
   return String(value).startsWith('http') ? value : `${API_BASE}${value}`;
 };
 
+const tabFromPath = (pathname) => {
+  if (pathname.endsWith('/resource')) return 'resource';
+  if (pathname.endsWith('/timetable')) return 'timetable';
+  if (pathname.endsWith('/jobs')) return 'jobs';
+  if (pathname.endsWith('/support')) return 'support';
+  if (pathname.endsWith('/feedback')) return 'feedback';
+  return 'home';
+};
+
+const buildPathForTab = ({ tabKey, user }) => {
+  if (!user) return '/';
+  if (user.role === 'admin') return '/admin';
+  const roleBase = user.role === 'lecturer' ? '/lecturer' : '/student';
+  if (tabKey === 'home') return `${roleBase}/home`;
+  return `${roleBase}/${tabKey}`;
+};
+
 const MainPortalPage = () => {
-  const [activeTab, setActiveTab] = useState('home');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState(() => tabFromPath(location.pathname));
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   const [token, setToken] = useState(() => localStorage.getItem('unihelp_token') || '');
   const [user, setUser] = useState(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState('');
+  const [pendingTab, setPendingTab] = useState(null);
   const [booting, setBooting] = useState(Boolean(localStorage.getItem('unihelp_token')));
+
+  useEffect(() => {
+    setActiveTab(tabFromPath(location.pathname));
+  }, [location.pathname]);
 
   useEffect(() => {
     const loadMe = async () => {
@@ -34,6 +59,9 @@ const MainPortalPage = () => {
       try {
         const result = await getMe(token);
         setUser(result.user);
+        if (result.user?.role === 'admin') {
+          navigate('/admin', { replace: true });
+        }
       } catch (_error) {
         localStorage.removeItem('unihelp_token');
         setToken('');
@@ -62,17 +90,22 @@ const MainPortalPage = () => {
 
   const handleTabClick = (tab) => {
     if (!tab.public && !user) {
+      setPendingTab(tab.key);
       setAuthOpen(true);
       return;
     }
 
     setActiveTab(tab.key);
+    navigate(buildPathForTab({ tabKey: tab.key, user }));
   };
 
   const onAuthenticated = ({ token: accessToken, user: authUser }) => {
     localStorage.setItem('unihelp_token', accessToken);
     setToken(accessToken);
     setUser(authUser);
+    const nextTab = pendingTab || 'home';
+    setPendingTab(null);
+    navigate(buildPathForTab({ tabKey: nextTab, user: authUser }), { replace: true });
     setAuthOpen(false);
   };
 
@@ -88,7 +121,25 @@ const MainPortalPage = () => {
     setProfileOpen(false);
     setProfilePhoto('');
     setActiveTab('home');
+    setPendingTab(null);
+    navigate('/', { replace: true });
   };
+
+  useEffect(() => {
+    if (!user) return;
+
+    const isStudentPath = location.pathname.startsWith('/student/');
+    const isLecturerPath = location.pathname.startsWith('/lecturer/');
+    if (user.role === 'admin') {
+      navigate('/admin', { replace: true });
+    }
+    if (user.role === 'student' && isLecturerPath) {
+      navigate(buildPathForTab({ tabKey: activeTab, user }), { replace: true });
+    }
+    if (user.role === 'lecturer' && isStudentPath) {
+      navigate(buildPathForTab({ tabKey: activeTab, user }), { replace: true });
+    }
+  }, [activeTab, location.pathname, navigate, user]);
 
   const onProfilePhotoChange = async (file) => {
     if (!token) return;
@@ -105,12 +156,12 @@ const MainPortalPage = () => {
   };
 
   const resourceOpen = activeTab === 'resource';
-  const blueThemeOpen = activeTab === 'home' || activeTab === 'resource';
+  const blueThemeOpen = activeTab === 'home' || activeTab === 'resource' || activeTab === 'timetable' || activeTab === 'support' || activeTab === 'feedback';
 
   return (
     <div
       className={`min-h-screen text-slate-900 ${
-        blueThemeOpen ? 'bg-gradient-to-br from-blue-200 via-blue-50 to-sky-200' : 'bg-slate-50'
+        blueThemeOpen ? 'bg-linear-to-br from-blue-200 via-blue-50 to-sky-200' : 'bg-slate-50'
       }`}
     >
       <TopNavHeader

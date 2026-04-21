@@ -1,6 +1,14 @@
 import LecDashboard from '../../pages/lecture-resource/LecDashboard';
 import StuDashboard from '../../pages/lecture-resource/StuDashboard';
 import PortalHomeContent from './PortalHomeContent';
+import StudentTimetableContent from '../timetable/StudentTimetableContent';
+import AdminTimetableContent from '../timetable/AdminTimetableContent';
+
+// Vimo Components
+import StudentFeedbackDashboard from '../../components/user-feedback/StudentFeedbackDashboard';
+import StudentSupportDashboard from '../../components/user-feedback/StudentSupportDashboard';
+import LecturerFeedbackDashboard from '../../components/user-feedback/LecturerFeedbackDashboard';
+import LecturerSupportDashboard from '../../components/user-feedback/LecturerSupportDashboard';
 
 const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
   if (tab === 'home') {
@@ -17,7 +25,7 @@ const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
   }
 
   if (tab === 'resource') {
-    const userId = user.role === 'lecturer' ? user.idNumber : user.idNumber;
+    const userId = user.idNumber;
     return user.role === 'lecturer' ? (
       <LecDashboard userId={userId} profilePhoto={profilePhoto} />
     ) : (
@@ -26,13 +34,10 @@ const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
   }
 
   if (tab === 'timetable') {
-    return (
-      <RolePanel
-        title="Timetable"
-        user={user}
-        lecturerBody="Lecturer timetable tools will show your teaching schedule and session planning controls."
-        studentBody="Student timetable tools will show your class schedule and upcoming sessions."
-      />
+    return user.role === 'lecturer' ? (
+      <AdminTimetableContent />
+    ) : (
+      <StudentTimetableContent studentId={user.idNumber} user={user} profilePhoto={profilePhoto} />
     );
   }
 
@@ -45,6 +50,16 @@ const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
         studentBody="Student jobs panel will show internships, campus jobs, and role-specific applications."
       />
     );
+  }
+
+  if (tab === 'support') {
+    if (user.role === 'student') return <StudentSupportDashboard studentId={user.idNumber} />;
+    if (user.role === 'lecturer') return <LecturerSupportDashboard lecturerId={user.idNumber} />;
+  }
+
+  if (tab === 'feedback') {
+    if (user.role === 'student') return <StudentFeedbackDashboard studentId={user.idNumber} />;
+    if (user.role === 'lecturer') return <LecturerFeedbackDashboard lecturerId={user.idNumber} />;
   }
 
   return (
