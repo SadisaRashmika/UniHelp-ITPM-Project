@@ -1,15 +1,71 @@
 import React, { useState } from 'react';
 import { FileText, Video, Upload, ChevronDown, ChevronUp, PenTool, Heart } from 'lucide-react';
 
-const StuResourceCard = ({ lecture, onUpload, onQuiz, noteLikes, likedSet, onLike }) => {
+const getYoutubeThumbnail = (url) => {
+  if (!url) return null;
+  const idMatch = url.match(/(?:v=|be\/|embed\/|shorts\/)([A-Za-z0-9_-]{11})/);
+  const videoId = idMatch?.[1];
+  if (!videoId) return null;
+  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+};
+
+const getInitials = (name) => {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((p) => p[0]).join('').toUpperCase() || 'L';
+};
+
+const StuResourceCard = ({ lecture, onUpload, onQuiz, noteLikes, likedSet, onLike, onExploreStudentNotes }) => {
   const [showStudents, setShowStudents] = useState(false);
   const studentCount = lecture.studentNotes.length;
+  const latestNote = studentCount > 0 ? lecture.studentNotes[0] : null;
+  const youtubeThumb = getYoutubeThumbnail(lecture.youtubeUrl);
+  const hasQuiz = lecture?.quiz && Array.isArray(lecture.quiz.questions) && lecture.quiz.questions.length > 0;
+
+  const openYoutube = () => {
+    if (!lecture?.youtubeUrl) return;
+    window.open(lecture.youtubeUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleDownloadFile = async (file) => {
+    if (!file?.url) {
+      console.error('Missing file URL for download:', file);
+      return;
+    }
+    try {
+      const response = await fetch(file.url);
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = file.name || 'lecture-file';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      window.open(file.url, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden hover:shadow-sm transition-all">
       {/* Header image area */}
-      <div className="h-36 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-        <Video size={48} className="text-white/20" />
+      <div
+        className={`h-46 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center overflow-hidden ${lecture.youtubeUrl ? 'cursor-pointer' : ''}`}
+        onClick={openYoutube}
+        title={lecture.youtubeUrl ? 'Open YouTube video' : ''}
+      >
+        {youtubeThumb ? (
+          <img
+            src={youtubeThumb}
+            alt={`${lecture.title} thumbnail`}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <Video size={48} className="text-white/20" />
+        )}
       </div>
 
       <div className="p-5 space-y-4">
@@ -23,7 +79,25 @@ const StuResourceCard = ({ lecture, onUpload, onQuiz, noteLikes, likedSet, onLik
               </span>
             ))}
           </div>
-          <p className="text-sm text-gray-400 font-medium mt-2.5">🎓 {lecture.lecturer}</p>
+          <div className="mt-3 flex items-center gap-2.5">
+            {lecture.lecturerImageUrl ? (
+              <img
+                src={lecture.lecturerImageUrl}
+                alt={lecture.lecturer || 'Lecturer'}
+                className="h-9 w-9 rounded-full border border-slate-200 object-cover shrink-0"
+              />
+            ) : (
+              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                {getInitials(lecture.lecturer)}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-sm text-gray-700 font-medium truncate">{lecture.lecturer}</p>
+              {lecture.lecturerEmail && (
+                <p className="text-xs text-blue-400 truncate">{lecture.lecturerEmail}</p>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Files */}
@@ -31,9 +105,13 @@ const StuResourceCard = ({ lecture, onUpload, onQuiz, noteLikes, likedSet, onLik
           <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Lecture Files:</p>
           <div className="space-y-1">
             {lecture.files.map((file, idx) => (
-              <div key={idx} className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline cursor-pointer">
-                <FileText size={14} className="shrink-0" /> {file}
-              </div>
+              <button
+                key={idx}
+                onClick={() => handleDownloadFile(file)}
+                className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline cursor-pointer"
+              >
+                <FileText size={14} className="shrink-0" /> {file.name}
+              </button>
             ))}
           </div>
         </div>
@@ -41,7 +119,7 @@ const StuResourceCard = ({ lecture, onUpload, onQuiz, noteLikes, likedSet, onLik
         {/* Action buttons */}
         <div className="space-y-2 pt-1">
           <button
-            onClick={() => onUpload(lecture)}
+            onClick={() => onUpload?.(lecture)}
             className="w-full py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 transition-all"
           >
             <Upload size={15} /> Upload Note for this Lecture
@@ -52,12 +130,13 @@ const StuResourceCard = ({ lecture, onUpload, onQuiz, noteLikes, likedSet, onLik
             className="w-full py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-gray-700 flex items-center justify-center gap-2 hover:bg-gray-50 transition-all"
           >
             {showStudents ? <ChevronUp size={15}/> : <ChevronDown size={15}/>}
-            {showStudents ? `Hide Student Notes (${studentCount})` : `Show Student Notes (${studentCount})`}
+            {showStudents ? 'Hide Student Notes' : 'Show Student Note'}
           </button>
 
           <button
-            onClick={() => onQuiz(lecture)}
-            className="w-full py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-black transition-all"
+            onClick={() => hasQuiz && onQuiz?.(lecture)}
+            disabled={!hasQuiz}
+            className="w-full py-2.5 bg-gray-900 text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-black transition-all disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:bg-gray-300"
           >
             <PenTool size={15} /> Take Quiz — {lecture.quizTitle}
           </button>
@@ -71,15 +150,23 @@ const StuResourceCard = ({ lecture, onUpload, onQuiz, noteLikes, likedSet, onLik
                 No student notes yet — be the first to upload!
               </p>
             ) : (
-              lecture.studentNotes.map(note => (
+              <>
                 <MiniStudentNote
-                  key={note.id}
-                  note={note}
-                  likes={noteLikes?.[note.id] ?? note.likes}
-                  liked={likedSet?.has(note.id) ?? false}
-                  onLike={() => onLike?.(note.id, note.isMyUpload)}
+                  note={latestNote}
+                  likes={noteLikes?.[latestNote.id] ?? latestNote.likes}
+                  liked={likedSet?.has(latestNote.id) ?? false}
+                  onLike={() => onLike?.(latestNote.id, latestNote.isMyUpload)}
                 />
-              ))
+                <button
+                  onClick={() => {
+                    setShowStudents(false);
+                    onExploreStudentNotes?.();
+                  }}
+                  className="text-sm text-blue-600 hover:underline font-medium"
+                >
+                  Explore More
+                </button>
+              </>
             )}
           </div>
         )}
@@ -93,7 +180,7 @@ const MiniStudentNote = ({ note, likes, liked, onLike }) => (
     {/* Left: icon + info */}
     <div className="flex items-center gap-2.5 min-w-0">
       <div className="p-1.5 bg-green-50 rounded-lg shrink-0">
-        <FileText size={13} className="text-green-600" />
+        <FileText size={13} className="text-blue-600" />
       </div>
       <div className="min-w-0">
         <p className="text-sm font-medium text-gray-800 truncate">{note.title}</p>

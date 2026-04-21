@@ -1,60 +1,107 @@
-import React, { useState } from 'react';
-import StuSidebar         from '../../components/lecture-resource/StuSidebar';
-import StuHome            from '../../components/lecture-resource/StuHome';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import StuSidebar from '../../components/lecture-resource/StuSidebar';
+import StuHome from '../../components/lecture-resource/StuHome';
+import StuQuizModal from '../../components/lecture-resource/StuQuizModal';
 import StuNoteUploadModal from '../../components/lecture-resource/StuNoteUploadModal';
-import StuQuizModal       from '../../components/lecture-resource/StuQuizModal';
+import StuMyUploadsModal from '../../components/lecture-resource/StuMyUploadsModal';
 import StuBonusMarksModal from '../../components/lecture-resource/StuBonusMarkModal';
 
-const StuDashboard = () => {
+const API_BASE = 'http://localhost:5000';
+
+const StuDashboard = ({ userId = 'STU001', profilePhoto = '' }) => {
+  const [myNotesCount, setMyNotesCount] = useState(0);
+  const [studentData, setStudentData] = useState(null);
+  const [quizLecture, setQuizLecture] = useState(null);
   const [uploadLecture, setUploadLecture] = useState(null);
-  const [quizLecture,   setQuizLecture]   = useState(null);
-  const [bonusOpen,     setBonusOpen]     = useState(false);
+  const [myUploadsOpen, setMyUploadsOpen] = useState(false);
+  const [bonusOpen, setBonusOpen] = useState(false);
 
-  const [likes,     setLikes]     = useState(45);
-  const [bonusUsed, setBonusUsed] = useState(false);
+  const fetchStudentData = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/api/student/profile?studentId=${userId}`);
+      setStudentData(response.data);
+    } catch (error) {
+      console.error('Error fetching student data:', error);
+    }
+  };
 
-  const handleSpendLikes  = () => setLikes(prev => prev - 100);
-  // Each time the student likes someone else's note, their own likes counter goes up
-  const handleLikeEarned  = () => setLikes(prev => prev + 1);
+  // Fetch student data from the backend
+  useEffect(() => {
+    fetchStudentData();
+  }, [userId]);
+
+  useEffect(() => {
+    refreshMyUploadsCount();
+  }, [studentData?.student_id, uploadLecture]);
+
+  const refreshMyUploadsCount = async () => {
+    if (!studentData?.student_id) return;
+    try {
+      const response = await axios.get(`${API_BASE}/api/student/notes/my-uploads?studentId=${studentData.student_id}`);
+      const uploads = response.data || [];
+      // Active notes in feed should only count accepted notes.
+      setMyNotesCount(uploads.filter((u) => u.status === 'accepted').length);
+    } catch (error) {
+      console.error('Error fetching upload stats:', error);
+    }
+  };
+
+  const refreshDashboardData = async () => {
+    await fetchStudentData();
+    await refreshMyUploadsCount();
+  };
+
+  if (!studentData) return <div className="p-6 text-slate-700">Loading...</div>; // Loading state
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-transparent flex">
       <StuSidebar
-        points={likes}
-        quizzes={12}
-        notes={8}
-        level="Bronze"
+        student={studentData}
+        profilePhoto={profilePhoto}
+        fullLikes={studentData?.full_likes ?? 0}
+        points={studentData?.points ?? 0}
+        notes={myNotesCount}
       />
-
-      <main className="flex-1 ml-72 p-10 min-w-0 w-full">
+      <main className="flex-1 ml-72 px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8 min-w-0 w-full">
         <StuHome
+          student={studentData}
           onUploadClick={(lecture) => setUploadLecture(lecture)}
-          onTakeQuiz={(lecture)    => setQuizLecture(lecture)}
-          onBonusMarks={()         => setBonusOpen(true)}
-          onLikeEarned={handleLikeEarned}
+          onTakeQuiz={(lecture) => setQuizLecture(lecture)}
+          onMyUploads={() => setMyUploadsOpen(true)}
+          onBonusMarks={() => setBonusOpen(true)}
         />
+        {/* You can add other sections here like uploading notes or quizzes */}
       </main>
-
       <StuNoteUploadModal
-        isOpen={!!uploadLecture}
+        isOpen={Boolean(uploadLecture)}
         onClose={() => setUploadLecture(null)}
         lecture={uploadLecture}
+        student={studentData}
+        onUploaded={() => {
+          setUploadLecture(null);
+        }}
       />
-
       {quizLecture && (
         <StuQuizModal
           lecture={quizLecture}
           onClose={() => setQuizLecture(null)}
         />
       )}
-
+      <StuMyUploadsModal
+        isOpen={myUploadsOpen}
+        onClose={() => setMyUploadsOpen(false)}
+        studentId={studentData?.student_id || userId}
+        onChanged={refreshDashboardData}
+      />
       <StuBonusMarksModal
         isOpen={bonusOpen}
-        onClose={() => setBonusOpen(false)}
-        studentLikes={likes}
-        onSpendLikes={handleSpendLikes}
-        bonusUsed={bonusUsed}
-        setBonusUsed={setBonusUsed}
+        onClose={async () => {
+          setBonusOpen(false);
+          await fetchStudentData();
+        }}
+        student={studentData}
+        pointsBalance={studentData?.points ?? 0}
       />
     </div>
   );

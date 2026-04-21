@@ -1,7 +1,112 @@
-import React, { useState } from 'react';
-import { Search, BookOpen, Users, ChevronDown, Sparkles, Heart, FileText } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Search, BookOpen, Users, ChevronDown, Sparkles, Heart, FileText, User } from 'lucide-react';
 import StuResourceCard from './StuResourceCard';
-import { LECTURES, STUDENT_NOTES } from './stuData';
+import axios from 'axios';
+
+const API_BASE = 'http://localhost:5000';
+
+const toArray = (value) => {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
+const normalizeFileUrl = (fileObj) => {
+  if (fileObj?.url) {
+    return fileObj.url.startsWith('http') ? fileObj.url : `${API_BASE}${fileObj.url}`;
+  }
+  if (fileObj?.filepath) {
+    const normalizedPath = String(fileObj.filepath).replace(/\\/g, '/');
+    const withSlash = normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`;
+    return `${API_BASE}${withSlash}`;
+  }
+  return null;
+};
+
+const normalizeLecture = (row) => {
+  const files = toArray(row.files).map((f) => {
+    if (typeof f === 'string') {
+      return { name: f, url: null };
+    }
+    return {
+      name: f.filename,
+      url: normalizeFileUrl(f),
+    };
+  }).filter((f) => f.name);
+
+  const quizFromRow = row.quiz && typeof row.quiz === 'object' ? row.quiz : null;
+  const quizQuestions = toArray(quizFromRow?.questions || row.quiz_questions).map((q) => ({
+    question: q.question,
+    options: Array.isArray(q.options) ? q.options : toArray(q.options),
+    answer: Number(q.answer),
+    orderNum: Number(q.orderNum ?? q.order_num ?? 0),
+  }));
+
+  const quizTitle = quizFromRow?.title || row.quiz_title || null;
+  const quiz = quizTitle && quizQuestions.length > 0
+    ? { title: quizTitle, questions: quizQuestions }
+    : null;
+
+  const tags = [row.subject, row.topic, row.year, row.semester].filter(Boolean);
+
+  return {
+    id: row.id,
+    title: row.title,
+    lecturer: row.lecturer_name || 'Lecturer',
+    lecturerEmail: row.lecturer_email || row.lecturerEmail || row.email || '',
+    lecturerImageUrl: normalizeFileUrl({ url: row.lecturer_profile_image_url }),
+    subject: row.subject,
+    topic: row.topic,
+    year: row.year,
+    semester: row.semester,
+    tags,
+    files,
+    youtubeUrl: row.youtube_url,
+    quizTitle: quiz?.title || 'No quiz yet',
+    quiz,
+    studentNotes: [],
+  };
+};
+
+const normalizeAcceptedNote = (row, currentStudentId) => ({
+  id: row.id,
+  lectureId: row.lecture_id,
+  title: row.title,
+  uploader: row.uploader,
+  isMyUpload: row.owner_student_id === currentStudentId,
+  likedByMe: Boolean(row.liked_by_me),
+  tags: [row.subject, row.topic, row.year, row.semester].filter(Boolean),
+  file: row.filename,
+  fileUrl: normalizeFileUrl({ url: row.file_url, filepath: row.filepath }),
+  likes: row.likes || 0,
+  uploadedAt: row.uploaded_at,
+});
+
+const downloadFile = async (url, filename) => {
+  if (!url) return;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Download failed');
+    const blob = await res.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename || 'student-note';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+};
 
 const YEAR_OPTIONS = [
   { value: 'all',      label: 'All Years'     },
@@ -15,24 +120,63 @@ const SEM_OPTIONS = [
   { value: '2nd Semester', label: '2nd Semester'  },
 ];
 
-const StuHome = ({ onUploadClick, onTakeQuiz, onBonusMarks, onLikeEarned }) => {
+const StuHome = ({ student, onUploadClick, onTakeQuiz, onBonusMarks, onLikeEarned, onMyUploads }) => {
   const [view,       setView]  = useState('lecturer');
   const [search,     setSearch]= useState('');
   const [yearFilter, setYear]  = useState('all');
   const [semFilter,  setSem]   = useState('all');
+  const [lectures,   setLectures] = useState([]);
+  const [acceptedNotes, setAcceptedNotes] = useState([]);
 
-  // Like state — keyed by noteId, initialised from data
-  const [noteLikes, setNoteLikes] = useState(
-    () => Object.fromEntries(STUDENT_NOTES.map(n => [n.id, n.likes]))
-  );
+  useEffect(() => {
+    const loadLectures = async () => {
+      try {
+        const response = await axios.get(`${API_BASE}/api/student/lectures`);
+        setLectures((response.data || []).map(normalizeLecture));
+      } catch (error) {
+        console.error('Error fetching lectures for student home:', error);
+      }
+    };
+
+    loadLectures();
+  }, []);
+
+  useEffect(() => {
+    const loadAcceptedNotes = async () => {
+      try {
+        const currentStudentId = student?.student_id || 'STU001';
+        const response = await axios.get(`${API_BASE}/api/student/notes/accepted`, {
+          params: { studentId: currentStudentId },
+        });
+        const notes = (response.data || []).map((n) => normalizeAcceptedNote(n, currentStudentId));
+        setAcceptedNotes(notes);
+        setNoteLikes(Object.fromEntries(notes.map((n) => [n.id, n.likes])));
+        setLikedSet(new Set(notes.filter((n) => n.likedByMe).map((n) => n.id)));
+      } catch (error) {
+        console.error('Error fetching accepted notes:', error);
+      }
+    };
+
+    loadAcceptedNotes();
+  }, [student?.student_id]);
+
+  // Like state — keyed by noteId
+  const [noteLikes, setNoteLikes] = useState({});
   const [likedSet, setLikedSet] = useState(new Set());
 
-  const handleLike = (noteId, isMyUpload) => {
+  const handleLike = async (noteId, isMyUpload) => {
     if (isMyUpload)         return; // can't like own note
     if (likedSet.has(noteId)) return; // already liked
-    setLikedSet(prev => new Set([...prev, noteId]));
-    setNoteLikes(prev => ({ ...prev, [noteId]: (prev[noteId] ?? 0) + 1 }));
-    if (onLikeEarned) onLikeEarned(); // bubble up so sidebar total likes updates
+
+    try {
+      const studentId = student?.student_id || 'STU001';
+      const res = await axios.post(`${API_BASE}/api/student/notes/${noteId}/like`, { studentId });
+      setLikedSet(prev => new Set([...prev, noteId]));
+      setNoteLikes(prev => ({ ...prev, [noteId]: res.data?.likes ?? ((prev[noteId] ?? 0) + 1) }));
+      if (onLikeEarned) onLikeEarned();
+    } catch (error) {
+      console.error('Error liking note:', error);
+    }
   };
 
   const lectureMatches = (l) => {
@@ -52,11 +196,24 @@ const StuHome = ({ onUploadClick, onTakeQuiz, onBonusMarks, onLikeEarned }) => {
     );
   };
 
-  const filteredLectures = LECTURES.filter(lectureMatches);
-  const filteredNotes    = STUDENT_NOTES.filter(noteMatches);
+  const filteredLectures = lectures.filter(lectureMatches);
+  const filteredNotes    = acceptedNotes.filter(noteMatches);
+  const notesByLecture = acceptedNotes.reduce((acc, note) => {
+    if (!note.lectureId) return acc;
+    if (!acc[note.lectureId]) acc[note.lectureId] = [];
+    acc[note.lectureId].push(note);
+    return acc;
+  }, {});
+
+  const lecturesWithNotes = filteredLectures.map((lecture) => ({
+    ...lecture,
+    studentNotes: (notesByLecture[lecture.id] || [])
+      .slice()
+      .sort((a, b) => new Date(b.uploadedAt || 0).getTime() - new Date(a.uploadedAt || 0).getTime()),
+  }));
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-5 w-full">
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
@@ -64,12 +221,20 @@ const StuHome = ({ onUploadClick, onTakeQuiz, onBonusMarks, onLikeEarned }) => {
           <h1 className="text-3xl font-bold text-gray-900">Resources and Notes</h1>
           <p className="text-gray-400 text-sm mt-1">Access lecture materials, upload your notes, and test your knowledge</p>
         </div>
-        <button
-          onClick={onBonusMarks}
-          className="shrink-0 flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
-        >
-          <Sparkles size={15} /> Bonus Marks
-        </button>
+        <div className="shrink-0 flex items-center gap-2">
+          <button
+            onClick={onMyUploads}
+            className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
+          >
+            <FileText size={15} /> My Uploads
+          </button>
+          <button
+            onClick={onBonusMarks}
+            className="flex items-center gap-2 bg-blue-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
+          >
+            <Sparkles size={15} /> Bonus Marks
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -80,27 +245,28 @@ const StuHome = ({ onUploadClick, onTakeQuiz, onBonusMarks, onLikeEarned }) => {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search by lecture name, subject, topic, or lecturer..."
-          className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all placeholder:text-gray-400"
+          className="w-full pl-11 pr-4 py-2.5 bg-white border border-blue-200 rounded-xl text-sm text-gray-700 outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all placeholder:text-gray-400"
         />
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-3">
-        <SelectFilter value={yearFilter} onChange={setYear} options={YEAR_OPTIONS} />
-        <SelectFilter value={semFilter}  onChange={setSem}  options={SEM_OPTIONS}  />
-      </div>
+      {/* Tabs + Filters */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+          <TabBtn active={view === 'lecturer'} label={`Lecture Resources (${filteredLectures.length})`} onClick={() => setView('lecturer')} icon={<BookOpen size={15}/>} />
+          <TabBtn active={view === 'student'}  label={`Student Notes (${filteredNotes.length})`}        onClick={() => setView('student')}  icon={<Users size={15}/>} />
+        </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
-        <TabBtn active={view === 'lecturer'} label={`Lecture Resources (${filteredLectures.length})`} onClick={() => setView('lecturer')} icon={<BookOpen size={15}/>} />
-        <TabBtn active={view === 'student'}  label={`Student Notes (${filteredNotes.length})`}        onClick={() => setView('student')}  icon={<Users size={15}/>} />
+        <div className="flex gap-3 ml-auto">
+          <SelectFilter value={yearFilter} onChange={setYear} options={YEAR_OPTIONS} />
+          <SelectFilter value={semFilter}  onChange={setSem}  options={SEM_OPTIONS}  />
+        </div>
       </div>
 
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 pb-10">
         {view === 'lecturer' ? (
           filteredLectures.length > 0 ? (
-            filteredLectures.map(lecture => (
+            lecturesWithNotes.map(lecture => (
               <StuResourceCard
                 key={lecture.id}
                 lecture={lecture}
@@ -109,6 +275,7 @@ const StuHome = ({ onUploadClick, onTakeQuiz, onBonusMarks, onLikeEarned }) => {
                 noteLikes={noteLikes}
                 likedSet={likedSet}
                 onLike={handleLike}
+                onExploreStudentNotes={() => setView('student')}
               />
             ))
           ) : (
@@ -167,15 +334,26 @@ const StudentNoteCard = ({ note, likes, liked, onLike }) => (
       </div>
 
       {/* Uploader */}
-      <p className="text-sm text-gray-400 font-medium">👤 Uploaded by {note.uploader}</p>
-
+      <div>
+      <p className="text-sm text-gray-700 font-medium"><User size={16}/>Uploaded by {note.uploader}</p>
+      </div>
       {/* File */}
       <div>
         <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Files:</p>
-        <div className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline cursor-pointer">
-          <FileText size={13} className="shrink-0" />
-          {note.file}
-        </div>
+        {note.fileUrl ? (
+          <button
+            onClick={() => downloadFile(note.fileUrl, note.file)}
+            className="flex items-center gap-2 text-blue-600 text-sm font-medium hover:underline cursor-pointer"
+          >
+            <FileText size={13} className="shrink-0" />
+            {note.file}
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 text-gray-400 text-sm font-medium">
+            <FileText size={13} className="shrink-0" />
+            {note.file || 'File unavailable'}
+          </div>
+        )}
       </div>
 
       {/* Like row */}

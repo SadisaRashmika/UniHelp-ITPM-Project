@@ -1,5 +1,11 @@
 import React from 'react';
-import { User, FileCheck, BookOpen, Award } from 'lucide-react';
+import { User, FileCheck, BookOpen, Award, Calendar } from 'lucide-react';
+
+const getInitials = (lecturer) => {
+  if (lecturer?.initials) return lecturer.initials;
+  const parts = (lecturer?.name || '').trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((p) => p[0]).join('').toUpperCase() || 'L';
+};
 
 const NAV = [
   { key: 'profile',    label: 'Profile',                icon: User      },
@@ -8,7 +14,7 @@ const NAV = [
   { key: 'extramarks', label: 'Extra Marks Approve',    icon: Award     },
 ];
 
-const LecSidebar = ({ activeTab, onTabChange, pendingCount, extraMarksPending, lecturer }) => (
+const LecSidebar = ({ activeTab, onTabChange, pendingCount, extraMarksPending, lecturer, profilePhoto }) => (
   <aside className="w-72 h-screen bg-white border-r border-gray-200 fixed left-0 top-0 flex flex-col shadow-sm">
 
     {/* App branding */}
@@ -51,12 +57,20 @@ const LecSidebar = ({ activeTab, onTabChange, pendingCount, extraMarksPending, l
     {lecturer && (
       <div className="px-4 py-4 border-t border-gray-100">
         <div className="flex items-center gap-3 px-2">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
-            {lecturer.initials}
-          </div>
+          {profilePhoto ? (
+            <img
+              src={profilePhoto}
+              alt="Profile"
+              className="w-9 h-9 rounded-full border border-indigo-200 object-cover shrink-0"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-xs font-bold shrink-0">
+              {getInitials(lecturer)}
+            </div>
+          )}
           <div className="min-w-0">
             <p className="text-sm font-semibold text-gray-800 truncate">{lecturer.name}</p>
-            <p className="text-xs text-gray-400 truncate">{lecturer.employeeId}</p>
+            <p className="text-xs text-gray-400 truncate">{lecturer.employee_id}</p>
           </div>
         </div>
       </div>
