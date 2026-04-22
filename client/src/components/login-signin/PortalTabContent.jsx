@@ -1,5 +1,7 @@
 import LecDashboard from '../../pages/lecture-resource/LecDashboard';
 import StuDashboard from '../../pages/lecture-resource/StuDashboard';
+import LecturerDashboard1 from '../../pages/academic-ticket/lecturerDashboard1';
+import StudentDashboard1 from '../../pages/academic-ticket/studentDashboard1';
 import PortalHomeContent from './PortalHomeContent';
 import StudentTimetableContent from '../timetable/StudentTimetableContent';
 import AdminTimetableContent from '../timetable/AdminTimetableContent';
@@ -43,12 +45,9 @@ const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
 
   if (tab === 'jobs') {
     return (
-      <RolePanel
-        title="Jobs"
-        user={user}
-        lecturerBody="Lecturer jobs panel will publish assistant opportunities and academic openings."
-        studentBody="Student jobs panel will show internships, campus jobs, and role-specific applications."
-      />
+      <section className="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4">
+        {user.role === 'lecturer' ? <LecturerDashboard1 /> : <StudentDashboard1 />}
+      </section>
     );
   }
 

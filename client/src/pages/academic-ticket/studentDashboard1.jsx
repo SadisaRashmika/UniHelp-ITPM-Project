@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const StudentDashboard = () => {
+const StudentDashboard = ({ embedded = false }) => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [lightMode, setLightMode] = useState(false);
   const navigate = useNavigate();
@@ -184,7 +184,7 @@ const StudentDashboard = () => {
     { icon: ChartColumnBig, label: "Overview", link: "/academic-ticket/student-dashboard/overview", key: "overview" },
     { icon: BookOpen, label: "Tasks", link: "/academic-ticket/student-dashboard/tasks", key: "tasks" },
     { icon: FileText, label: "Submissions", link: "/academic-ticket/student-dashboard/submissions", key: "submissions" },
-    { icon: Briefcase, label: "Career", link: "/academic-ticket/student-dashboard/career", key: "career" },
+    { icon: Briefcase, label: "Jobs", link: "/academic-ticket/student-dashboard/jobs", key: "jobs" },
     { icon: Users, label: "Resume", link: "/academic-ticket/student-dashboard/resume", key: "resume" },
     { icon: Bell, label: "Notifications", link: "/academic-ticket/student-dashboard/notifications", key: "notifications" },
   ];
@@ -229,21 +229,16 @@ const StudentDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-900">
+    <div
+      className={
+        embedded
+          ? "w-full bg-gray-50 text-gray-900 rounded-2xl"
+          : "flex w-full min-h-[700px] bg-gray-50 text-gray-900 rounded-2xl overflow-hidden"
+      }
+    >
       {/* Header Sidebar */}
+      {!embedded && (
       <div className="w-72 h-full bg-white border-r border-gray-200 flex flex-col shadow-sm">
-        <div className="px-6 py-5 border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-sky-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold">🎓</span>
-            </div>
-            <div>
-              <span className="text-xl font-bold text-gray-900">Uni-Help System</span>
-              <p className="text-xs text-gray-400 mt-0.5">Student Dashboard</p>
-            </div>
-          </div>
-        </div>
-
         <nav className="flex-1 px-4 py-4">
           {sidebarItems.map((item, i) => (
             <div
@@ -277,38 +272,19 @@ const StudentDashboard = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-auto">
-        {/* Top Bar */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Student Dashboard</h1>
+      <div className={embedded ? "w-full flex flex-col overflow-auto min-w-0" : "flex-1 flex flex-col overflow-auto min-w-0"}>
+
+        {/* Page Content */}
+        <main className={embedded ? "p-4 md:p-5 overflow-auto" : "flex-1 p-5 md:p-6 overflow-auto"}>
+          {embedded && (
+            <div className="mb-5">
+              <h1 className="text-2xl font-bold text-gray-900">Student Jobs Dashboard</h1>
               <p className="text-sm text-gray-500 mt-1">Welcome back, {studentData?.name || "Alex Johnson"}!</p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Search className="text-gray-400" size={20} />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <button className="relative p-2 text-gray-600 hover:text-gray-900">
-                <Bell size={20} />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                {studentData?.avatar || "AJ"}
-              </div>
-            </div>
-          </div>
-        </header>
-        
-        {/* Page Content */}
-        <main className="flex-1 p-6 overflow-auto">
+          )}
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-center">

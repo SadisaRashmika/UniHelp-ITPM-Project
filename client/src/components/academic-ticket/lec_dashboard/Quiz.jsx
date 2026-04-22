@@ -10,7 +10,7 @@ import axios from "axios";
 
 const API_BASE = "http://localhost:5000/api/academic-ticket";
 
-const QuizManagement = () => {
+const QuizManagement = ({ embedded = false }) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("quiz");
@@ -257,8 +257,9 @@ const QuizManagement = () => {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 text-slate-900 font-sans">
+    <div className={embedded ? "w-full bg-slate-50 text-slate-900 font-sans rounded-2xl min-w-0" : "flex h-screen bg-slate-50 text-slate-900 font-sans"}>
       {/* SIDEBAR */}
+      {!embedded && (
       <div className="w-72 h-full bg-white border-r border-gray-200 flex flex-col shadow-sm">
         <div className="px-8 py-8">
           <div className="flex items-center gap-3">
@@ -299,9 +300,11 @@ const QuizManagement = () => {
           </div>
         </div>
       </div>
+      )}
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className={embedded ? "w-full flex flex-col overflow-hidden min-w-0" : "flex-1 flex flex-col overflow-hidden min-w-0"}>
+        {!embedded && (
         <header className="h-24 bg-white border-b border-slate-100 flex items-center justify-between px-10">
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">Quiz Management</h1>
@@ -319,8 +322,15 @@ const QuizManagement = () => {
             </div>
           </div>
         </header>
+        )}
 
-        <main className="flex-1 overflow-y-auto p-10">
+        <main className={embedded ? "overflow-y-auto p-4 md:p-6" : "flex-1 overflow-y-auto p-10"}>
+          {embedded && (
+            <div className="mb-5">
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight">Lecturer Jobs Dashboard</h1>
+              <p className="text-xs font-bold text-slate-500 mt-1">Manage assessments and track student progress</p>
+            </div>
+          )}
           {/* SELECTION STRUCTURE */}
           <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 mb-8">
             <div className="flex items-center gap-3 mb-6">
