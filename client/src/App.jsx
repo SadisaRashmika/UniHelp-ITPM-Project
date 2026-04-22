@@ -7,8 +7,6 @@ import LectureDashboard from './pages/user-feedback/LectureDashboard'
 
 import MainPortalPage from './pages/login-signin/MainPortalPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
-import LecturerTimetable from './pages/timetable/LecturerTimetable';
-import StudentTimetable from './pages/timetable/StudentTimetable';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 const App = () => {
@@ -16,16 +14,16 @@ const App = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<MainPortalPage />} />
-        <Route path="/timetable" element={<LecturerTimetable />} />
+        <Route path="/timetable" element={<MainPortalPage />} />
         <Route path="/student/home" element={<MainPortalPage />} />
         <Route path="/student/resource" element={<MainPortalPage />} />
-        <Route path="/student/timetable" element={<StudentTimetable />} />
+        <Route path="/student/timetable" element={<MainPortalPage />} />
         <Route path="/student/jobs" element={<MainPortalPage />} />
         <Route path="/student/support" element={<MainPortalPage />} />
         <Route path="/student/feedback" element={<MainPortalPage />} />
         <Route path="/lecturer/home" element={<MainPortalPage />} />
         <Route path="/lecturer/resource" element={<MainPortalPage />} />
-        <Route path="/lecturer/timetable" element={<LecturerTimetable />} />
+        <Route path="/lecturer/timetable" element={<MainPortalPage />} />
         <Route path="/lecturer/jobs" element={<MainPortalPage />} />
         <Route path="/lecturer/support" element={<MainPortalPage />} />
         <Route path="/lecturer/feedback" element={<MainPortalPage />} />

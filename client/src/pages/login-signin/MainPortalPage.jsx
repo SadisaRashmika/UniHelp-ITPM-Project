@@ -201,6 +201,7 @@ const MainPortalPage = () => {
       <ProfileModal
         isOpen={profileOpen}
         onClose={() => setProfileOpen(false)}
+        token={token}
         user={user}
         initials={initials}
         profilePhoto={profilePhoto}

@@ -3,8 +3,8 @@ import { test, expect } from '@playwright/test';
 test.describe('Timetable Page', () => {
   test('should load the lecturer timetable page', async ({ page }) => {
     // Increase timeout to give the server time to respond
-    await page.goto('/timetable', { waitUntil: 'networkidle' }); 
-    
+    await page.goto('/timetable', { waitUntil: 'networkidle' });
+
     // Check if we are actually on the timetable page or were redirected
     const url = page.url();
     console.log('Current URL:', url);
@@ -16,11 +16,11 @@ test.describe('Timetable Page', () => {
   test('should show loading state initially', async ({ page }) => {
     // Mock the API to be slow so we can catch the loading state
     await page.route('**/api/timetable/timeslots', async (route) => {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, timeslots: [] })
+        body: JSON.stringify({ success: true, timeslots: [] }),
       });
     });
 
@@ -31,7 +31,7 @@ test.describe('Timetable Page', () => {
 
   test('should navigate between weeks', async ({ page }) => {
     await page.goto('/timetable');
-    
+
     const weekText = page.locator('text=Week 1');
     await expect(weekText).toBeVisible();
 
@@ -46,7 +46,7 @@ test.describe('Timetable Page', () => {
 
   test('should display stats cards for lecturer', async ({ page }) => {
     await page.goto('/timetable');
-    
+
     await expect(page.locator('text=Sessions')).toBeVisible();
     await expect(page.locator('text=Total Seats')).toBeVisible();
     await expect(page.locator('text=Hours/Week')).toBeVisible();
@@ -58,12 +58,12 @@ test.describe('Timetable Page', () => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({ success: true, bookings: [] })
+        body: JSON.stringify({ success: true, bookings: [] }),
       });
     });
 
     await page.goto('/student/timetable');
-    
+
     const title = page.locator('h1');
     await expect(title).toContainText('My Timetable');
     await expect(page.locator('text=Booked')).toBeVisible();
