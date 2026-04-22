@@ -156,7 +156,7 @@ const MainPortalPage = () => {
   };
 
   const resourceOpen = activeTab === 'resource';
-  const blueThemeOpen = activeTab === 'home' || activeTab === 'resource' || activeTab === 'timetable';
+  const blueThemeOpen = activeTab === 'home' || activeTab === 'resource' || activeTab === 'timetable' || activeTab === 'support' || activeTab === 'feedback';
 
   return (
     <div

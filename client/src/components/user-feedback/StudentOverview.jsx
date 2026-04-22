@@ -49,7 +49,7 @@ const StudentOverview = ({ studentId = 1 }) => {
     );
 
     return (
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-4">
             
             <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-gray-100 p-3 flex items-center justify-between shadow-xs">
                 <div className="flex items-center gap-3 ml-2">

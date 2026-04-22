@@ -91,27 +91,6 @@ const AuthModal = ({ isOpen, onClose, onAuthenticated, initialMode = MODES.LOGIN
     }
   };
 
-  // Dev-only quick login (bypasses real auth for testing without PostgreSQL)
-  const onDevLogin = async (role) => {
-    resetFeedback();
-    setLoading(true);
-    try {
-      const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
-      const response = await fetch(`${API_BASE}/api/auth/dev-login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Dev login failed');
-      onAuthenticated(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const onRequestActivationOtp = async (event) => {
     event.preventDefault();
     resetFeedback();
@@ -237,7 +216,6 @@ const AuthModal = ({ isOpen, onClose, onAuthenticated, initialMode = MODES.LOGIN
               onLogin={onLogin}
               onForgot={() => switchMode(MODES.FORGOT)}
               onActivate={() => switchMode(MODES.ACTIVATE)}
-              onDevLogin={onDevLogin}
             />
           )}
 
@@ -270,7 +248,7 @@ const AuthModal = ({ isOpen, onClose, onAuthenticated, initialMode = MODES.LOGIN
   );
 };
 
-const LoginForm = ({ forms, updateForm, loading, onLogin, onForgot, onActivate, onDevLogin }) => (
+const LoginForm = ({ forms, updateForm, loading, onLogin, onForgot, onActivate }) => (
   <form className="space-y-3" onSubmit={onLogin}>
     <Field icon={Mail} label="University email or ID" type="text" placeholder="you@university.edu or STU001" value={forms.login.identifier} onChange={(value) => updateForm('login', 'identifier', value)} required />
     <PasswordField label="Password" placeholder="Enter your password" value={forms.login.password} onChange={(value) => updateForm('login', 'password', value)} required />
@@ -285,18 +263,6 @@ const LoginForm = ({ forms, updateForm, loading, onLogin, onForgot, onActivate, 
     </div>
 
     <SubmitButton loading={loading} label="Sign In" loadingLabel="Signing in…" />
-
-    {/* Dev-only quick login buttons (remove in production) */}
-    {onDevLogin && (
-      <div className="pt-3 border-t border-dashed border-slate-200 mt-3">
-        <p className="text-[10px] text-slate-400 text-center mb-2 uppercase tracking-wider">Dev Quick Login</p>
-        <div className="flex gap-2">
-          <button type="button" onClick={() => onDevLogin('student')} className="flex-1 text-xs py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-medium transition-colors">Student</button>
-          <button type="button" onClick={() => onDevLogin('lecturer')} className="flex-1 text-xs py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium transition-colors">Lecturer</button>
-          <button type="button" onClick={() => onDevLogin('admin')} className="flex-1 text-xs py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 font-medium transition-colors">Admin</button>
-        </div>
-      </div>
-    )}
   </form>
 );
 

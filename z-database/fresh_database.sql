@@ -28,7 +28,8 @@ CREATE TABLE lecturers (
 	status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Active', 'Blocked')),
 	password_hash VARCHAR(255),
 	updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-	created_at TIMESTAMP DEFAULT NOW()
+	created_at TIMESTAMP DEFAULT NOW(),
+	faculty VARCHAR(100)
 );
 
 -- Students
@@ -48,7 +49,8 @@ CREATE TABLE students (
 	status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Active', 'Blocked')),
 	password_hash VARCHAR(255),
 	updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-	created_at TIMESTAMP DEFAULT NOW()
+	created_at TIMESTAMP DEFAULT NOW(),
+	faculty VARCHAR(100)
 );
 
 -- Lectures
@@ -60,6 +62,7 @@ CREATE TABLE lectures (
 	topic VARCHAR(150),
 	year VARCHAR(20) NOT NULL,
 	semester VARCHAR(20) NOT NULL,
+	faculty VARCHAR(100),
 	youtube_url VARCHAR(255),
 	published_at TIMESTAMP DEFAULT NOW()
 );

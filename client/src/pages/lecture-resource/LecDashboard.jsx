@@ -5,7 +5,7 @@ import LecProfile from '../../components/lecture-resource/LecProfile';
 import LecStudentUploads from '../../components/lecture-resource/LecStudentUploads';
 import LecUpload from '../../components/lecture-resource/LecUpload';
 import LecExtraMarks from '../../components/lecture-resource/LecExtraMarks';
-import LecturerTimetableContent from '../../components/timetable/LecturerTimetableContent';
+import AdminTimetableContent from '../../components/timetable/AdminTimetableContent';
 
 const LecDashboard = ({ userId = 'LEC001', profilePhoto = '' }) => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -91,7 +91,7 @@ const LecDashboard = ({ userId = 'LEC001', profilePhoto = '' }) => {
           />
         )}
         {activeTab === 'timetable' && (
-          <LecturerTimetableContent lecturerId={userId} />
+          <AdminTimetableContent />
         )}
       </main>
     </div>

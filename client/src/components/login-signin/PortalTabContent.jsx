@@ -2,13 +2,13 @@ import LecDashboard from '../../pages/lecture-resource/LecDashboard';
 import StuDashboard from '../../pages/lecture-resource/StuDashboard';
 import PortalHomeContent from './PortalHomeContent';
 import StudentTimetableContent from '../timetable/StudentTimetableContent';
-import LecturerTimetableContent from '../timetable/LecturerTimetableContent';
+import AdminTimetableContent from '../timetable/AdminTimetableContent';
 
 // Vimo Components
-import StudentFeedbackDashboard from '../../components/user-feedback/StudentFeedbackDashboard';
-import StudentSupportDashboard from '../../components/user-feedback/StudentSupportDashboard';
-import LecturerFeedbackDashboard from '../../components/user-feedback/LecturerFeedbackDashboard';
-import LecturerSupportDashboard from '../../components/user-feedback/LecturerSupportDashboard';
+import StudentFeedbackDashboard from '../user-feedback/StudentFeedbackDashboard';
+import StudentSupportDashboard from '../user-feedback/StudentSupportDashboard';
+import LecturerFeedbackDashboard from '../user-feedback/LecturerFeedbackDashboard';
+import LecturerSupportDashboard from '../user-feedback/LecturerSupportDashboard';
 
 const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
   if (tab === 'home') {
@@ -34,11 +34,10 @@ const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
   }
 
   if (tab === 'timetable') {
-    const userId = user.idNumber;
     return user.role === 'lecturer' ? (
-      <LecturerTimetableContent lecturerId={userId} user={user} profilePhoto={profilePhoto} />
+      <AdminTimetableContent />
     ) : (
-      <StudentTimetableContent studentId={userId} user={user} profilePhoto={profilePhoto} />
+      <StudentTimetableContent studentId={user.idNumber} user={user} profilePhoto={profilePhoto} />
     );
   }
 

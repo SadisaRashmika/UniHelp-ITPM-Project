@@ -1,8 +1,30 @@
 const db = require('../../../config/db');
 
-const submitFeedback = async (student_id, lecturer_id, module_id, rating, comment) => {
-    const query = 'INSERT INTO feedbacks (student_id, lecturer_id, module_id, rating, comment) VALUES ($1, $2, $3, $4, $5) RETURNING *';
-    const result = await db.query(query, [student_id, lecturer_id, module_id, rating, comment]);
+const submitFeedback = async (student_id, lecturer_id, subject, rating, comment) => {
+    const query = `
+        WITH resolved_ids AS (
+            SELECT
+                COALESCE(
+                    (CASE WHEN $1 ~ '^[0-9]+$' THEN $1::integer ELSE NULL END),
+                    (SELECT id FROM students WHERE student_id = $1::text)
+                ) AS resolved_student_id,
+                COALESCE(
+                    (CASE WHEN $2 ~ '^[0-9]+$' THEN $2::integer ELSE NULL END),
+                    (SELECT id FROM lecturers WHERE employee_id = $2::text)
+                ) AS resolved_lecturer_id
+        )
+        INSERT INTO feedbacks (student_id, lecturer_id, subject, rating, comment)
+        SELECT resolved_student_id, resolved_lecturer_id, $3, $4, $5
+        FROM resolved_ids
+        WHERE resolved_student_id IS NOT NULL AND resolved_lecturer_id IS NOT NULL
+        RETURNING *
+    `;
+    const result = await db.query(query, [String(student_id), String(lecturer_id), subject, rating, comment]);
+    if (!result.rows[0]) {
+        const error = new Error('Invalid student or lecturer identifier');
+        error.statusCode = 400;
+        throw error;
+    }
     return result.rows[0];
 };
 
@@ -46,14 +68,20 @@ const getAllFeedback = async () => {
 
 const getLecturerModules = async (lecturerId) => {
     const query = `
-        SELECT m.* 
-        FROM modules m
-        WHERE m.lecturer_id = $1 OR m.lecturer_id IN (
-            SELECT id FROM lecturers WHERE employee_id = $1::text
-        )
+        SELECT DISTINCT lec.subject
+        FROM lectures lec
+        WHERE lec.subject IS NOT NULL
+          AND lec.subject <> ''
+          AND (
+              lec.lecturer_id = (CASE WHEN $1 ~ '^[0-9]+$' THEN $1::integer ELSE NULL END)
+              OR lec.lecturer_id IN (
+                  SELECT id FROM lecturers WHERE employee_id = $1::text
+              )
+          )
+        ORDER BY lec.subject
     `;
     const result = await db.query(query, [lecturerId]);
-    return result.rows;
+    return result.rows.map((row) => row.subject);
 };
 
 const updateFeedback = async (id, rating, comment) => {

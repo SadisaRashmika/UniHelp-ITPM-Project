@@ -12,11 +12,11 @@ const AdminTimetableContent = () => {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingSlot, setEditingSlot] = useState(null);
+  const [submitError, setSubmitError] = useState('');
 
   // Form state
   const [formData, setFormData] = useState({
     subject_id: '',
-    lecturer_id: '',
     location_id: '',
     day_of_week: 1,
     start_time: '08:00',
@@ -35,7 +35,7 @@ const AdminTimetableContent = () => {
         fetch(`${API_URL}/timetable/timeslots`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API_URL}/timetable/subjects`, { headers: { Authorization: `Bearer ${token}` } }),
         fetch(`${API_URL}/timetable/locations`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_URL}/timetable/admin/lecturers`, { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`${API_URL}/timetable/lecturer/lecturers`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
       const timeslotsData = await timeslotsRes.json();
@@ -59,47 +59,79 @@ const AdminTimetableContent = () => {
 
   const handleAddTimeslot = async () => {
     try {
+      setSubmitError('');
+      if (!formData.subject_id || !formData.location_id || !formData.day_of_week || !formData.start_time || !formData.end_time) {
+        setSubmitError('Please fill in all required fields.');
+        return;
+      }
+
+      if (formData.start_time >= formData.end_time) {
+        setSubmitError('End time must be later than start time.');
+        return;
+      }
+
       const token = localStorage.getItem('unihelp_token');
-      const response = await fetch(`${API_URL}/timetable/admin/timeslots`, {
+      const response = await fetch(`${API_URL}/timetable/lecturer/timeslots`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          subject_id: Number(formData.subject_id),
+          location_id: Number(formData.location_id),
+          day_of_week: Number(formData.day_of_week),
+          start_time: formData.start_time,
+          end_time: formData.end_time
+        })
       });
 
       const data = await response.json();
-      if (data.success) {
-        setTimeslots([...timeslots, data.timeslot]);
-        setShowAddModal(false);
-        resetForm();
+      if (!response.ok || !data.success) {
+        setSubmitError(data.message || 'Failed to add timeslot.');
+        return;
       }
+
+      setTimeslots([...timeslots, data.timeslot]);
+      setShowAddModal(false);
+      resetForm();
     } catch (error) {
       console.error('Failed to add timeslot:', error);
+      setSubmitError('Failed to add timeslot. Please try again.');
     }
   };
 
   const handleUpdateTimeslot = async () => {
     try {
+      setSubmitError('');
       const token = localStorage.getItem('unihelp_token');
-      const response = await fetch(`${API_URL}/timetable/admin/timeslots/${editingSlot.id}`, {
+      const response = await fetch(`${API_URL}/timetable/lecturer/timeslots/${editingSlot.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          subject_id: Number(formData.subject_id),
+          location_id: Number(formData.location_id),
+          day_of_week: Number(formData.day_of_week),
+          start_time: formData.start_time,
+          end_time: formData.end_time
+        })
       });
 
       const data = await response.json();
-      if (data.success) {
-        setTimeslots(timeslots.map(t => t.id === editingSlot.id ? data.timeslot : t));
-        setEditingSlot(null);
-        resetForm();
+      if (!response.ok || !data.success) {
+        setSubmitError(data.message || 'Failed to update timeslot.');
+        return;
       }
+
+      setTimeslots(timeslots.map(t => t.id === editingSlot.id ? data.timeslot : t));
+      setEditingSlot(null);
+      resetForm();
     } catch (error) {
       console.error('Failed to update timeslot:', error);
+      setSubmitError('Failed to update timeslot. Please try again.');
     }
   };
 
@@ -108,7 +140,7 @@ const AdminTimetableContent = () => {
 
     try {
       const token = localStorage.getItem('unihelp_token');
-      const response = await fetch(`${API_URL}/timetable/admin/timeslots/${id}`, {
+      const response = await fetch(`${API_URL}/timetable/lecturer/timeslots/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -123,9 +155,9 @@ const AdminTimetableContent = () => {
   };
 
   const resetForm = () => {
+    setSubmitError('');
     setFormData({
       subject_id: '',
-      lecturer_id: '',
       location_id: '',
       day_of_week: 1,
       start_time: '08:00',
@@ -134,10 +166,10 @@ const AdminTimetableContent = () => {
   };
 
   const openEditModal = (slot) => {
+    setSubmitError('');
     setEditingSlot(slot);
     setFormData({
       subject_id: slot.subject_id,
-      lecturer_id: slot.lecturer_id,
       location_id: slot.location_id,
       day_of_week: slot.day_of_week,
       start_time: slot.start_time?.substring(0, 5) || '08:00',
@@ -154,7 +186,7 @@ const AdminTimetableContent = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">Timetable Management</h2>
+          <h2 className="text-xl font-bold text-gray-800">Lecturer Timetable Management</h2>
           <p className="text-gray-600 text-sm">Create, edit, and manage lecture timeslots</p>
         </div>
         <button
@@ -299,6 +331,12 @@ const AdminTimetableContent = () => {
             </div>
 
             <div className="space-y-4">
+              {submitError && (
+                <div className="px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+                  {submitError}
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
                 <select
@@ -309,20 +347,6 @@ const AdminTimetableContent = () => {
                   <option value="">Select Subject</option>
                   {subjects.map(s => (
                     <option key={s.id} value={s.id}>{s.subject_name} ({s.subject_code})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Lecturer</label>
-                <select
-                  value={formData.lecturer_id}
-                  onChange={(e) => setFormData({ ...formData, lecturer_id: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select Lecturer</option>
-                  {lecturers.map(l => (
-                    <option key={l.id} value={l.id}>{l.name}</option>
                   ))}
                 </select>
               </div>

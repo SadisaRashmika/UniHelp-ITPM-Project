@@ -71,7 +71,7 @@ const StudentFeedbackDashboard = ({ studentId }) => {
     );
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-1000">
+        <div className="space-y-8">
             
             {/* Top Analysis Section */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
