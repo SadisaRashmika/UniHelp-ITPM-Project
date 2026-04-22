@@ -8,4 +8,14 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    css: true,
+    setupFiles: './src/test/setupTests.js',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+    },
+  },
 })
