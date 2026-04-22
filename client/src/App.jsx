@@ -8,23 +8,6 @@ import LectureDashboard from './pages/user-feedback/LectureDashboard'
 import MainPortalPage from './pages/login-signin/MainPortalPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 
-import LecturerDashboard1 from './pages/academic-ticket/lecturerDashboard1';
-import StudentDashboard1 from './pages/academic-ticket/studentDashboard1';
-import TasksPage from './components/academic-ticket/student-dashboard/TasksPage';
-import Submissions from './components/academic-ticket/student-dashboard/Submissions';
-import Career from './components/academic-ticket/student-dashboard/Career';
-import Notifications from './components/academic-ticket/student-dashboard/Notifications';
-import Resume from './components/academic-ticket/student-dashboard/Resume';
-import Profile from './components/academic-ticket/student-dashboard/Profile';
-import StudentOverview from './components/academic-ticket/student-dashboard/Overview';
-import Overview from './components/academic-ticket/lec_dashboard/Overview';
-import Quiz from './components/academic-ticket/lec_dashboard/Quiz';
-import Practical from './components/academic-ticket/lec_dashboard/Practical';
-import LecSubmissions from './components/academic-ticket/lec_dashboard/Submissions';
-import Analytics from './components/academic-ticket/lec_dashboard/Analytics';
-import Grades from './components/academic-ticket/lec_dashboard/Grades';
-import StudentGrades from './components/academic-ticket/student-dashboard/Grades';
-
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 const App = () => {
@@ -45,26 +28,6 @@ const App = () => {
         <Route path="/lecturer/support" element={<MainPortalPage />} />
         <Route path="/lecturer/feedback" element={<MainPortalPage />} />
         <Route path="/admin" element={<AdminDashboard />} />
-
-        <Route path="/academic-ticket/lecturer-dashboard" element={<LecturerDashboard1 />} />
-        <Route path="/academic-ticket/lec-dashboard" element={<Navigate to="/academic-ticket/lec-dashboard/overview" replace />} />
-        <Route path="/academic-ticket/lec-dashboard/overview" element={<Overview />} />
-        <Route path="/academic-ticket/lec-dashboard/jobs" element={<Quiz />} />
-        <Route path="/academic-ticket/lec-dashboard/quiz" element={<Quiz />} />
-        <Route path="/academic-ticket/lec-dashboard/practical" element={<Practical />} />
-        <Route path="/academic-ticket/lec-dashboard/submissions" element={<LecSubmissions />} />
-        <Route path="/academic-ticket/lec-dashboard/analytics" element={<Analytics />} />
-        <Route path="/academic-ticket/lec-dashboard/grades" element={<Grades />} />
-        <Route path="/academic-ticket/student-dashboard" element={<StudentDashboard1 />} />
-        <Route path="/academic-ticket/student-dashboard/tasks" element={<TasksPage />} />
-        <Route path="/academic-ticket/student-dashboard/submissions" element={<Submissions />} />
-        <Route path="/academic-ticket/student-dashboard/grades" element={<StudentGrades />} />
-        <Route path="/academic-ticket/student-dashboard/jobs" element={<Career />} />
-        <Route path="/academic-ticket/student-dashboard/career" element={<Career />} />
-        <Route path="/academic-ticket/student-dashboard/notifications" element={<Notifications />} />
-        <Route path="/academic-ticket/student-dashboard/resume" element={<Resume />} />
-        <Route path="/academic-ticket/student-dashboard/overview" element={<StudentOverview />} />
-        <Route path="/academic-ticket/studentdashboard" element={<Profile />} />
 
 
         <Route path="/vimo/student" element={<StudentDashboard />} />

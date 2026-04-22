@@ -5,13 +5,11 @@ import {
   TrendingUp, Award, Upload, List, Globe, BookOpen, Layers,
   ChevronRight, Filter, Search, MoreVertical, LayoutGrid
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const API_BASE = "http://localhost:5000/api/academic-ticket";
 
 const QuizManagement = ({ embedded = false }) => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("quiz");
   
@@ -48,11 +46,11 @@ const QuizManagement = ({ embedded = false }) => {
   const lecturer = { id: "LEC001" };
 
   const sidebarItems = [
-    { icon: ChartColumnBig, label: "Overview", link: "/academic-ticket/lec-dashboard/overview", key: "overview" },
-    { icon: LayoutGrid, label: "Quiz Management", link: "/academic-ticket/lec-dashboard/quiz", key: "quiz" },
-    { icon: Upload, label: "Submissions", link: "/academic-ticket/lec-dashboard/submissions", key: "submissions" },
-    { icon: TrendingUp, label: "Analytics", link: "/academic-ticket/lec-dashboard/analytics", key: "analytics" },
-    { icon: Award, label: "Grades", link: "/academic-ticket/lec-dashboard/grades", key: "grades" },
+    { icon: ChartColumnBig, label: "Overview", key: "overview" },
+    { icon: LayoutGrid, label: "Quiz Management", key: "quiz" },
+    { icon: Upload, label: "Submissions", key: "submissions" },
+    { icon: TrendingUp, label: "Analytics", key: "analytics" },
+    { icon: Award, label: "Grades", key: "grades" },
   ];
 
   // Fetch Faculties on Mount
@@ -243,7 +241,6 @@ const QuizManagement = ({ embedded = false }) => {
 
   const handleSidebarClick = (item) => {
     setActiveTab(item.key);
-    navigate(item.link);
   };
 
   const handleDeleteQuiz = async (id) => {
@@ -254,6 +251,92 @@ const QuizManagement = ({ embedded = false }) => {
     } catch (err) {
       console.error("Error deleting quiz:", err);
     }
+  };
+
+  const renderSecondaryTabContent = () => {
+    if (activeTab === "overview") {
+      return (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Overview</h2>
+            <p className="text-sm font-medium text-slate-500 mt-1">High-level summary of your quiz operations.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Total Quizzes</p>
+              <p className="text-3xl font-black text-slate-900 mt-2">{quizzes.length}</p>
+            </div>
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Selected Module</p>
+              <p className="text-sm font-bold text-slate-900 mt-2">
+                {modules.find((m) => m.id == selectedModule)?.code || "Not selected"}
+              </p>
+            </div>
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Status</p>
+              <p className="text-sm font-bold text-indigo-600 mt-2">Ready to manage quizzes</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === "submissions") {
+      return (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Submissions</h2>
+            <p className="text-sm font-medium text-slate-500 mt-1">Student submissions appear here after quiz attempts.</p>
+          </div>
+          <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
+            <p className="text-slate-600 font-medium">No submissions are loaded in this view yet.</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === "analytics") {
+      return (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Analytics</h2>
+            <p className="text-sm font-medium text-slate-500 mt-1">Performance insights for created quizzes.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Modules with Quizzes</p>
+              <p className="text-3xl font-black text-slate-900 mt-2">{selectedModule ? 1 : 0}</p>
+            </div>
+            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Average Questions/Quiz</p>
+              <p className="text-3xl font-black text-slate-900 mt-2">
+                {quizzes.length > 0
+                  ? Math.round(
+                      quizzes.reduce((sum, item) => sum + (item.questions?.length || 0), 0) / quizzes.length
+                    )
+                  : 0}
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === "grades") {
+      return (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Grades</h2>
+            <p className="text-sm font-medium text-slate-500 mt-1">Grade management for quizzes will appear here.</p>
+          </div>
+          <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
+            <p className="text-slate-600 font-medium">No graded records available in this module yet.</p>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -331,6 +414,10 @@ const QuizManagement = ({ embedded = false }) => {
               <p className="text-xs font-bold text-slate-500 mt-1">Manage assessments and track student progress</p>
             </div>
           )}
+          {activeTab !== "quiz" ? (
+            renderSecondaryTabContent()
+          ) : (
+          <>
           {/* SELECTION STRUCTURE */}
           <div className="bg-white rounded-[32px] p-8 shadow-sm border border-slate-100 mb-8">
             <div className="flex items-center gap-3 mb-6">
@@ -476,6 +563,8 @@ const QuizManagement = ({ embedded = false }) => {
                 </div>
               )}
             </div>
+          )}
+          </>
           )}
         </main>
       </div>
