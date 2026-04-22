@@ -5,10 +5,10 @@ import StudentTimetableContent from '../timetable/StudentTimetableContent';
 import AdminTimetableContent from '../timetable/AdminTimetableContent';
 
 // Vimo Components
-import StudentFeedbackDashboard from '../../components/user-feedback/StudentFeedbackDashboard';
-import StudentSupportDashboard from '../../components/user-feedback/StudentSupportDashboard';
-import LecturerFeedbackDashboard from '../../components/user-feedback/LecturerFeedbackDashboard';
-import LecturerSupportDashboard from '../../components/user-feedback/LecturerSupportDashboard';
+import StudentFeedbackDashboard from '../user-feedback/StudentFeedbackDashboard';
+import StudentSupportDashboard from '../user-feedback/StudentSupportDashboard';
+import LecturerFeedbackDashboard from '../user-feedback/LecturerFeedbackDashboard';
+import LecturerSupportDashboard from '../user-feedback/LecturerSupportDashboard';
 
 const PortalTabContent = ({ tab, user, profilePhoto, onLogin, onNavigate }) => {
   if (tab === 'home') {
