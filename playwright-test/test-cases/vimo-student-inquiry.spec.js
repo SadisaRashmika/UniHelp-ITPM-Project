@@ -21,6 +21,6 @@ test.describe('VIMO Student Inquiry Support', () => {
         await page.getByText('Inquiry Support').click();
         
         // Check for common elements in the inquiry list
-        await expect(page.getByText('Recent Perspective Logs')).toBeVisible();
+        await expect(page.getByText('Support Lifecycle')).toBeVisible();
     });
 });

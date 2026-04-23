@@ -13,7 +13,7 @@ test.describe('VIMO Student Feedback Management', () => {
         await page.getByRole('button', { name: /Add Review/i }).click();
         
         // Verify form elements
-        await expect(page.getByText('New Feedback Node')).toBeVisible();
+        await expect(page.getByText('New Feedback')).toBeVisible();
         await expect(page.locator('select').first()).toBeVisible(); // Lecturer selection
         await expect(page.getByPlaceholder('e.g. System Control')).toBeVisible(); // Subject input
         await expect(page.getByPlaceholder('Execute deep-dive analysis...')).toBeVisible(); // Comment

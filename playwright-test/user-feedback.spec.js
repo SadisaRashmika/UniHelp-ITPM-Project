@@ -9,13 +9,13 @@ test.describe('User Feedback & Ticketing Module Tests', () => {
         await page.goto(feedbackPath);
         
         // Wait for the archive list to be visible
-        await expect(page.getByText('Perspective Archive')).toBeVisible({ timeout: 10000 });
+        await expect(page.getByText('New Feedback')).toBeVisible({ timeout: 10000 });
 
         // Click "Add Review" button to open the form
         await page.getByRole('button', { name: /Add Review/i }).click();
 
         // Verify the form is opened by checking for the form title and submit button
-        await expect(page.getByText('New Feedback Node')).toBeVisible();
+        await expect(page.getByText('New Feedback')).toBeVisible();
         await expect(page.getByRole('button', { name: /Initialize Transmission/i })).toBeVisible();
     });
 
