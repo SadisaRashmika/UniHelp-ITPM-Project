@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, BookOpen, Clock, Users, CheckCircle, XCircle, AlertCircle, User } from 'lucide-react';
+import { Calendar, BookOpen, Clock, Users, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import TimetableGrid from './TimetableGrid';
 import BookingModal from './BookingModal';
 import NotificationBell from './NotificationBell';
 
 const API_URL = 'http://localhost:5000/api';
 
-const StudentTimetableContent = ({ studentId, user }) => {
+const getInitials = (name) => {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'S';
+};
+
+const StudentTimetableContent = ({ studentId, user, profilePhoto = '' }) => {
   const [timeslots, setTimeslots] = useState([]);
   const [myBookings, setMyBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -110,9 +115,17 @@ const StudentTimetableContent = ({ studentId, user }) => {
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-4 text-white shadow-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <User size={20} className="text-white" />
-              </div>
+              {profilePhoto ? (
+                <img
+                  src={profilePhoto}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full border border-white/30 object-cover shrink-0"
+                />
+              ) : (
+                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-semibold text-sm">
+                  {getInitials(user.fullName || user.full_name || 'Student')}
+                </div>
+              )}
               <div>
                 <h3 className="font-semibold text-lg">{user.fullName || user.full_name || 'Student'}</h3>
                 <div className="flex items-center gap-3 text-blue-100 text-sm">

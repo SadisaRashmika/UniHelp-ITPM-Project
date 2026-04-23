@@ -14,7 +14,6 @@ DROP TABLE IF EXISTS lectures CASCADE;
 DROP TABLE IF EXISTS students CASCADE;
 DROP TABLE IF EXISTS lecturers CASCADE;
 DROP TABLE IF EXISTS otp_codes CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS feedbacks CASCADE;
 DROP TABLE IF EXISTS tickets CASCADE;
 DROP TABLE IF EXISTS ticket_chats CASCADE;
@@ -203,7 +202,6 @@ CREATE TABLE otp_codes (
 CREATE INDEX idx_otp_user_purpose_created ON otp_codes (user_id, purpose, created_at DESC);
 CREATE INDEX idx_otp_expires_at ON otp_codes (expires_at);
 
-
 ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Active', 'Blocked'));
 ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
 ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT NOW();
@@ -227,6 +225,7 @@ CREATE TABLE auth_otp_codes (
 
 CREATE INDEX idx_auth_otp_identity ON auth_otp_codes (role, id_number, purpose, created_at DESC);
 CREATE INDEX idx_auth_otp_expires ON auth_otp_codes (expires_at);
+
 
 -- =====================================================================================
 -- 3. DATA INSERTS (FROM vimo.sql and dummy_data.sql)
@@ -336,18 +335,17 @@ SET
 	status = 'Pending',
 	password_hash = NULL,
 	updated_at = NOW();
-
 -- Initialize lecturer/student auth columns
 UPDATE lecturers
 SET
-	status = COALESCE(status, 'Pending'),
-	password_hash = NULL,
+	status = 'Active',
+	password_hash = '$2b$10$dummyHashForTestingPurposesOnly',
 	updated_at = NOW();
 
 UPDATE students
 SET
-	status = COALESCE(status, 'Pending'),
-	password_hash = NULL,
+	status = 'Active',
+	password_hash = '$2b$10$dummyHashForTestingPurposesOnly',
 	updated_at = NOW();
 
 COMMIT;

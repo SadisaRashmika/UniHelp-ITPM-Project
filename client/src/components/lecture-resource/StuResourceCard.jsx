@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Video, Upload, ChevronDown, ChevronUp, PenTool, Heart, GraduationCap } from 'lucide-react';
+import { FileText, Video, Upload, ChevronDown, ChevronUp, PenTool, Heart } from 'lucide-react';
 
 const getYoutubeThumbnail = (url) => {
   if (!url) return null;
@@ -7,6 +7,11 @@ const getYoutubeThumbnail = (url) => {
   const videoId = idMatch?.[1];
   if (!videoId) return null;
   return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+};
+
+const getInitials = (name) => {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  return parts.slice(0, 2).map((p) => p[0]).join('').toUpperCase() || 'L';
 };
 
 const StuResourceCard = ({ lecture, onUpload, onQuiz, noteLikes, likedSet, onLike, onExploreStudentNotes }) => {
@@ -74,10 +79,25 @@ const StuResourceCard = ({ lecture, onUpload, onQuiz, noteLikes, likedSet, onLik
               </span>
             ))}
           </div>
-          <p className="text-sm text-gray-700 font-medium mt-2.5"><GraduationCap size={16} /> {lecture.lecturer}</p>
-          {lecture.lecturerEmail && (
-            <p className="text-xs text-blue-400 mt-0.5">{lecture.lecturerEmail}</p>
-          )}
+          <div className="mt-3 flex items-center gap-2.5">
+            {lecture.lecturerImageUrl ? (
+              <img
+                src={lecture.lecturerImageUrl}
+                alt={lecture.lecturer || 'Lecturer'}
+                className="h-9 w-9 rounded-full border border-slate-200 object-cover shrink-0"
+              />
+            ) : (
+              <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                {getInitials(lecture.lecturer)}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-sm text-gray-700 font-medium truncate">{lecture.lecturer}</p>
+              {lecture.lecturerEmail && (
+                <p className="text-xs text-blue-400 truncate">{lecture.lecturerEmail}</p>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Files */}

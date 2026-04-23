@@ -1,13 +1,13 @@
 const feedbackModel = require('../models/feedbackModel');
 
 const submitFeedback = async (req, res) => {
-    const { student_id, lecturer_id, module_id, rating, comment } = req.body;
+    const { student_id, lecturer_id, subject, rating, comment } = req.body;
     try {
-        const feedback = await feedbackModel.submitFeedback(student_id, lecturer_id, module_id, rating, comment);
+        const feedback = await feedbackModel.submitFeedback(student_id, lecturer_id, subject, rating, comment);
         res.status(201).json(feedback);
     } catch (error) {
         console.error('Error submitting feedback:', error.message);
-        res.status(500).json({ error: 'Failed to submit feedback' });
+        res.status(error.statusCode || 500).json({ error: error.message || 'Failed to submit feedback' });
     }
 };
 

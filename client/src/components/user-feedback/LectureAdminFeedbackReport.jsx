@@ -95,7 +95,7 @@ const LectureAdminFeedbackReport = ({ lecturerId = 1 }) => {
     );
 
     return (
-        <div className="space-y-5 grow animate-in fade-in slide-in-from-bottom-5 duration-700 pb-6">
+        <div className="space-y-5 grow pb-6">
 
             <div className="flex items-center justify-between">
                 <div>
@@ -125,8 +125,7 @@ const LectureAdminFeedbackReport = ({ lecturerId = 1 }) => {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-                <div className="lg:col-span-2 bg-white/80 backdrop-blur-md rounded-2xl border border-gray-100 shadow-sm p-6 relative overflow-hidden group">
-                    <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-50/50 rounded-full blur-3xl pointer-events-none" />
+                <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 relative overflow-hidden group">
 
                     <div className="flex items-center justify-between mb-6 relative z-10">
                         <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">

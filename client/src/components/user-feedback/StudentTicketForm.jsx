@@ -166,15 +166,15 @@ const StudentTicketForm = ({ studentId = 1, onTicketSubmitted }) => {
 
     if (view === 'create') {
         return (
-            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-xl shadow-gray-100/50 animate-in zoom-in-95 duration-500 max-w-4xl mx-auto">
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm max-w-4xl mx-auto">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                             <Plus size={20} />
                         </div>
                         <div>
-                            <h3 className="text-lg font-black tracking-tight text-gray-900 leading-none">Initiate Support Protocol</h3>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Fill all required nodes to proceed</p>
+                            <h3 className="text-lg font-bold tracking-tight text-gray-900 leading-none">Open Inquiry</h3>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Submit a support or academic request</p>
                         </div>
                     </div>
                     <button 
@@ -308,7 +308,7 @@ const StudentTicketForm = ({ studentId = 1, onTicketSubmitted }) => {
     }
 
     return (
-        <div className="space-y-6">
+            <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h3 className="text-base font-extrabold text-gray-900 tracking-tight leading-none">Support Lifecycle</h3>
@@ -316,14 +316,14 @@ const StudentTicketForm = ({ studentId = 1, onTicketSubmitted }) => {
                 </div>
                 <button 
                     onClick={() => setView('create')}
-                    className="px-6 py-2.5 bg-linear-to-br from-blue-500 to-indigo-700 text-white rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-xl shadow-blue-50 hover:scale-105 transition-all flex items-center gap-2"
+                    className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-blue-700 transition-all flex items-center gap-2"
                 >
                     <Plus size={14} /> Open Inquiry
                 </button>
             </div>
 
             {status.msg && (
-                <div className={`p-3 rounded-lg text-[10px] font-bold text-center border animate-pulse flex items-center justify-center gap-2 uppercase tracking-tight
+                <div className={`p-3 rounded-lg text-[10px] font-bold text-center border flex items-center justify-center gap-2 uppercase tracking-tight
                     ${status.type === 'success' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
                     {status.type === 'success' ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
                     {status.msg}
@@ -331,7 +331,7 @@ const StudentTicketForm = ({ studentId = 1, onTicketSubmitted }) => {
             )}
 
             {loading ? (
-                <div className="p-20 text-center animate-pulse text-[10px] font-bold text-blue-500 uppercase tracking-widest italic opacity-50">Synchronizing Ticket Archives...</div>
+                <div className="p-20 text-center text-[10px] font-bold text-blue-500 uppercase tracking-widest italic opacity-50">Synchronizing Ticket Archives...</div>
             ) : (
                 <div className="grid grid-cols-1 gap-4">
                     {tickets.map((ticket) => (
@@ -401,8 +401,8 @@ const StudentTicketForm = ({ studentId = 1, onTicketSubmitted }) => {
                     ))}
 
                     {selectedTicket && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-300 text-left">
-                        <div className="bg-white w-full max-w-6xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/55 backdrop-blur-sm text-left">
+                            <div className="bg-white w-full max-w-6xl rounded-2xl shadow-xl overflow-hidden border border-white/20">
                             {/* Header */}
                             <div className="px-6 py-3 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
                                 <div className="flex items-center gap-3">
