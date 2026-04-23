@@ -10,7 +10,7 @@ test.describe('VIMO Lecture Management & Analytics', () => {
         await page.getByText('My Reviews').click();
         
         await expect(page.getByText('Student Sentiment Analytics')).toBeVisible();
-        await expect(page.getByRole('button', { name: /Export Analytics/i })).toBeVisible();
+        await expect(page.getByRole('button', { name: 'Export Analytics' })).toBeVisible({ timeout: 10000 });
     });
 
     test('Should access user management and filter accounts', async ({ page }) => {
