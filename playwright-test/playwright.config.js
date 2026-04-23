@@ -14,7 +14,7 @@ module.exports = defineConfig({
   use: {
     actionTimeout: 0,
     trace: 'on-first-retry',
-    baseURL: 'http://localhost:5173', // Adjust this based on your React app port (Vite is usually 5173, CRA is 3000)
+    baseURL: 'http://127.0.0.1:5173', // Adjust this based on your React app port (Vite is usually 5173, CRA is 3000)
   },
   projects: [
     {

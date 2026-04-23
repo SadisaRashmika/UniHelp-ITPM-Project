@@ -40,7 +40,7 @@ test.describe('User Feedback & Ticketing Module Tests', () => {
         await page.locator('button').filter({ has: page.locator('svg.lucide-star') }).nth(4).click();
 
         // 4. Enter Analytical Remarks (Comment)
-        await page.getByPlaceholder('Execute deep-dive analysis...').fill('Exceptional module delivery and clear concepts.');
+        await page.getByPlaceholder('Write a clear, constructive comment...').fill('Exceptional module delivery and clear concepts.');
 
         // Submit the form
         await page.getByRole('button', { name: /Initialize Transmission/i }).click();

@@ -7,7 +7,7 @@ test.describe('VIMO Student Dashboard', () => {
         await page.goto(studentVimoPath);
         
         // Check for key metrics
-        await expect(page.getByText('Experience Points (XP)')).toBeVisible();
+        await expect(page.getByText('Experience Points')).toBeVisible();
         await expect(page.getByText('Academic Level')).toBeVisible();
         await expect(page.getByText('Global Rank')).toBeVisible();
         

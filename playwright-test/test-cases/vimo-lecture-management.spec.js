@@ -20,7 +20,7 @@ test.describe('VIMO Lecture Management & Analytics', () => {
         await page.getByText('User Management').click();
         
         // Check for search and tabs
-        await expect(page.getByPlaceholder(/Search for entities/i)).toBeVisible();
+        await expect(page.getByPlaceholder(/Search protocols.../i)).toBeVisible();
         await expect(page.getByRole('button', { name: 'Lecturers' })).toBeVisible();
         await expect(page.getByRole('button', { name: 'Students' })).toBeVisible();
     });
