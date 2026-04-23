@@ -203,8 +203,6 @@ CREATE TABLE otp_codes (
 CREATE INDEX idx_otp_user_purpose_created ON otp_codes (user_id, purpose, created_at DESC);
 CREATE INDEX idx_otp_expires_at ON otp_codes (expires_at);
 
-ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS user_id BIGINT UNIQUE REFERENCES users(id) ON DELETE SET NULL;
-ALTER TABLE students ADD COLUMN IF NOT EXISTS user_id BIGINT UNIQUE REFERENCES users(id) ON DELETE SET NULL;
 
 ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Active', 'Blocked'));
 ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
@@ -338,19 +336,6 @@ SET
 	status = 'Pending',
 	password_hash = NULL,
 	updated_at = NOW();
-
--- Link existing student/lecturer rows with users table
-UPDATE lecturers l
-SET user_id = u.id
-FROM users u
-WHERE u.id_number = l.employee_id
-	AND l.user_id IS DISTINCT FROM u.id;
-
-UPDATE students s
-SET user_id = u.id
-FROM users u
-WHERE u.id_number = s.student_id
-	AND s.user_id IS DISTINCT FROM u.id;
 
 -- Initialize lecturer/student auth columns
 UPDATE lecturers

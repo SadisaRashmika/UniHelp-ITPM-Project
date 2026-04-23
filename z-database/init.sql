@@ -184,10 +184,6 @@ CREATE TABLE IF NOT EXISTS otp_codes (
 CREATE INDEX IF NOT EXISTS idx_otp_user_purpose_created ON otp_codes (user_id, purpose, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_otp_expires_at ON otp_codes (expires_at);
 
--- Optional mapping so lecture-resource rows can be linked with the unified auth user.
-ALTER TABLE lecturers ADD COLUMN IF NOT EXISTS user_id BIGINT UNIQUE REFERENCES users(id) ON DELETE SET NULL;
-ALTER TABLE students ADD COLUMN IF NOT EXISTS user_id BIGINT UNIQUE REFERENCES users(id) ON DELETE SET NULL;
-
 -- =====================================================================================
 -- Additive migration: use lecturers/students directly for authentication.
 -- =====================================================================================

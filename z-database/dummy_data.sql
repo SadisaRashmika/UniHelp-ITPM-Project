@@ -28,19 +28,6 @@ SET
 	password_hash = NULL,
 	updated_at = NOW();
 
--- Link existing student/lecturer rows with users table based on ID numbers.
-UPDATE lecturers l
-SET user_id = u.id
-FROM users u
-WHERE u.id_number = l.employee_id
-	AND l.user_id IS DISTINCT FROM u.id;
-
-UPDATE students s
-SET user_id = u.id
-FROM users u
-WHERE u.id_number = s.student_id
-	AND s.user_id IS DISTINCT FROM u.id;
-
 -- Initialize lecturer/student auth columns (activation flow uses these directly).
 UPDATE lecturers
 SET
